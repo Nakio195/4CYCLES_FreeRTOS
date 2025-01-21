@@ -1,0 +1,16 @@
+.metadata
+.settings
+.mxproject
+librairies
+Release
+.cproject
+.project
+.sproject
+spec.d
+.o
+Drivers/
+Common
+Debug
+*.ld
+Middlewares
+Backup
