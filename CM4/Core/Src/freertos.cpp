@@ -25,6 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "tim.h"
 #include "tasks/RedLEDTask.h"
 /* USER CODE END Includes */
 
@@ -63,6 +64,24 @@ const osThreadAttr_t InitTask_attributes = {
 void StartInit(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
+
+/* Hook prototypes */
+void configureTimerForRunTimeStats(void);
+unsigned long getRunTimeCounterValue(void);
+
+/* USER CODE BEGIN 1 */
+/* Functions needed when configGENERATE_RUN_TIME_STATS is on */
+__weak void configureTimerForRunTimeStats(void)
+{
+	HAL_TIM_Base_Start_IT(&htim13);
+}
+
+extern volatile unsigned long ulHighFrequencyTimerTicks;
+__weak unsigned long getRunTimeCounterValue(void)
+{
+	return ulHighFrequencyTimerTicks;
+}
+/* USER CODE END 1 */
 
 /**
   * @brief  FreeRTOS initialization
@@ -118,7 +137,7 @@ void StartInit(void *argument)
 
 	RedLED_Task blinkRed;
 
-	if(blinkRed.start("blinRedTask", 32*4, osPriorityBelowNormal7) == pdPASS)
+	if(blinkRed.start("blinkRedTask", 32*4, osPriorityBelowNormal7) == pdPASS)
 	{
 		//Task created Successuflly !
 	}
