@@ -25,7 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "tasks/RedLEDTask.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,33 +47,12 @@
 /* USER CODE BEGIN Variables */
 
 /* USER CODE END Variables */
-/* Definitions for initTask */
-osThreadId_t initTaskHandle;
-const osThreadAttr_t initTask_attributes = {
-  .name = "initTask",
+/* Definitions for InitTask */
+osThreadId_t InitTaskHandle;
+const osThreadAttr_t InitTask_attributes = {
+  .name = "InitTask",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
-};
-/* Definitions for ModbusTask */
-osThreadId_t ModbusTaskHandle;
-const osThreadAttr_t ModbusTask_attributes = {
-  .name = "ModbusTask",
-  .stack_size = 2048 * 4,
-  .priority = (osPriority_t) osPriorityHigh,
-};
-/* Definitions for MotorTask */
-osThreadId_t MotorTaskHandle;
-const osThreadAttr_t MotorTask_attributes = {
-  .name = "MotorTask",
-  .stack_size = 512 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
-};
-/* Definitions for MonitoringTask */
-osThreadId_t MonitoringTaskHandle;
-const osThreadAttr_t MonitoringTask_attributes = {
-  .name = "MonitoringTask",
-  .stack_size = 256 * 4,
-  .priority = (osPriority_t) osPriorityBelowNormal7,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -82,9 +61,6 @@ const osThreadAttr_t MonitoringTask_attributes = {
 /* USER CODE END FunctionPrototypes */
 
 void StartInit(void *argument);
-void StartModbus(void *argument);
-void StartMotorControl(void *argument);
-void StartMonitoring(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -115,17 +91,8 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* creation of initTask */
-  initTaskHandle = osThreadNew(StartInit, NULL, &initTask_attributes);
-
-  /* creation of ModbusTask */
-  ModbusTaskHandle = osThreadNew(StartModbus, NULL, &ModbusTask_attributes);
-
-  /* creation of MotorTask */
-  MotorTaskHandle = osThreadNew(StartMotorControl, NULL, &MotorTask_attributes);
-
-  /* creation of MonitoringTask */
-  MonitoringTaskHandle = osThreadNew(StartMonitoring, NULL, &MonitoringTask_attributes);
+  /* creation of InitTask */
+  InitTaskHandle = osThreadNew(StartInit, NULL, &InitTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -148,65 +115,19 @@ void StartInit(void *argument)
 {
   /* USER CODE BEGIN StartInit */
   /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+
+	RedLED_Task blinkRed;
+
+	if(blinkRed.start("blinRedTask", 32*4, osPriorityBelowNormal7) == pdPASS)
+	{
+		//Task created Successuflly !
+	}
+
+	for(;;)
+	{
+		osDelay(1);
+	}
   /* USER CODE END StartInit */
-}
-
-/* USER CODE BEGIN Header_StartModbus */
-/**
-* @brief Function implementing the ModbusDriverTas thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartModbus */
-void StartModbus(void *argument)
-{
-  /* USER CODE BEGIN StartModbus */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END StartModbus */
-}
-
-/* USER CODE BEGIN Header_StartMotorControl */
-/**
-* @brief Function implementing the MotorControlTas thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartMotorControl */
-void StartMotorControl(void *argument)
-{
-  /* USER CODE BEGIN StartMotorControl */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END StartMotorControl */
-}
-
-/* USER CODE BEGIN Header_StartMonitoring */
-/**
-* @brief Function implementing the MonitoringTask thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartMonitoring */
-void StartMonitoring(void *argument)
-{
-  /* USER CODE BEGIN StartMonitoring */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END StartMonitoring */
 }
 
 /* Private application code --------------------------------------------------*/
