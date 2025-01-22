@@ -10,15 +10,17 @@
 
 #include <stdint.h>
 
-#include "ModbusDriver.hpp"
+#include "ModbusMaster.hpp"
 #include "PhaserunnerRegisterMap.h"
-#include "Timer.hpp"
+#include "tools/Timer.hpp"
+
+#include "../RTOSTask.h"
 
 #define HeartBeat_Rate 100
 
-extern ModbusDriver* ModbusHandler;
+extern ModbusMaster ModbusHandler;
 
-class Phaserunner
+class Phaserunner : public RTOS_Task
 {
 	public:
 		Phaserunner(uint8_t slaveID);
@@ -30,10 +32,8 @@ class Phaserunner
 			//Timer hearthBeat;
 		};
 
-		//Phaserunner main loop
-		void process();
-		// Phaserunner time tick
-		void tick(unsigned long dt);
+		void setup() override;
+		void run() override;
 
 		// Methods
 		void startMotor();

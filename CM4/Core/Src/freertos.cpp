@@ -26,7 +26,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "tim.h"
-#include "tasks/RedLEDTask.h"
+#include "tasks/utils/Phaserunner.hpp"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -135,16 +135,14 @@ void StartInit(void *argument)
   /* USER CODE BEGIN StartInit */
   /* Infinite loop */
 
-	RedLED_Task blinkRed;
+	Phaserunner Motor(1);
 
-	if(blinkRed.start("blinkRedTask", 32*4, osPriorityBelowNormal7) == pdPASS)
-	{
-		//Task created Successuflly !
-	}
+	Motor.start("Phaserunner", 128, osPriorityNormal);
 
 	for(;;)
 	{
-		osDelay(1);
+
+		osDelay(100);
 	}
   /* USER CODE END StartInit */
 }

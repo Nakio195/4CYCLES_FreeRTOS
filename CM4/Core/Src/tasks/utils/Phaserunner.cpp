@@ -17,12 +17,116 @@ Phaserunner::Phaserunner(uint8_t slaveID)
 	TimerHeartbeat.startTimer();
 
 	//Controller initialization
+
+}
+
+void Phaserunner::setup()
+{
+	ModbusHandler.start("ModbusMaster", 128, osPriorityNormal7);
+
 	setCommunicationTimeout(5000);
 	setControlSource(0);
 	setCurrentsLimits(100.0, 100.0);
 	setSpeedRegulatorMode(2);
 	setTorqueCommand(50.0);
 	stopMotor();
+}
+
+void Phaserunner::run()
+{
+
+	if(TimerHeartbeat.triggered())
+	{
+		heartbeat();
+	}
+
+	// Send all pending write request
+	std::vector<Register> pendingRegisters;
+	bool needTransmit = false;
+
+	for(auto& r : mRegisters->map)
+	{
+		if(r.pendingWrite)
+		{
+			pendingRegisters.push_back(r);
+			r.pendingWrite = false;
+			needTransmit = true;
+		}
+	}
+
+	if(needTransmit)
+	{
+		ModbusPacket* request = new ModbusPacket(mConnection.slaveID, ModbusPacket::Write);
+		request->registers = pendingRegisters;
+		ModbusHandler.request(request);
+	}
+
+	//Send all pending read request
+	pendingRegisters.clear();
+	needTransmit = false;
+
+	for(auto& r : mRegisters->map)
+	{
+		if(r.pendingRead)
+		{
+			pendingRegisters.push_back(r);
+			r.pendingRead = false;
+			needTransmit = true;
+		}
+	}
+
+	if(needTransmit)
+	{
+		ModbusPacket* request = new ModbusPacket(mConnection.slaveID, ModbusPacket::Read);
+		request->registers = pendingRegisters;
+		ModbusHandler.request(request);
+	}
+
+	// Read one received Answer
+	//delete ModbusHandler->getAnswer(mConnection.slaveID);
+	ModbusPacket* answer = ModbusHandler.response(mConnection.slaveID);
+
+	if(answer != nullptr)
+	{
+		if(!answer->success)
+		{
+			//TODO Warn a about a invalid answer
+
+			for(const auto& r : answer->registers)
+			{
+				//TODO Print answer
+			}
+			delete answer;
+		}
+
+		else
+		{
+	//		Serial.print("\tSuccess ");
+	//		answer->direction == ModbusPacket::Read ? Serial.println("reading :") : Serial.println("writing :");
+	//		for(const auto& r : answer->registers)
+	//		{
+	//			Serial.print("\t@");
+	//			Serial.println(r.address);
+	//		}
+			for(const auto& r : answer->registers)
+			{
+				switch(r.address)
+				{
+					case 258:
+						mMotorFaults.faults = r.value;
+						break;
+
+					case 299:
+						mControllerFaults.faults = r.value;
+						break;
+				}
+			}
+
+			delete answer;
+		}
+	}
+
+	sleep(10);
 }
 
 void Phaserunner::startMotor()
@@ -59,111 +163,13 @@ void Phaserunner::clearFaults()
 	mRegisters->set(508, 1);
 }
 
-void Phaserunner::tick(unsigned long dt)
-{
-	TimerHeartbeat.tick(dt);
-}
-void Phaserunner::process()
-{
 
-	if(TimerHeartbeat.triggered())
-	{
-		heartbeat();
-	}
-
-	// Send all pending write request
-	std::vector<Register> pendingRegisters;
-	bool needTransmit = false;
-
-	for(auto& r : mRegisters->map)
-	{
-		if(r.pendingWrite)
-		{
-			pendingRegisters.push_back(r);
-			r.pendingWrite = false;
-			needTransmit = true;
-		}
-	}
-
-	if(needTransmit)
-	{
-		ModbusPacket* request = new ModbusPacket(mConnection.slaveID, ModbusPacket::Write);
-		request->registers = pendingRegisters;
-		ModbusHandler->request(request);
-	}
-
-	//Send all pending read request
-	pendingRegisters.clear();
-	needTransmit = false;
-
-	for(auto& r : mRegisters->map)
-	{
-		if(r.pendingRead)
-		{
-			pendingRegisters.push_back(r);
-			r.pendingRead = false;
-			needTransmit = true;
-		}
-	}
-
-	if(needTransmit)
-	{
-		ModbusPacket* request = new ModbusPacket(mConnection.slaveID, ModbusPacket::Read);
-		request->registers = pendingRegisters;
-		ModbusHandler->request(request);
-	}
-
-	// Read one received Answer
-	//delete ModbusHandler->getAnswer(mConnection.slaveID);
-	ModbusPacket* answer = ModbusHandler->getAnswer(mConnection.slaveID);
-
-	if(answer == nullptr)
-		return;
-
-	if(!answer->success)
-	{
-		//TODO Warn a about a invalid answer
-
-		for(const auto& r : answer->registers)
-		{
-			//TODO Print answer
-		}
-		delete answer;
-	}
-
-	else
-	{
-//		Serial.print("\tSuccess ");
-//		answer->direction == ModbusPacket::Read ? Serial.println("reading :") : Serial.println("writing :");
-//		for(const auto& r : answer->registers)
-//		{
-//			Serial.print("\t@");
-//			Serial.println(r.address);
-//		}
-		for(const auto& r : answer->registers)
-		{
-			switch(r.address)
-			{
-				case 258:
-					mMotorFaults.faults = r.value;
-					break;
-
-				case 299:
-					mControllerFaults.faults = r.value;
-					break;
-			}
-		}
-
-		delete answer;
-	}
-
-}
 
 bool Phaserunner::instantRequest(uint8_t add, uint16_t val)
 {
 	ModbusPacket* packet = new ModbusPacket(mConnection.slaveID, ModbusPacket::Write);
 	packet->push(Register(add, 0, val));
-	return ModbusHandler->request(packet);
+	return ModbusHandler.request(packet);
 }
 bool Phaserunner::setCommunicationTimeout(uint16_t timeout)
 {

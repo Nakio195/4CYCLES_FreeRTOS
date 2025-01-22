@@ -1,47 +1,51 @@
 /*
- * ModbusDriver.cpp
+ * ModbusMaster.cpp
  *
  *  Created on: 2 janv. 2025
  *      Author: To
  */
 
-#include "ModbusDriver.hpp"
+#include "ModbusMaster.hpp"
+
 #include <math.h>
 
-ModbusDriver *ModbusHandler;
+ModbusMaster ModbusHandler;
 
-ModbusDriver::ModbusDriver()
+
+ModbusMaster::ModbusMaster()
 {
 	// Define a specific HardwareSerial as interface
-
-	Serial1 = new ModbusMaster(&huart1);
-	Serial2 = new ModbusMaster(&huart2);
-	Serial4 = new ModbusMaster(&huart4);
-	Serial6 = new ModbusMaster(&huart6);
-
 	//TODO Retrieve from FLASH or EEPROM values
 	successRequest = 0;
 	failedRequest = 0;
 	requestPanicCounter = 0;
 	answerPanicCounter = 0;
 	successiveFailure = 0;
+
+	// Initalizing and starting ModbusDriver tasks
+
+	mInterfaces[0].modbus = &Serial1;
+	mInterfaces[1].modbus = &Serial2;
+	mInterfaces[2].modbus = &Serial4;
+	mInterfaces[3].modbus = &Serial6;
 }
 
 
 /*
- * This function handle the hadware and process the request and retrieve the answer from the modbus slaves
+ * This function handle the drivers and process the request and retrieve the answer from the modbus slaves
  */
 
-
-void ModbusDriver::process()
+void ModbusMaster::setup()
 {
-	Serial1->process();
-	Serial2->process();
-	Serial4->process();
-	Serial6->process();
+	Serial6.start("Modbus_UART6", 128, osPriorityHigh);
+}
 
+
+void ModbusMaster::run()
+{
 	if(RequestFIFO.size() == 0)
 	{
+		suspend();
 		return;
 	}
 
@@ -63,11 +67,10 @@ void ModbusDriver::process()
 		{
 			packet->success = true;
 
-			ModbusMaster* client = getInterface(packet->slave);
+			Interface* interface = getInterface(packet->slave);
 
 			// Begin transmission for first register
-			blockSize = calculateBlockSize(packet->registers, 0, startAddress);
-			packet->success &= client->beginMultipleWrite(slaveID, startAddress);
+			packet->success &= interface->modbus->beginMultipleWrite(slaveID, startAddress, &interface->DataReadySemaphore);
 
 			for(uint8_t i = 0; i < packet->registers.size(); i++)
 			{
@@ -76,10 +79,18 @@ void ModbusDriver::process()
 				// Ending transmission, checking for error and starting new transmission
 				if(abs(packet->registers[i].address - previousAddress) > 1)
 				{
-					client->endMultipleWrite();
-					while(client->busy());
+					xSemaphoreTake(interface->DataReadySemaphore, 0);
+					interface->modbus->endMultipleWrite();
+					if(xSemaphoreTake(interface->DataReadySemaphore, pdMS_TO_TICKS(1000)) != pdTRUE)
+					{
+						failedRequest++;
+						successiveFailure++;
+						packet->success = false;
+						//TODO Warn about invalid read
+						break;
+					}
 
-					packet->success = client->lastRequestStatus();
+					packet->success = interface->modbus->lastRequestStatus();
 
 					if(!packet->success)
 					{
@@ -94,18 +105,25 @@ void ModbusDriver::process()
 						successiveFailure = 0;
 					}
 
-					packet->success &= client->beginMultipleWrite(slaveID, startAddress);
+					packet->success &= interface->modbus->beginMultipleWrite(slaveID, startAddress, &interface->DataReadySemaphore);
 
 				}
 
 				// Writing words to bus
-				packet->success &= client->write(packet->registers[i].value);
+				packet->success &= interface->modbus->write(packet->registers[i].value);
 			}
 
-			client->endMultipleWrite();
-			while(client->busy());
+			interface->modbus->endMultipleWrite();
+			if(xSemaphoreTake(interface->DataReadySemaphore, pdMS_TO_TICKS(1000)) != pdTRUE)
+			{
+				failedRequest++;
+				successiveFailure++;
+				packet->success = false;
+				//TODO Warn about invalid read
+				break;
+			}
 
-			packet->success = client->lastRequestStatus();
+			packet->success = interface->modbus->lastRequestStatus();
 
 			if(!packet->success)
 			{
@@ -125,15 +143,24 @@ void ModbusDriver::process()
 		{
 			packet->success = true;
 
-			ModbusMaster* client = getInterface(packet->slave);
-			client->readHoldingRegister(slaveID, startAddress, blockSize);
-			while(client->busy());
+			Interface* interface = getInterface(packet->slave);
 
-			if(client->available() == blockSize)
+			xSemaphoreTake(interface->DataReadySemaphore, 0);
+			interface->modbus->readHoldingRegister(slaveID, startAddress, blockSize, &interface->DataReadySemaphore);
+			if(xSemaphoreTake(interface->DataReadySemaphore, pdMS_TO_TICKS(1000)) != pdTRUE)
+			{
+				failedRequest++;
+				successiveFailure++;
+				packet->success = false;
+				//TODO Warn about invalid read
+				break;
+			}
+
+			if(interface->modbus->available() == blockSize)
 			{
 				for(uint8_t i = 0; i < blockSize; i++)
 				{
-					uint16_t read = client->read();
+					uint16_t read = interface->modbus->read();
 					if(read == -1)
 					{
 						failedRequest++;
@@ -174,8 +201,9 @@ void ModbusDriver::process()
 	}
 }
 
-bool ModbusDriver::request(ModbusPacket *packet)
+bool ModbusMaster::request(ModbusPacket *packet)
 {
+
 	if(RequestFIFO.size() >= PANIC_FIFO_SIZE)
 	{
 		requestPanicCounter++;
@@ -186,6 +214,7 @@ bool ModbusDriver::request(ModbusPacket *packet)
 	if(packet->registers.size() > 0)
 	{
 		RequestFIFO.push_back(packet);
+		resume();
 	}
 
 	else
@@ -199,7 +228,7 @@ bool ModbusDriver::request(ModbusPacket *packet)
 
 }
 
-ModbusPacket* ModbusDriver::getAnswer(uint8_t slaveID)
+ModbusPacket* ModbusMaster::response(uint8_t slaveID)
 {
 	if(AnswerFIFO.size() == 0)
 		return nullptr;
@@ -215,7 +244,7 @@ ModbusPacket* ModbusDriver::getAnswer(uint8_t slaveID)
 		return nullptr;
 }
 
-uint8_t ModbusDriver::available(uint8_t slaveID)
+uint8_t ModbusMaster::available(uint8_t slaveID)
 {
 	uint8_t count = 0;
 
@@ -231,13 +260,12 @@ uint8_t ModbusDriver::available(uint8_t slaveID)
 	return count;
 }
 
-
-ModbusMaster* ModbusDriver::getInterface(uint8_t slaveID)
+ModbusMaster::Interface* ModbusMaster::getInterface(uint8_t slaveID)
 {
-	return Serial6;
+	return &mInterfaces[3];
 }
 
-uint16_t ModbusDriver::calculateBlockSize(const std::vector<Register>& registers, uint8_t startIndex, uint16_t startAddress)
+uint16_t ModbusMaster::calculateBlockSize(const std::vector<Register>& registers, uint8_t startIndex, uint16_t startAddress)
 {
     uint16_t size = 0;
 
