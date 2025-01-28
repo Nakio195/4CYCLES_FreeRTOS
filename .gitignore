@@ -8,9 +8,10 @@ Release
 .sproject
 spec.d
 .o
-Drivers/
 Common
 Debug
 *.ld
 Middlewares
 Backup
+Drivers/STM32H7xx_HAL_Driver
+Drivers/CMSIS
