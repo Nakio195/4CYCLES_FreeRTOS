@@ -139,6 +139,7 @@ void StartInit(void *argument)
 
 
 	Motor.start("Phaserunner", 256, osPriorityNormal);
+	osDelay(500);
 
 	for(;;)
 	{
