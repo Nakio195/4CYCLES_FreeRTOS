@@ -24,12 +24,13 @@ void Phaserunner::setup()
 {
 	ModbusHandler.start("ModbusMaster", 128, osPriorityNormal7);
 
-	setCommunicationTimeout(5000);
+	setCommunicationTimeout(0);
 	setControlSource(0);
 	setCurrentsLimits(100.0, 100.0);
 	setSpeedRegulatorMode(2);
 	setTorqueCommand(50.0);
 	stopMotor();
+	clearFaults();
 }
 
 void Phaserunner::run()
@@ -40,7 +41,7 @@ void Phaserunner::run()
 		heartbeat();
 	}
 
-	// Send all pending write request
+	// Check for modified register that would need writing
 	std::vector<Register> pendingRegisters;
 	bool needTransmit = false;
 
@@ -61,7 +62,7 @@ void Phaserunner::run()
 		ModbusHandler.request(request);
 	}
 
-	//Send all pending read request
+	//Check registers that would need to be read
 	pendingRegisters.clear();
 	needTransmit = false;
 
@@ -83,7 +84,6 @@ void Phaserunner::run()
 	}
 
 	// Read one received Answer
-	//delete ModbusHandler->getAnswer(mConnection.slaveID);
 	ModbusPacket* answer = ModbusHandler.response(mConnection.slaveID);
 
 	if(answer != nullptr)
@@ -196,7 +196,7 @@ void Phaserunner::heartbeat()
 		setRemoteState(mMotorCommands.State);
 	}
 
-	setCommunicationTimeout(1000);
+	setCommunicationTimeout(0);
 	readControllerFaults();
 	readMotorFaults();
 }
@@ -276,7 +276,7 @@ bool Phaserunner::setCurrentsLimits(float motor, float brake)
 	if(motor > 100.0 || brake > 100.0)
 		return false;
 
-	mMotorCommands.MotoringCurrentLimit= motor;
+	mMotorCommands.MotoringCurrentLimit = motor;
 	mMotorCommands.BrakingCurrentLimit = brake;
 
 	mRegisters->set(491, 4096*(motor/100.0));

@@ -64,9 +64,9 @@
 
 #define USBD_VID     1155
 #define USBD_LANGID_STRING     1036
-#define USBD_MANUFACTURER_STRING     "4CYCLES"
+#define USBD_MANUFACTURER_STRING     "EntreAutre"
 #define USBD_PID_FS     22336
-#define USBD_PRODUCT_STRING_FS     "4CYCLES-Brain"
+#define USBD_PRODUCT_STRING_FS     "4CYCLES"
 #define USBD_CONFIGURATION_STRING_FS     "CDC Config"
 #define USBD_INTERFACE_STRING_FS     "CDC Interface"
 

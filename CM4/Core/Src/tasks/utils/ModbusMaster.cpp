@@ -37,7 +37,7 @@ ModbusMaster::ModbusMaster()
 
 void ModbusMaster::setup()
 {
-	Serial6.start("Modbus_UART6", 128, osPriorityHigh);
+	Serial6.start("Modbus_UART6", 512, osPriorityHigh);
 }
 
 
@@ -77,7 +77,7 @@ void ModbusMaster::run()
 				uint16_t previousAddress = i == 0 ? startAddress : packet->registers[i-1].address;
 				// Next address is not contiguous
 				// Ending transmission, checking for error and starting new transmission
-				if(abs(packet->registers[i].address - previousAddress) > 1)
+				if(abs((int32_t)(packet->registers[i].address) - (int32_t)(previousAddress)) > 1)
 				{
 					xSemaphoreTake(interface->DataReadySemaphore, 0);
 					interface->modbus->endMultipleWrite();
@@ -105,7 +105,7 @@ void ModbusMaster::run()
 						successiveFailure = 0;
 					}
 
-					packet->success &= interface->modbus->beginMultipleWrite(slaveID, startAddress, &interface->DataReadySemaphore);
+					packet->success &= interface->modbus->beginMultipleWrite(slaveID, packet->registers[i].address, &interface->DataReadySemaphore);
 
 				}
 
@@ -113,6 +113,10 @@ void ModbusMaster::run()
 				packet->success &= interface->modbus->write(packet->registers[i].value);
 			}
 
+			if(!packet->success)
+				break;
+
+			xSemaphoreTake(interface->DataReadySemaphore, 0);
 			interface->modbus->endMultipleWrite();
 			if(xSemaphoreTake(interface->DataReadySemaphore, pdMS_TO_TICKS(1000)) != pdTRUE)
 			{

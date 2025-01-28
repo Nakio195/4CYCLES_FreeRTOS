@@ -47,6 +47,8 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 
+Phaserunner Motor(1);
+
 /* USER CODE END Variables */
 /* Definitions for InitTask */
 osThreadId_t InitTaskHandle;
@@ -58,7 +60,7 @@ const osThreadAttr_t InitTask_attributes = {
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-
+volatile unsigned long ulHighFrequencyTimerTicks;
 /* USER CODE END FunctionPrototypes */
 
 void StartInit(void *argument);
@@ -135,14 +137,20 @@ void StartInit(void *argument)
   /* USER CODE BEGIN StartInit */
   /* Infinite loop */
 
-	Phaserunner Motor(1);
 
-	Motor.start("Phaserunner", 128, osPriorityNormal);
+	Motor.start("Phaserunner", 256, osPriorityNormal);
 
 	for(;;)
 	{
+		Motor.startMotor();
+		Motor.setSpeed(20.0);
+		vTaskDelay(pdMS_TO_TICKS(2000));
+		Motor.stopMotor();
+		for(;;)
+		{
+			osDelay(100);
+		};
 
-		osDelay(100);
 	}
   /* USER CODE END StartInit */
 }
