@@ -21,6 +21,7 @@
 #include "cmsis_os.h"
 #include "fdcan.h"
 #include "memorymap.h"
+#include "tim.h"
 #include "usb_device.h"
 #include "gpio.h"
 
@@ -129,6 +130,7 @@ Error_Handler();
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_FDCAN2_Init();
+  MX_TIM14_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */

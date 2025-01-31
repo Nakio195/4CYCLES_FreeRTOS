@@ -25,7 +25,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "tim.h"
 #include "usbd_cdc_if.h"
+#include "tasks/CANTask.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,13 +59,40 @@ const osThreadAttr_t USBTask_attributes = {
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-
+volatile unsigned long ulHighFrequencyTimerTicks;
 /* USER CODE END FunctionPrototypes */
 
 void StartUSBTask(void *argument);
 
 extern "C" void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
+
+/* Hook prototypes */
+void configureTimerForRunTimeStats(void);
+unsigned long getRunTimeCounterValue(void);
+void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName);
+
+/* USER CODE BEGIN 1 */
+/* Functions needed when configGENERATE_RUN_TIME_STATS is on */
+__weak void configureTimerForRunTimeStats(void)
+{
+	HAL_TIM_Base_Start_IT(&htim14);
+}
+
+__weak unsigned long getRunTimeCounterValue(void)
+{
+	return ulHighFrequencyTimerTicks;
+}
+/* USER CODE END 1 */
+
+/* USER CODE BEGIN 4 */
+void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName)
+{
+   /* Run time stack overflow checking is performed if
+   configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2. This hook function is
+   called if a stack overflow is detected. */
+}
+/* USER CODE END 4 */
 
 /**
   * @brief  FreeRTOS initialization
@@ -117,12 +146,33 @@ void StartUSBTask(void *argument)
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN StartUSBTask */
+
+  CanHandler.start("CAN Task", 256, osPriorityHigh);
+
   /* Infinite loop */
   for(;;)
   {
     osDelay(500);
     uint8_t Hello[] = "Hello World !\n";
     CDC_Transmit_FS(Hello, sizeof(Hello));
+
+    CANPacket *packet = new CANPacket(CANPacket::Transmit);
+    packet->TxHeader.Identifier = 0x80;
+    packet->data.push_back(0x01);
+    packet->data.push_back(0x02);
+    packet->data.push_back(0x03);
+    packet->data.push_back(0x04);
+    packet->data.push_back(0x05);
+    packet->data.push_back(0x06);
+    packet->data.push_back(0x07);
+    packet->data.push_back(0x08);
+
+    if(!CanHandler.send(packet))
+    {
+    	uint8_t error[] = "CAN - TX FIFO Full\n";
+    	CDC_Transmit_FS(error, sizeof(error));
+    	//delete packet;
+    }
   }
   /* USER CODE END StartUSBTask */
 }
