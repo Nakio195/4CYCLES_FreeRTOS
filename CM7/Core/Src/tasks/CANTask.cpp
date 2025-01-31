@@ -67,7 +67,7 @@ void CAN_Task::run()
 	}
 
 	CANPacket* packet = nullptr;
-	if(xQueueReceive(TX_Queue, &packet, 10) == pdTRUE)
+	if(xQueueReceive(TX_Queue, &packet, 0) == pdTRUE)
 	{
 		if(packet != nullptr)
 		{
@@ -79,7 +79,6 @@ void CAN_Task::run()
 		}
 	}
 
-	osDelay(10);
 }
 
 bool CAN_Task::send(CANPacket* packet)
