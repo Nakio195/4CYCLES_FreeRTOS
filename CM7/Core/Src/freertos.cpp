@@ -27,7 +27,9 @@
 /* USER CODE BEGIN Includes */
 #include "tim.h"
 #include "usbd_cdc_if.h"
-#include "tasks/CANTask.h"
+#include "tasks/VehicleTask.h"
+#include <string>
+#include <new>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -146,33 +148,13 @@ void StartUSBTask(void *argument)
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN StartUSBTask */
-
-  CanHandler.start("CAN Task", 256, osPriorityHigh);
-
+  std::set_new_handler(Error_Handler); // Set new exception to call ErrorHandler
+  Vehicle.start("Vehicle", 512, osPriorityNormal);
+  osDelay(100);
   /* Infinite loop */
   for(;;)
   {
     osDelay(500);
-    uint8_t Hello[] = "Hello World !\n";
-    CDC_Transmit_FS(Hello, sizeof(Hello));
-
-    CANPacket *packet = new CANPacket(CANPacket::Transmit);
-    packet->TxHeader.Identifier = 0x80;
-    packet->data.push_back(0x01);
-    packet->data.push_back(0x02);
-    packet->data.push_back(0x03);
-    packet->data.push_back(0x04);
-    packet->data.push_back(0x05);
-    packet->data.push_back(0x06);
-    packet->data.push_back(0x07);
-    packet->data.push_back(0x08);
-
-    if(!CanHandler.send(packet))
-    {
-    	uint8_t error[] = "CAN - TX FIFO Full\n";
-    	CDC_Transmit_FS(error, sizeof(error));
-    	//delete packet;
-    }
   }
   /* USER CODE END StartUSBTask */
 }
