@@ -11,59 +11,12 @@
 #include "RTOSTask.h"
 #include "cmsis_os2.h"
 #include "semphr.h"
-#include "queue.h"
-
 #include "fdcan.h"
 #include <vector>
-#include <deque>
 
-class CANPacket
-{
-	public:
-		enum {Invalid, Receive = 1, Transmit = 2};
+#include "utils/CanPacket.h"
+#include "utils/CanPeripheral.h"
 
-	public:
-		CANPacket(uint8_t dir) : direction(dir)
-		{
-		    TxHeader.IdType = FDCAN_STANDARD_ID;             // Standard ID type (11 bits)
-		    TxHeader.TxFrameType = FDCAN_DATA_FRAME;         // Data frame
-		    TxHeader.DataLength = FDCAN_DLC_BYTES_8;         // Data length code (DLC) - 8 bytes of data
-		    TxHeader.ErrorStateIndicator = FDCAN_ESI_PASSIVE; // Error state indicator (PASSIVE)
-		    TxHeader.BitRateSwitch = FDCAN_BRS_OFF;          // No bit-rate switch (for classic CAN)
-		    TxHeader.FDFormat = FDCAN_CLASSIC_CAN;           // Classic CAN frame format
-		    TxHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS; // No event FIFO control
-		    TxHeader.MessageMarker = 0;
-		}
-
-		static inline uint8_t dataLength(uint32_t DLC)
-		{
-			if(DLC <= 8)
-				return DLC;
-			else if(DLC == FDCAN_DLC_BYTES_12)
-				return 12;
-			else if(DLC == FDCAN_DLC_BYTES_16)
-				return 16;
-			else if(DLC == FDCAN_DLC_BYTES_20)
-				return 20;
-			else if(DLC == FDCAN_DLC_BYTES_24)
-				return 24;
-			else if(DLC == FDCAN_DLC_BYTES_32)
-				return 32;
-			else if(DLC == FDCAN_DLC_BYTES_48)
-				return 48;
-			else if(DLC == FDCAN_DLC_BYTES_64)
-				return 64;
-
-			return 0;
-		}
-
-
-	public:
-		bool direction = Invalid;
-		FDCAN_TxHeaderTypeDef TxHeader;
-		FDCAN_RxHeaderTypeDef RxHeader;
-		std::vector<uint8_t> data;
-};
 
 class CAN_Task : public RTOS_Task
 {
@@ -74,7 +27,8 @@ class CAN_Task : public RTOS_Task
 		void run() override;
 		void cleanup() override;
 
-		bool send(CANPacket* packet);
+		void attach(CanPeripheral* peripheral);
+		bool send(CanPacket* packet);
 
 
 		inline void IRQ_Handler(FDCAN_HandleTypeDef* hfdcan)
@@ -91,9 +45,11 @@ class CAN_Task : public RTOS_Task
 	public:
 		xQueueHandle TX_Queue;
 
+		uint32_t TxErrorCounter;
+		uint32_t RxErrorCounter;
+
 	private:
-		std::deque<CANPacket> mRX_Packets;
-		std::deque<CANPacket> mTX_Packets;
+		std::vector<CanPeripheral*> mPeripherals;
 		xSemaphoreHandle Sem_MessageAvailable;
 
 
