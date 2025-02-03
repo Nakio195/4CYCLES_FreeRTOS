@@ -65,7 +65,7 @@ void MX_FREERTOS_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+#include "usbd_cdc_if.h"
 /* USER CODE END 0 */
 
 /**
@@ -303,10 +303,18 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
+	uint8_t Error[] = "[CRTICAL] Core M7 - Main Error ";
+	osDelay(200);
+	CDC_Transmit_FS(Error, sizeof(Error));
+	__disable_irq();
+	HAL_FDCAN_Stop(&hfdcan2);
+	__HAL_RCC_FDCAN_CLK_DISABLE();
+	__HAL_RCC_FDCAN_FORCE_RESET();
+	__HAL_RCC_FDCAN_RELEASE_RESET();
+	HAL_FDCAN_DeInit(&hfdcan2);
+	while (1)
+	{
+	}
   /* USER CODE END Error_Handler_Debug */
 }
 
