@@ -35,6 +35,14 @@ void VehicleTask::run()
 		CDC_Transmit_FS((uint8_t*)value.data(), value.size());
 	}
 
+	if(!MainController.isResponding())
+	{
+		std::string value = "[WARNING] - PS3Controller not responding";
+		value += "\n";
+		CDC_Transmit_FS((uint8_t*)value.data(), value.size());
+		osDelay(500);
+	}
+
 }
 
 void VehicleTask::cleanup()

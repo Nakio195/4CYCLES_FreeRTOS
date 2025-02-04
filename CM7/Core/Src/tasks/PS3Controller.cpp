@@ -12,6 +12,7 @@ PS3Controller MainController;
 PS3Controller::PS3Controller()
 {
 	setRangeFilter(0x10, 0x15);
+	setCommunicationTimeout(3000);
 	CanHandler.attach(this);
 	// TODO Auto-generated constructor stub
 
@@ -42,6 +43,15 @@ void PS3Controller::run()
 			else if(packet->Identifier == 0x11)
 				ControllerStatus(packet);
 			delete packet;
+		}
+	}
+
+	if(!isResponding())
+	{
+		while(!isResponding())
+		{
+			setup();
+			osDelay(500);
 		}
 	}
 

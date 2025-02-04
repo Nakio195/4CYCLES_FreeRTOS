@@ -88,12 +88,15 @@ void CAN_Task::run()
 			{
 				TxErrorCounter++;
 				//TODO Notify TX send error
-				Error_Handler();
+				//Error_Handler();
 			}
 
 			delete packet;
 		}
 	}
+
+	for(auto peripheral : mPeripherals)
+		peripheral->tick(xTaskGetTickCount());
 }
 
 void CAN_Task::attach(CanPeripheral* peripheral)

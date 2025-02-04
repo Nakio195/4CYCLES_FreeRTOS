@@ -55,7 +55,7 @@
 osThreadId_t USBTaskHandle;
 const osThreadAttr_t USBTask_attributes = {
   .name = "USBTask",
-  .stack_size = 2048 * 4,
+  .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 
