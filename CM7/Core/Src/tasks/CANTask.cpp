@@ -94,9 +94,6 @@ void CAN_Task::run()
 			delete packet;
 		}
 	}
-
-	for(auto peripheral : mPeripherals)
-		peripheral->tick(xTaskGetTickCount());
 }
 
 void CAN_Task::attach(CanPeripheral* peripheral)

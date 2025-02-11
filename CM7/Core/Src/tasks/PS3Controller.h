@@ -20,6 +20,7 @@ namespace PS3
 		{
 			uint8_t battery = 0;
 			bool connected = 0;
+			uint32_t timestamp = 0;
 		};
 
 		struct Stick
@@ -86,6 +87,11 @@ class PS3Controller: public CanPeripheral, public RTOS_Task
 		void run() override;
 		void cleanup() override;
 
+		void init() override;
+		void reInit();
+		void recovery();
+		void absent();
+
 		PS3::Data getData();
 
 	private:
@@ -94,9 +100,6 @@ class PS3Controller: public CanPeripheral, public RTOS_Task
 
 	private:
 		SemaphoreHandle_t Mut_Data;
-
-		uint32_t lastTimestamp = 0;
-		bool transmissionEnabled = 0;
 		//Peripheral control
 		PS3::Data controller;
 

@@ -13,22 +13,53 @@ PS3Controller::PS3Controller()
 {
 	setRangeFilter(0x10, 0x15);
 	setCommunicationTimeout(3000);
+	setRecoveryMode(50, 1000);
+
 	CanHandler.attach(this);
 	// TODO Auto-generated constructor stub
-
 }
 
-void PS3Controller::setup()
+void PS3Controller::init()
 {
 	CanPacket *ControllerSettings = new CanPacket(0x19);
 	ControllerSettings->data.push_back(0x01);
 	ControllerSettings->data.push_back(0x00);
 	ControllerSettings->data.push_back(0x00);
 	if(CanHandler.send(ControllerSettings))
-		transmissionEnabled = true;
+	{
+		CanPeripheral::init();
+	}
+}
 
+void PS3Controller::reInit()
+{
+	CanPacket *ControllerSettings = new CanPacket(0x19);
+	ControllerSettings->data.push_back(0x01);
+	ControllerSettings->data.push_back(0x00);
+	ControllerSettings->data.push_back(0x00);
+	if(CanHandler.send(ControllerSettings))
+	{
+		// Todo handle full Queue
+	}
+
+}
+
+void PS3Controller::absent()
+{
+	log(Message(Message::Critical) << "PS3 Controller absent from bus...");
+}
+
+void PS3Controller::recovery()
+{
+	log(Message(Message::Error) << "Lost PS3 Controller, recovery...");
+	reInit();
+}
+
+void PS3Controller::setup()
+{
 	Mut_Data = xSemaphoreCreateMutex();
 	xSemaphoreGive(Mut_Data);
+	init();
 }
 
 void PS3Controller::run()
@@ -46,16 +77,8 @@ void PS3Controller::run()
 		}
 	}
 
-	if(!isResponding())
-	{
-		while(!isResponding())
-		{
-			setup();
-			osDelay(500);
-		}
-	}
-
-	osDelay(50);
+	tick(xTaskGetTickCount());
+	osDelay(40);
 }
 
 PS3::Data PS3Controller::getData()
@@ -81,10 +104,11 @@ void PS3Controller::ControllerStatus(CanPacket* packet)
 	{
 		controller.status.battery = packet->data[0];
 		controller.status.connected = packet->data[1];
-		lastTimestamp |= packet->data[2] << 24;
-		lastTimestamp |= packet->data[3] << 16;
-		lastTimestamp |= packet->data[4] << 8;
-		lastTimestamp |= packet->data[5] & 0xFF;
+		controller.status.timestamp = 0;
+		controller.status.timestamp |= packet->data[2] << 24;
+		controller.status.timestamp |= packet->data[3] << 16;
+		controller.status.timestamp |= packet->data[4] << 8;
+		controller.status.timestamp |= packet->data[5] & 0xFF;
 
 		xSemaphoreGive(Mut_Data);
 	}

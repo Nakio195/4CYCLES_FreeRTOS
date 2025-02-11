@@ -9,23 +9,49 @@
 #define SRC_TASKS_UTILS_CANPERIPHERAL_H_
 
 #include <inttypes.h>
+#include <cmsis_os2.h>
 #include "FreeRTOS.h"
 #include "queue.h"
+#include "semphr.h"
 
+#include "LockGuard.hpp"
 #include "CanPacket.h"
 
 class CanPeripheral
 {
 	public:
 		enum FilterMode{Range, Mask};
+		enum State{Unitialized, Initialized, Ready, Recovery, Lost, Absent};
 	public:
 		CanPeripheral();
+
+		virtual void init()
+		{
+			mState = Initialized;
+		}
+
+		virtual void reInit() = 0;
+		virtual void recovery() = 0;
+		virtual void absent() = 0;
+
+		void inline setRecoveryMode(uint8_t maxTries, uint16_t ticks)
+		{
+			mMaxRecovery = maxTries;
+			mRecoveryTicks = ticks;
+		}
+
 		bool inline push(CanPacket *packet)
 		{
+			//Ensure data is not being manipulated elsewhere
+			LockGuard lock(mutex);
+
 			if(accept(packet->Identifier))
 			{
 				mLastCommunication = 0;
 				mResponding = true;
+
+				mState = Ready;
+
 				// Add packet to Queue for children class to process
 				if(xQueueSend(mPacketsQueue, &packet, 0) == pdTRUE)
 					return true;
@@ -34,33 +60,60 @@ class CanPeripheral
 			return false;
 		}
 
+	protected:
 		bool inline isResponding()
 		{
+			LockGuard lock(mutex);
 			return mResponding;
 		}
 
 		virtual void CommunicationTimeout()
 		{
+			if(mState == Initialized)
+				mState = Absent;
+			if(mState == Ready)
+				mState = Recovery;
 		}
 
 		void inline setCommunicationTimeout(uint32_t timeout)
 		{
+			LockGuard lock(mutex);
 			mCommunicationTimeout = timeout;
 		}
 
 		void inline tick(uint32_t t)
 		{
-			mLastCommunication += t - previousTick;
-			previousTick = t;
 
-			if(mLastCommunication >= mCommunicationTimeout)
+			{ // Locked scope
+				LockGuard lock(mutex);
+
+				if(mState == Ready)
+				{
+					mLastCommunication += t - previousTick;
+					previousTick = t;
+				}
+				if(mLastCommunication >= mCommunicationTimeout && mState != Recovery)
+					CommunicationTimeout();
+
+				if(mState == Absent)
+				{
+					absent();
+				}
+
+			}
+
+			//Realease lock for CanTask to access push
+			if(mState == Recovery)
 			{
-				mResponding = false;
-				CommunicationTimeout();
+				while(mRecoveryAttempt < mMaxRecovery && mState == Recovery)
+				{
+					recovery();
+					mRecoveryAttempt++;
+					osDelay(mRecoveryTicks);
+				}
 			}
 		}
 
-	protected:
 		bool inline accept(uint32_t id)
 		{
 			if(mFilterMode == Range)
@@ -86,11 +139,20 @@ class CanPeripheral
 		}
 
 	protected:
+		// Mutex
+		SemaphoreHandle_t mutex;
+
 		// Connection monitoring
 		uint32_t previousTick;
 		uint32_t mLastCommunication;
 		uint32_t mCommunicationTimeout;
 		bool mResponding;
+
+		//State Machine
+		State mState;
+		uint8_t mRecoveryAttempt;
+		uint8_t mMaxRecovery;
+		uint16_t mRecoveryTicks;
 
 
 		uint8_t mFilterMode;
