@@ -10,6 +10,9 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
+#include "queue.h"
+#include "semphr.h"
+#include "utils/Message.h"
 
 class RTOS_Task
 {
@@ -25,6 +28,18 @@ class RTOS_Task
 		inline void stop()
 		{
 			this->stopCalled = true;
+		}
+
+		void inline attachLogQueue(QueueHandle_t q)
+		{
+			if(q != nullptr)
+				mLogQueue = q;
+		}
+
+		void inline log(Message m)
+		{
+			Message* p = new Message(m);
+			xQueueSend(mLogQueue, &p, 100);
 		}
 
 	protected:
@@ -65,6 +80,7 @@ class RTOS_Task
 
 		bool stopCalled = false;
 		TaskHandle_t xHandle = 0;
+		QueueHandle_t mLogQueue;
 };
 
 #endif /* SRC_UTILS_RTOSTASK_H_ */

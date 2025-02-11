@@ -17,8 +17,14 @@ VehicleTask::VehicleTask()
 
 void VehicleTask::setup()
 {
+
+	this->attachLogQueue(Json.createLogQueue());
+	CanHandler.attachLogQueue(Json.createLogQueue());
+	MainController.attachLogQueue(Json.createLogQueue());
+
 	CanHandler.start("CAN", 256, osPriorityHigh);
 	MainController.start("PS3", 128, osPriorityAboveNormal);
+	Json.start("JSON Logger", 256, osPriorityBelowNormal);
 }
 
 void VehicleTask::run()
@@ -33,14 +39,6 @@ void VehicleTask::run()
 		value += "\n";
 
 		CDC_Transmit_FS((uint8_t*)value.data(), value.size());
-	}
-
-	if(!MainController.isResponding())
-	{
-		std::string value = "[WARNING] - PS3Controller not responding";
-		value += "\n";
-		CDC_Transmit_FS((uint8_t*)value.data(), value.size());
-		osDelay(500);
 	}
 
 }

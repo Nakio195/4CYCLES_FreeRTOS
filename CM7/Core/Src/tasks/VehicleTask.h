@@ -9,6 +9,7 @@
 #define SRC_TASKS_VEHICLETASK_H_
 
 #include "RTOSTask.h"
+#include "LoggerTask.h"
 #include "PS3Controller.h"
 #include "usbd_cdc_if.h"
 
