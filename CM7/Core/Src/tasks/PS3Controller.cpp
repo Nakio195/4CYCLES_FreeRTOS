@@ -46,13 +46,23 @@ void PS3Controller::reInit()
 
 void PS3Controller::absent()
 {
-	log(Message(Message::Critical) << "PS3 Controller absent from bus...");
+	log(Message(Message::LogCritical) << "PS3 Controller absent from bus...");
 }
 
 void PS3Controller::recovery()
 {
-	log(Message(Message::Error) << "Lost PS3 Controller, recovery...");
+	log(Message(Message::LogError) << "Lost PS3 Controller, recovery...");
 	reInit();
+}
+
+void PS3Controller::recovered()
+{
+	log(Message(Message::LogInfo) << "PS3 Controller recovered !");
+}
+
+void PS3Controller::lost()
+{
+	log(Message(Message::LogCritical) << "PS3 Controller lost !");
 }
 
 void PS3Controller::setup()
@@ -79,19 +89,6 @@ void PS3Controller::run()
 
 	tick(xTaskGetTickCount());
 	osDelay(40);
-}
-
-PS3::Data PS3Controller::getData()
-{
-	if(xSemaphoreTake(Mut_Data, 10) == pdTRUE)
-	{
-		PS3::Data data = controller;
-		xSemaphoreGive(Mut_Data);
-
-		return data;
-	}
-
-	return PS3::Data();
 }
 
 void PS3Controller::ControllerStatus(CanPacket* packet)
@@ -148,6 +145,9 @@ void PS3Controller::ControllerData(CanPacket* packet)
 		controller.buttons.select = packet->data[7] & 0x20;
 		controller.buttons.ps = packet->data[7] & 0x40;
 		controller.status.connected = packet->data[7] & 0x80;
+
+		setThrottleCommand(controller.trig.L);
+		setBrakeCommand(controller.trig.R);
 
 		xSemaphoreGive(Mut_Data);
 	}

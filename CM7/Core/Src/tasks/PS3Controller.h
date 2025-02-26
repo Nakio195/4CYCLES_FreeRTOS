@@ -13,6 +13,7 @@
 #include "semphr.h"
 #include "utils/CanPeripheral.h"
 #include "CANTask.h"
+#include "utils/Controller.h"
 
 namespace PS3
 {
@@ -75,7 +76,7 @@ namespace PS3
 		};
 }
 
-class PS3Controller: public CanPeripheral, public RTOS_Task
+class PS3Controller: public CanPeripheral, public RTOS_Task, public Controller
 {
 	public:
 		enum BatteryLevels{Undefined, Shutdown, Dying, Low, High, Full, Charging};
@@ -91,8 +92,8 @@ class PS3Controller: public CanPeripheral, public RTOS_Task
 		void reInit();
 		void recovery();
 		void absent();
-
-		PS3::Data getData();
+		void recovered();
+		void lost();
 
 	private:
 		void ControllerStatus(CanPacket* packet);
