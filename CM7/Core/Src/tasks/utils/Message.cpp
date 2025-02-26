@@ -1,34 +1,30 @@
 #include "Message.h"
 
-Message::Message(Level level)
+Message::Message(Type type)
 {
-	mLevel = level;
+	mType = type;
 	mCode = 0;
 	mMessage = "";
 }
 
-Message::Level Message::level()
+Message::Type Message::type()
 {
-	return mLevel;
-}
-void Message::setLevel(Level level)
-{
-	mLevel = level;
+	return mType;
 }
 
 std::string Message::levelToString()
 {
-	switch (mLevel)
+	switch (mType)
 	{
-		case Info:
+		case LogInfo:
 			return std::string("[INFO]");
-		case Warning:
+		case LogWarning:
 			return std::string("[WARN]");
-		case Error:
+		case LogError:
 			return std::string("[ERROR]");
-		case Critical:
+		case LogCritical:
 			return std::string("[CRITICAL]");
-		case Debug:
+		case LogDebug:
 			return std::string("[DEBUG]");
 		default:
 			return std::string("[UNKNOWN]");
@@ -45,11 +41,12 @@ uint32_t Message::code()
 	return mCode;
 }
 
-Message& Message::operator<<(Level level)
+Message& Message::operator<<(Type type)
 {
-	mLevel = level;
+	mType = type;
 	return *this;
 }
+
 
 Message& Message::operator<<(std::string text)
 {
@@ -61,6 +58,15 @@ Message& Message::operator<<(uint32_t number)
 {
 	mMessage += std::to_string(number) + " ";
 	return *this;
+}
+
+Message& Message::operator<<(std::initializer_list<std::pair<const char*, JsonVariant>> values)
+{
+//	for (const auto& pair : values)
+//	{
+//		mObject.[pair.first] = pair.second;
+//	}
+//	return *this;
 }
 
 

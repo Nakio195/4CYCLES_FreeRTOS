@@ -2,27 +2,32 @@
 
 #include <stdint.h>
 #include <string>
+#include "ArduinoJson-v7.3.0.h"
 
 class Message
 {
 	public:
-		enum Level{Debug, Info, Warning, Error, Critical};
-		Message(Level type);
-		
-		Level level();
+		enum Type{LogDebug, LogInfo, LogWarning, LogError, LogCritical, Controller, Wheel, Direction};
+
+		Message(Type type);
+
+		Type type();
+		Type level();
 		std::string levelToString();
-		void setLevel(Level level);
 
 		std::string message();
 		uint32_t code();
-	
-		Message& operator<<(Level level);
+
+		Message& operator<<(Type type);
 		Message& operator<<(std::string text);
 		Message& operator<<(uint32_t number);
+		Message& operator<<(std::initializer_list<std::pair<const char*, JsonVariant>> values);
+
 
 	protected:
-		Level mLevel;
+		Type mType;
 		uint32_t mCode;
 		std::string mMessage;
+		JsonObject mObject;
 };
 

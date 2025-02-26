@@ -3,7 +3,7 @@
 JsonLogger Json;
 
 
-JsonLogger::JsonLogger() : Logger()
+JsonLogger::JsonLogger()
 {
 	mutex = xSemaphoreCreateMutex();
 }
@@ -21,7 +21,8 @@ QueueHandle_t JsonLogger::createLogQueue()
 
 void JsonLogger::setup()
 {
-	setLogLevel(Message::Debug);
+
+	osDelay(3000); //Wait for USB CDC to init and connect
 }
 
 void JsonLogger::run()
@@ -35,7 +36,7 @@ void JsonLogger::run()
 			{
 				if(m != nullptr)
 				{
-					if((uint32_t)(m->level()) >= mLogLevel)
+					if((uint32_t)(m->type()) >= mLogLevel)
 						print(*m);
 					delete m;
 				}
@@ -56,13 +57,34 @@ void JsonLogger::print(Message& m)
 {
 	mDocument.clear();
 
-	mDocument["level"] = m.level();
+	mDocument["msgType"] = m.type();
 	if(m.code() != 0)
 		mDocument["code"] = m.code();
-	mDocument["message"] = m.message();
+
+	if(m.type() <= Message::LogCritical)
+	{
+		mDocument["message"] = m.message();
+	}
+
+	else if(m.type() == Message::Controller)
+	{
+		mDocument["message"] = m.message();
+	}
+
+	else if(m.type() == Message::Wheel)
+	{
+		mDocument["message"] = m.message();
+	}
+
+	else if(m.type() == Message::Direction)
+	{
+		mDocument["message"] = m.message();
+	}
 
 	std::string out;
 	serializeJson(mDocument, out);
+
+	out += "\n";
 
 	CDC_Transmit_FS((uint8_t*)out.data(), out.size());
 }

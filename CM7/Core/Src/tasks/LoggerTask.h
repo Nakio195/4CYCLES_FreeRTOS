@@ -1,5 +1,4 @@
 #pragma once
-#include "utils/Logger.h"
 #include <string>
 #include <vector>
 
@@ -14,12 +13,12 @@
 #include "utils/LockGuard.hpp"
 #include "utils/ArduinoJson-v7.3.0.h"
 
-class JsonLogger : public Logger, public RTOS_Task
+class JsonLogger : public RTOS_Task
 {
 	public:
 		JsonLogger();
 
-		void print(Message &m) override;
+		void print(Message &m);
 
 		QueueHandle_t createLogQueue();
 
@@ -31,6 +30,8 @@ class JsonLogger : public Logger, public RTOS_Task
 		JsonDocument mDocument;
 		std::vector<QueueHandle_t> mQueues;
 		SemaphoreHandle_t mutex;
+
+		Message::Type mLogLevel = Message::LogDebug;
 };
 
 extern JsonLogger Json;
