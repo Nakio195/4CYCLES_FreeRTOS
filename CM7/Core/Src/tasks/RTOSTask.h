@@ -13,6 +13,7 @@
 #include "queue.h"
 #include "semphr.h"
 #include "utils/Message.h"
+#include "utils/Controller.h"
 
 class RTOS_Task
 {
@@ -36,7 +37,7 @@ class RTOS_Task
 				mLogQueue = q;
 		}
 
-		void inline log(Message m)
+		void inline log(Message &m)
 		{
 			Message* p = new Message(m);
 			xQueueSend(mLogQueue, &p, 100);
