@@ -15,15 +15,15 @@ class LockGuard
 {
 
 	public:
-	LockGuard(SemaphoreHandle_t &m) : mutex(m)
-	{
-		xSemaphoreTake(mutex, portMAX_DELAY);
-	}
+		LockGuard(SemaphoreHandle_t &m) : mutex(m)
+		{
+			xSemaphoreTake(mutex, portMAX_DELAY);
+		}
 
-	LockGuard(SemaphoreHandle_t &m, uint32_t ticks) : mutex(m)
-	{
-		xSemaphoreTake(mutex, ticks);
-	}
+		LockGuard(SemaphoreHandle_t &m, uint32_t ticks) : mutex(m)
+		{
+			xSemaphoreTake(mutex, ticks);
+		}
 
 		~LockGuard()
 		{
