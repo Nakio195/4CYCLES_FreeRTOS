@@ -16,6 +16,7 @@
 
 #include "LockGuard.hpp"
 #include "CanPacket.h"
+#include "Message.h"
 
 class CanPeripheral
 {
@@ -33,6 +34,8 @@ class CanPeripheral
 		virtual void reInit() = 0;
 		virtual void recovery() = 0;
 		virtual void absent() = 0;
+		virtual void recovered() = 0;
+		virtual void lost() = 0;
 
 		void inline setRecoveryMode(uint8_t maxTries, uint16_t ticks)
 		{
@@ -96,13 +99,10 @@ class CanPeripheral
 					CommunicationTimeout();
 
 				if(mState == Absent)
-				{
 					absent();
-				}
-
 			}
 
-			//Realease lock for CanTask to access push
+			//Release lock for CanTask to access push
 			if(mState == Recovery)
 			{
 				while(mRecoveryAttempt < mMaxRecovery && mState == Recovery)
@@ -110,6 +110,18 @@ class CanPeripheral
 					recovery();
 					mRecoveryAttempt++;
 					osDelay(mRecoveryTicks);
+				}
+
+				if(mState == Recovery)
+				{
+					mState = Lost;
+					lost();
+				}
+
+				else if (mState == Ready)
+				{
+					mRecoveryAttempt = 0;
+					recovered();
 				}
 			}
 		}
