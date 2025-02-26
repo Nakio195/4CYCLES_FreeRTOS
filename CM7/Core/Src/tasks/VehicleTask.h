@@ -13,6 +13,13 @@
 #include "PS3Controller.h"
 #include "usbd_cdc_if.h"
 
+#include "FreeRTOS.h"
+#include "timers.h"
+
+#include "utils/filters/FilterChain.h"
+#include "utils/filters/LowPassFilter.h"
+#include "utils/filters/SCurveFilter.h"
+
 #include <string>
 
 class VehicleTask : public RTOS_Task
@@ -25,7 +32,11 @@ class VehicleTask : public RTOS_Task
 		void cleanup() override;
 
 	private:
-		PS3Controller mController;
+		QueueHandle_t mControllerQueue;
+
+		// Filters
+		FilterChain mThrottle;
+
 };
 
 extern VehicleTask Vehicle;

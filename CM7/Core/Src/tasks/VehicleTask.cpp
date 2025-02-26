@@ -11,8 +11,11 @@ VehicleTask Vehicle;
 
 VehicleTask::VehicleTask()
 {
-	// TODO Auto-generated constructor stub
 
+	LowPassFilter* lowPass = new LowPassFilter(0.5);
+	SCurveFilter* sCurve = new SCurveFilter(0, 0, 10.0f);
+	mThrottle.addFilter(lowPass);
+	mThrottle.addFilter(sCurve);
 }
 
 void VehicleTask::setup()
@@ -21,6 +24,7 @@ void VehicleTask::setup()
 	this->attachLogQueue(Json.createLogQueue());
 	CanHandler.attachLogQueue(Json.createLogQueue());
 	MainController.attachLogQueue(Json.createLogQueue());
+	mControllerQueue = MainController.getQueue();
 
 	CanHandler.start("CAN", 256, osPriorityHigh);
 	MainController.start("PS3", 128, osPriorityAboveNormal);
@@ -29,18 +33,32 @@ void VehicleTask::setup()
 
 void VehicleTask::run()
 {
-	osDelay(50);
-	PS3::Data controller = MainController.getData();
-	if(controller.buttons.cross)
+	Action* action = nullptr;
+	if(xQueueReceive(mControllerQueue, &action, 0) == pdTRUE)
 	{
-		std::string value = std::to_string(controller.sticks.L.x);
-		value += ",";
-		value += std::to_string(controller.sticks.L.y);
-		value += "\n";
+		if (action != nullptr)
+		{
+			if(action->type() == Action::Throttle)
+			{
+				mThrottle.setInput(action->getThrottleValue());
+			}
+			else if(action->type() == Action::Brake)
+			{
+				log(Message(Message::LogInfo) << "Brake: " << action->getBrakeValue());
+			}
 
-		CDC_Transmit_FS((uint8_t*)value.data(), value.size());
+			delete action;
+		}
 	}
 
+	mThrottle.update();
+
+	if (mThrottle.hasChanged())
+	{
+		log(Message(Message::Controller) << mThrottle.getOutput());
+	}
+
+	osDelay(50);
 }
 
 void VehicleTask::cleanup()
