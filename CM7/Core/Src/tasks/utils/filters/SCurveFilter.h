@@ -19,11 +19,12 @@
 class SCurveFilter : public DigitalFilter
 {
 	public:
-		SCurveFilter(float start = 0, float target = 0, float steepness = 10.0f) : DigitalFilter(SCURVE)
+		SCurveFilter(float steepness = 10.0f) : DigitalFilter(SCURVE)
 		{
-			startValue = start;
-			targetValue = target;
+			startValue = 0;
+			targetValue = 0;
 			k = steepness;
+			s = logf(99.9f)/k;
 			updateDuration(); // Initialize totalDuration
 			currentTime = 0.0f;
 		}
@@ -38,8 +39,6 @@ class SCurveFilter : public DigitalFilter
 			if (targetValue == startValue)
 				return;
 
-			updateDuration();
-
 			//Clamping computation for near rails values
 			if(targetValue == 0 && mOutput < 3)
 				startValue = 0;
@@ -52,8 +51,11 @@ class SCurveFilter : public DigitalFilter
 			// Calculate the normalized time progress (t between 0 and 1)
 			float t = currentTime / totalDuration;
 
+			//Scaling progress to be between 0 and 1
+			t = 2.f*s*t/k;
+
 			// Apply the sigmoid-based S-curve formula for smooth acceleration/deceleration
-			float progress = 1.0f / (1.0f + expf(float(-k * (t - 0.5f)))); // Sigmoid function centered at 0.5
+			float progress = 1.0f / (1.0f + expf(float(-k * (t*(2.f*s) - s)))); // Sigmoid function centered according k
 
 			// Interpolate between start and target values based on the S-curve progress
 			float res = startValue + (targetValue - startValue) * progress;
@@ -76,6 +78,7 @@ class SCurveFilter : public DigitalFilter
 				startValue = mOutput;  // Fetch the current value (use update with zero deltaTime)
 				targetValue = newTarget;
 				currentTime = 0.0f; // Reset to start the transition again
+				updateDuration();
 			}
 		}
 
@@ -84,6 +87,7 @@ class SCurveFilter : public DigitalFilter
 		float targetValue;       // Target value (e.g., desired motor speed)
 		float totalDuration;     // Total duration for the transition
 		float k;                 // Steepness of the S-curve
+		float s;                 // Scaling factor
 		float currentTime;       // Current time/progress
 
 		uint32_t previousTick;

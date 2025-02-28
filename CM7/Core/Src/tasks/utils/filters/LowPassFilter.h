@@ -23,6 +23,8 @@ class LowPassFilter : public DigitalFilter
 	public:
 		LowPassFilter(float tau) : DigitalFilter(LOW_PASS)
 		{
+			mInitialized = false;
+			mPreviousTick = 0;
 			mTau = tau;
 			buffer.fill(0);
 			mIndex = 0;
