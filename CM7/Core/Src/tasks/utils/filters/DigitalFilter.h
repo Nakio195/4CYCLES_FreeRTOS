@@ -16,7 +16,7 @@ class DigitalFilter
 	public:
 		enum FilterType
 		{
-			LOW_PASS, SCURVE
+			LOW_PASS, SCURVE, THRESHOLD
 		};
 
 	public:
@@ -36,6 +36,11 @@ class DigitalFilter
 			{
 				mInput = value;
 				mNewInput = true;
+			}
+
+			else
+			{
+				mNewInput = false;
 			}
 		}
 
