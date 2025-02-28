@@ -12,10 +12,21 @@ VehicleTask Vehicle;
 VehicleTask::VehicleTask()
 {
 
-	LowPassFilter* lowPass = new LowPassFilter(0.5);
-	SCurveFilter* sCurve = new SCurveFilter(0, 0, 10.0f);
-	mThrottle.addFilter(lowPass);
-	mThrottle.addFilter(sCurve);
+	ThresholdFilter* threshold = new ThresholdFilter();
+
+	for (int i = 10; i <= 255; i += 10)
+	{
+		if(i == 10)
+			threshold->addThreshold(0, 10, 0);
+		else
+			threshold->addThreshold(i-4, i, i);
+		if (i == 255)
+			threshold->addThreshold(250, 255, 255);
+	}
+
+	mThrottle.addFilter(threshold);
+	mThrottle.addFilter(new SCurveFilter(5));
+	mThrottle.addFilter(new LowPassFilter(10));
 }
 
 void VehicleTask::setup()
@@ -53,12 +64,13 @@ void VehicleTask::run()
 
 	mThrottle.update();
 
-	if (mThrottle.hasChanged())
-	{
-		log(Message(Message::Controller) << mThrottle.getOutput());
-	}
+//	if (mThrottle.hasChanged())
+//	{
+//
+//	}
+	log(Message(Message::ThrottleOut) << mThrottle.getOutput());
 
-	osDelay(50);
+	osDelay(100);
 }
 
 void VehicleTask::cleanup()

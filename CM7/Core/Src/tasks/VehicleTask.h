@@ -19,6 +19,7 @@
 #include "utils/filters/FilterChain.h"
 #include "utils/filters/LowPassFilter.h"
 #include "utils/filters/SCurveFilter.h"
+#include "utils/filters/ThresholdFilter.h"
 
 #include <string>
 
