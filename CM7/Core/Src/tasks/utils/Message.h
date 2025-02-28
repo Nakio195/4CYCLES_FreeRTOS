@@ -4,10 +4,13 @@
 #include <string>
 #include "ArduinoJson-v7.3.0.h"
 
+#include "FreeRTOS.h"
+#include "task.h"
+
 class Message
 {
 	public:
-		enum Type{LogDebug, LogInfo, LogWarning, LogError, LogCritical, Controller, Wheel, Direction};
+		enum Type{LogDebug, LogInfo, LogWarning, LogError, LogCritical, ThrottleOut, Wheel, Direction};
 
 		Message(Type type);
 
@@ -16,7 +19,7 @@ class Message
 		std::string levelToString();
 
 		std::string message();
-		uint32_t code();
+		uint32_t timestamp();
 
 		Message& operator<<(Type type);
 		Message& operator<<(std::string text);
@@ -26,7 +29,7 @@ class Message
 
 	protected:
 		Type mType;
-		uint32_t mCode;
+		uint32_t mTimestamp;
 		std::string mMessage;
 		JsonObject mObject;
 };

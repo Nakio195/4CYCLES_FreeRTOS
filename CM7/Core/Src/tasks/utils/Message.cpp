@@ -3,7 +3,7 @@
 Message::Message(Type type)
 {
 	mType = type;
-	mCode = 0;
+	mTimestamp = xTaskGetTickCount();
 	mMessage = "";
 }
 
@@ -36,9 +36,9 @@ std::string Message::message()
 	return mMessage;
 }
 
-uint32_t Message::code()
+uint32_t Message::timestamp()
 {
-	return mCode;
+	return mTimestamp;
 }
 
 Message& Message::operator<<(Type type)
@@ -50,13 +50,13 @@ Message& Message::operator<<(Type type)
 
 Message& Message::operator<<(std::string text)
 {
-	mMessage += text + " ";
+	mMessage += text;
 	return *this;
 }
 
 Message& Message::operator<<(uint32_t number)
 {
-	mMessage += std::to_string(number) + " ";
+	mMessage += std::to_string(number);
 	return *this;
 }
 

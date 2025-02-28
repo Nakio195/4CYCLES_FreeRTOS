@@ -58,17 +58,17 @@ void JsonLogger::print(Message& m)
 	mDocument.clear();
 
 	mDocument["msgType"] = m.type();
-	if(m.code() != 0)
-		mDocument["code"] = m.code();
+	if(m.timestamp() != 0)
+		mDocument["timestamp"] = m.timestamp();
 
 	if(m.type() <= Message::LogCritical)
 	{
 		mDocument["message"] = m.message();
 	}
 
-	else if(m.type() == Message::Controller)
+	else if(m.type() == Message::ThrottleOut)
 	{
-		mDocument["message"] = m.message();
+		mDocument["message"] = std::stoi(m.message());
 	}
 
 	else if(m.type() == Message::Wheel)
