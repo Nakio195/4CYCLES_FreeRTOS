@@ -30,6 +30,7 @@
 #include "tasks/VehicleTask.h"
 #include <string>
 #include <new>
+#include "tasks/utils/segger/SEGGER_SYSVIEW.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -145,6 +146,7 @@ void MX_FREERTOS_Init(void) {
 /* USER CODE END Header_StartUSBTask */
 void StartUSBTask(void *argument)
 {
+  SEGGER_SYSVIEW_Conf();
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN StartUSBTask */
