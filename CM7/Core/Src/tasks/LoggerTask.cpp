@@ -45,7 +45,7 @@ void JsonLogger::run()
 		}
 	}
 
-	osDelay(50);
+	osDelay(7);
 
 }
 

@@ -19,7 +19,7 @@ VehicleTask::VehicleTask()
 		if(i == 10)
 			threshold->addThreshold(0, 10, 0);
 		else
-			threshold->addThreshold(i-4, i, i);
+			threshold->addThreshold(i-9, i, i);
 		if (i == 255)
 			threshold->addThreshold(250, 255, 255);
 	}

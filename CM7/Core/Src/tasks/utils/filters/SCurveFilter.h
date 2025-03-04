@@ -24,7 +24,7 @@ class SCurveFilter : public DigitalFilter
 			startValue = 0;
 			targetValue = 0;
 			k = steepness;
-			s = logf(99.9f)/k;
+			s = logf(99.9f);
 			updateDuration(); // Initialize totalDuration
 			currentTime = 0.0f;
 		}
@@ -55,7 +55,7 @@ class SCurveFilter : public DigitalFilter
 			t = 2.f*s*t/k;
 
 			// Apply the sigmoid-based S-curve formula for smooth acceleration/deceleration
-			float progress = 1.0f / (1.0f + expf(float(-k * (t*(2.f*s) - s)))); // Sigmoid function centered according k
+			float progress = 1.0f / (1.0f + expf(float(-k*t+s))); // Sigmoid function centered according k
 
 			// Interpolate between start and target values based on the S-curve progress
 			float res = startValue + (targetValue - startValue) * progress;

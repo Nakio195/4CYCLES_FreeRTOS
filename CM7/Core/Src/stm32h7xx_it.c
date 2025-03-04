@@ -211,11 +211,11 @@ void TIM8_TRG_COM_TIM14_IRQHandler(void)
 void OTG_FS_EP1_OUT_IRQHandler(void)
 {
   /* USER CODE BEGIN OTG_FS_EP1_OUT_IRQn 0 */
-
+	SEGGER_SYSVIEW_RecordEnterISR();
   /* USER CODE END OTG_FS_EP1_OUT_IRQn 0 */
   HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
   /* USER CODE BEGIN OTG_FS_EP1_OUT_IRQn 1 */
-
+  SEGGER_SYSVIEW_RecordExitISR();
   /* USER CODE END OTG_FS_EP1_OUT_IRQn 1 */
 }
 
@@ -225,11 +225,11 @@ void OTG_FS_EP1_OUT_IRQHandler(void)
 void OTG_FS_EP1_IN_IRQHandler(void)
 {
   /* USER CODE BEGIN OTG_FS_EP1_IN_IRQn 0 */
-
+	SEGGER_SYSVIEW_RecordEnterISR();
   /* USER CODE END OTG_FS_EP1_IN_IRQn 0 */
   HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
   /* USER CODE BEGIN OTG_FS_EP1_IN_IRQn 1 */
-
+  SEGGER_SYSVIEW_RecordExitISR();
   /* USER CODE END OTG_FS_EP1_IN_IRQn 1 */
 }
 
@@ -239,11 +239,11 @@ void OTG_FS_EP1_IN_IRQHandler(void)
 void OTG_FS_IRQHandler(void)
 {
   /* USER CODE BEGIN OTG_FS_IRQn 0 */
-
+	SEGGER_SYSVIEW_RecordEnterISR();
   /* USER CODE END OTG_FS_IRQn 0 */
   HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
   /* USER CODE BEGIN OTG_FS_IRQn 1 */
-
+  SEGGER_SYSVIEW_RecordExitISR();
   /* USER CODE END OTG_FS_IRQn 1 */
 }
 
