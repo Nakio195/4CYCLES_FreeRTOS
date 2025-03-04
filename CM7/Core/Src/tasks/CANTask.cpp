@@ -41,6 +41,8 @@ void CAN_Task::setup()
 
 void CAN_Task::run()
 {
+
+	// Take Semaphore and wait 10ms  for a give
 	xSemaphoreTake(Sem_MessageAvailable, 0);
 
 	if(xSemaphoreTake(Sem_MessageAvailable, 10) == pdTRUE)

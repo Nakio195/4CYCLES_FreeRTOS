@@ -36,6 +36,7 @@ void VehicleTask::setup()
 	CanHandler.attachLogQueue(Json.createLogQueue());
 	MainController.attachLogQueue(Json.createLogQueue());
 	mControllerQueue = MainController.getQueue();
+	vQueueAddToRegistry(mControllerQueue, "ControllerActions");
 
 	CanHandler.start("CAN", 256, osPriorityHigh);
 	MainController.start("PS3", 128, osPriorityAboveNormal);
@@ -45,6 +46,8 @@ void VehicleTask::setup()
 void VehicleTask::run()
 {
 	Action* action = nullptr;
+
+	// Read received action from controller
 	if(xQueueReceive(mControllerQueue, &action, 0) == pdTRUE)
 	{
 		if (action != nullptr)
@@ -55,7 +58,7 @@ void VehicleTask::run()
 			}
 			else if(action->type() == Action::Brake)
 			{
-				log(Message(Message::LogInfo) << "Brake: " << action->getBrakeValue());
+				mBrake.setInput(action->getBrakeValue());
 			}
 
 			delete action;

@@ -12,6 +12,7 @@ QueueHandle_t JsonLogger::createLogQueue()
 {
 	LockGuard lock(mutex);
 	QueueHandle_t q = xQueueCreate(20, sizeof(Message*));
+
 	if(q == nullptr)
 		Error_Handler();
 

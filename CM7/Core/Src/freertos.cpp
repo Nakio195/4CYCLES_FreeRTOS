@@ -30,7 +30,6 @@
 #include "tasks/VehicleTask.h"
 #include <string>
 #include <new>
-#include "tasks/utils/segger/SEGGER_SYSVIEW.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

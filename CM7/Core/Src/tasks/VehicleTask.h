@@ -37,6 +37,7 @@ class VehicleTask : public RTOS_Task
 
 		// Filters
 		FilterChain mThrottle;
+		FilterChain mBrake;
 
 };
 
