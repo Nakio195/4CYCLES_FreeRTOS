@@ -12,7 +12,6 @@
 extern "C" void FDCAN_IRQ(FDCAN_HandleTypeDef* fdcan)
 {
 	CanHandler.IRQ_Handler(fdcan);
-	SEGGER_SYSVIEW_RecordExitISR();
 }
 
 extern "C" void TIM16_IRQ(TIM_HandleTypeDef* htim)
