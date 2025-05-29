@@ -55,9 +55,12 @@ void DebugMon_Handler(void);
 void FDCAN2_IT0_IRQHandler(void);
 void TIM2_IRQHandler(void);
 void TIM8_TRG_COM_TIM14_IRQHandler(void);
+void UART5_IRQHandler(void);
+void SPI5_IRQHandler(void);
 void OTG_FS_EP1_OUT_IRQHandler(void);
 void OTG_FS_EP1_IN_IRQHandler(void);
 void OTG_FS_IRQHandler(void);
+void TIM16_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */

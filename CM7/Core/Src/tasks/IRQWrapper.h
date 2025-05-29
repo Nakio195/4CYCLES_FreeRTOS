@@ -16,6 +16,8 @@ extern "C" {
 
 void FDCAN_IRQ(FDCAN_HandleTypeDef* huart);
 
+void TIM16_IRQ(TIM_HandleTypeDef* htim);
+
 #ifdef __cplusplus
 }
 #endif

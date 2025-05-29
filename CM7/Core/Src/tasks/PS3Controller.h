@@ -14,13 +14,14 @@
 #include "utils/CanPeripheral.h"
 #include "CANTask.h"
 #include "utils/Controller.h"
+#include "utils/Switch.h"
 
 namespace PS3
 {
 		struct Status
 		{
 			uint8_t battery = 0;
-			bool connected = 0;
+			Switch connected;
 			uint32_t timestamp = 0;
 		};
 
@@ -40,30 +41,32 @@ namespace PS3
 		{
 			uint8_t L = 0;
 			uint8_t R = 0;
+			Switch L2;
+			Switch R2;
 
 		};
 
 		struct Pad
 		{
-			bool up = 0;
-			bool down = 0;
-			bool left = 0;
-			bool right = 0;
+			Switch up;
+			Switch down;
+			Switch left;
+			Switch right;
 		};
 
 		struct Buttons
 		{
-			bool circle = 0;
-			bool cross = 0;
-			bool square = 0;
-			bool triangle = 0;
-			bool R1 = 0;
-			bool L1 = 0;
-			bool L3 = 0;
-			bool R3 = 0;
-			bool select = 0;
-			bool start = 0;
-			bool ps = 0;
+			Switch circle;
+			Switch cross;
+			Switch square;
+			Switch triangle;
+			Switch R1;
+			Switch L1;
+			Switch L3;
+			Switch R3;
+			Switch select;
+			Switch start;
+			Switch ps;
 		};
 
 		struct Data
@@ -103,6 +106,7 @@ class PS3Controller: public CanPeripheral, public RTOS_Task, public Controller
 		SemaphoreHandle_t Mut_Data;
 		//Peripheral control
 		PS3::Data controller;
+		uint32_t mPreviousTick	 = 0;
 
 };
 

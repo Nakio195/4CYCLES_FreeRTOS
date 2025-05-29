@@ -12,7 +12,7 @@ CanPeripheral::CanPeripheral()
 	mLastCommunication = 0;
 	mCommunicationTimeout = 0xFFFFFFFF;
 
-	mMaxRecovery = 3;
+	mMaxRecovery = 99999;
 	mRecoveryTicks = 1000;
 
 	mFilterMode = Range;

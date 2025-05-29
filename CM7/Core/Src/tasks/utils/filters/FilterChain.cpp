@@ -34,11 +34,15 @@ void FilterChain::update()
 
 void FilterChain::setInput(int32_t value)
 {
+	if (mFilters.empty())
+		return;
 	mFilters.front()->setInput(value);
 }
 
 int32_t FilterChain::getOutput()
 {
+	if (mFilters.empty())
+		return 0;
 	return mFilters.back()->getOutput();
 }
 

@@ -101,13 +101,6 @@ void Phaserunner::run()
 
 		else
 		{
-	//		Serial.print("\tSuccess ");
-	//		answer->direction == ModbusPacket::Read ? Serial.println("reading :") : Serial.println("writing :");
-	//		for(const auto& r : answer->registers)
-	//		{
-	//			Serial.print("\t@");
-	//			Serial.println(r.address);
-	//		}
 			for(const auto& r : answer->registers)
 			{
 				switch(r.address)

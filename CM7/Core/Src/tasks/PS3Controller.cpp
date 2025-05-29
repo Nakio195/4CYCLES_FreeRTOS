@@ -15,6 +15,8 @@ PS3Controller::PS3Controller()
 	setCommunicationTimeout(3000);
 	setRecoveryMode(50, 1000);
 
+	mPreviousTick = 0;
+
 	CanHandler.attach(this);
 	// TODO Auto-generated constructor stub
 }
@@ -87,8 +89,33 @@ void PS3Controller::run()
 		}
 	}
 
+	uint32_t dt = xTaskGetTickCount() - mPreviousTick;
+	mPreviousTick = xTaskGetTickCount();
+
+	controller.buttons.cross.tick(dt);
+	controller.buttons.square.tick(dt);
+	controller.buttons.triangle.tick(dt);
+	controller.buttons.circle.tick(dt);
+
+	controller.dpad.left.tick(dt);
+	controller.dpad.up.tick(dt);
+	controller.dpad.right.tick(dt);
+	controller.dpad.down.tick(dt);
+
+	controller.trig.L2.tick(dt);
+	controller.trig.R2.tick(dt);
+
+	controller.buttons.L1.tick(dt);
+	controller.buttons.R1.tick(dt);
+	controller.buttons.L3.tick(dt);
+	controller.buttons.R3.tick(dt);
+
+	controller.buttons.start.tick(dt);
+	controller.buttons.select.tick(dt);
+	controller.buttons.ps.tick(dt);
+	controller.status.connected.tick(dt);
 	tick(xTaskGetTickCount());
-	osDelay(40);
+	osDelay(10);
 }
 
 void PS3Controller::ControllerStatus(CanPacket* packet)
@@ -100,7 +127,7 @@ void PS3Controller::ControllerStatus(CanPacket* packet)
 	if(xSemaphoreTake(Mut_Data, 10) == pdTRUE)
 	{
 		controller.status.battery = packet->data[0];
-		controller.status.connected = packet->data[1];
+		controller.status.connected.update(packet->data[1]);
 		controller.status.timestamp = 0;
 		controller.status.timestamp |= packet->data[2] << 24;
 		controller.status.timestamp |= packet->data[3] << 16;
@@ -125,29 +152,116 @@ void PS3Controller::ControllerData(CanPacket* packet)
 		controller.sticks.R.y = int8_t(packet->data[3]);
 		controller.trig.L = packet->data[4];
 		controller.trig.R = packet->data[5];
+		controller.trig.L2.update(packet->data[4] > 0);
+		controller.trig.R2.update(packet->data[5] > 0);
 
-		controller.buttons.cross = packet->data[6] & 0x01;
-		controller.buttons.square = packet->data[6] & 0x02;
-		controller.buttons.triangle = packet->data[6] & 0x04;
-		controller.buttons.circle = packet->data[6] & 0x08;
+		controller.buttons.cross.update(packet->data[6] & 0x01);
+		controller.buttons.square.update(packet->data[6] & 0x02);
+		controller.buttons.triangle.update(packet->data[6] & 0x04);
+		controller.buttons.circle.update(packet->data[6] & 0x08);
 
-		controller.dpad.left = packet->data[6] & 0x10;
-		controller.dpad.up = packet->data[6] & 0x20;
-		controller.dpad.right = packet->data[6] & 0x40;
-		controller.dpad.down = packet->data[6] & 0x80;
+		controller.dpad.left.update(packet->data[6] & 0x10);
+		controller.dpad.up.update(packet->data[6] & 0x20);
+		controller.dpad.right.update(packet->data[6] & 0x40);
+		controller.dpad.down.update(packet->data[6] & 0x80);
 
-		controller.buttons.L1 = packet->data[7] & 0x01;
-		controller.buttons.R1 = packet->data[7] & 0x02;
-		controller.buttons.L3 = packet->data[7] & 0x04;
-		controller.buttons.R3 = packet->data[7] & 0x08;
+		controller.buttons.L1.update(packet->data[7] & 0x01);
+		controller.buttons.R1.update(packet->data[7] & 0x02);
+		controller.buttons.L3.update(packet->data[7] & 0x04);
+		controller.buttons.R3.update(packet->data[7] & 0x08);
 
-		controller.buttons.start = packet->data[7] & 0x10;
-		controller.buttons.select = packet->data[7] & 0x20;
-		controller.buttons.ps = packet->data[7] & 0x40;
-		controller.status.connected = packet->data[7] & 0x80;
+		controller.buttons.start.update(packet->data[7] & 0x10);
+		controller.buttons.select.update(packet->data[7] & 0x20);
+		controller.buttons.ps.update(packet->data[7] & 0x40);
+		controller.status.connected.update(packet->data[7] & 0x80);
 
 		setThrottleCommand(controller.trig.L);
 		setBrakeCommand(controller.trig.R);
+		setSteeringCommand(controller.sticks.L.x*48);
+
+		switch(controller.buttons.L1.read())
+		{
+			case Switch::States::PRESSED:
+				setLightsCommand(Action::Signals::Left, true);
+				break;
+			case Switch::States::RELEASED:
+				setLightsCommand(Action::Signals::Left, false);
+				break;
+			default:
+				break;
+		}
+		switch(controller.buttons.R1.read())
+		{
+			case Switch::States::PRESSED:
+				setLightsCommand(Action::Signals::Right, true);
+				break;
+			case Switch::States::RELEASED:
+				setLightsCommand(Action::Signals::Right, false);
+				break;
+			default:
+				break;
+		}
+
+		switch (controller.buttons.triangle.read())
+		{
+			case Switch::States::PRESSED:
+				setLightsCommand(Action::Signals::Hazard, true);
+				break;
+			case Switch::States::RELEASED:
+				setLightsCommand(Action::Signals::Hazard, false);
+				break;
+			default:
+				break;
+		}
+
+		switch (controller.status.connected.read())
+		{
+			case Switch::States::PRESSED:
+				setLightsCommand(Action::Signals::Hazard, true);
+				break;
+			case Switch::States::RELEASED:
+				setLightsCommand(Action::Signals::Hazard, false);
+				break;
+			default:
+				break;
+		}
+
+		switch (controller.trig.L2.read())
+		{
+			case Switch::States::PRESSED:
+				setLightsCommand(Action::Signals::BrakeSignal, true);
+				break;
+			case Switch::States::RELEASED:
+				setLightsCommand(Action::Signals::BrakeSignal, false);
+				break;
+			default:
+				break;
+		}
+
+
+		switch (controller.buttons.triangle.read())
+		{
+			case Switch::States::PRESSED:
+				setLightsCommand(Action::Signals::Hazard, true);
+				break;
+			case Switch::States::RELEASED:
+				setLightsCommand(Action::Signals::Hazard, false);
+				break;
+			default:
+				break;
+		}
+
+		switch (controller.buttons.circle.read())
+		{
+			case Switch::States::PRESSED:
+				setLightsCommand(Action::Signals::NighLight, true);
+				break;
+			case Switch::States::RELEASED:
+				setLightsCommand(Action::Signals::NighLight, false);
+				break;
+			default:
+				break;
+		}
 
 		xSemaphoreGive(Mut_Data);
 	}

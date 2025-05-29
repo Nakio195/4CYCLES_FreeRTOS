@@ -20,8 +20,11 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "fdcan.h"
+#include "i2c.h"
 #include "memorymap.h"
+#include "spi.h"
 #include "tim.h"
+#include "usart.h"
 #include "usb_device.h"
 #include "gpio.h"
 
@@ -131,6 +134,10 @@ Error_Handler();
   MX_GPIO_Init();
   MX_FDCAN2_Init();
   MX_TIM14_Init();
+  MX_I2C2_Init();
+  MX_SPI5_Init();
+  MX_UART5_Init();
+  MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */

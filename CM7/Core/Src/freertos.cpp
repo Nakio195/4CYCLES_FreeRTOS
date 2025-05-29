@@ -74,6 +74,7 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 void configureTimerForRunTimeStats(void);
 unsigned long getRunTimeCounterValue(void);
 void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName);
+void vApplicationMallocFailedHook(void);
 
 /* USER CODE BEGIN 1 */
 /* Functions needed when configGENERATE_RUN_TIME_STATS is on */
@@ -91,11 +92,29 @@ __weak unsigned long getRunTimeCounterValue(void)
 /* USER CODE BEGIN 4 */
 void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName)
 {
+	while(1);
    /* Run time stack overflow checking is performed if
    configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2. This hook function is
    called if a stack overflow is detected. */
 }
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN 5 */
+void vApplicationMallocFailedHook(void)
+{
+	while(1);
+   /* vApplicationMallocFailedHook() will only be called if
+   configUSE_MALLOC_FAILED_HOOK is set to 1 in FreeRTOSConfig.h. It is a hook
+   function that will get called if a call to pvPortMalloc() fails.
+   pvPortMalloc() is called internally by the kernel whenever a task, queue,
+   timer or semaphore is created. It is also called by various parts of the
+   demo application. If heap_1.c or heap_2.c are used, then the size of the
+   heap available to pvPortMalloc() is defined by configTOTAL_HEAP_SIZE in
+   FreeRTOSConfig.h, and the xPortGetFreeHeapSize() API function can be used
+   to query the size of free heap space that remains (although it does not
+   provide information on how the remaining heap might be fragmented). */
+}
+/* USER CODE END 5 */
 
 /**
   * @brief  FreeRTOS initialization
@@ -146,17 +165,23 @@ void MX_FREERTOS_Init(void) {
 /* USER CODE END Header_StartUSBTask */
 void StartUSBTask(void *argument)
 {
-  SEGGER_SYSVIEW_Conf();
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN StartUSBTask */
   std::set_new_handler(Error_Handler); // Set new exception to call ErrorHandler
   Vehicle.start("Vehicle", 512, osPriorityNormal);
   osDelay(100);
+  HAL_GPIO_WritePin(DIR_PIN_GPIO_Port, DIR_PIN_Pin, GPIO_PIN_SET);
   /* Infinite loop */
+
   for(;;)
-  {
-    osDelay(500);
+  {/*
+	  HAL_GPIO_WritePin(PULSE_PIN_GPIO_Port, PULSE_PIN_Pin, GPIO_PIN_SET);
+	  osDelay(1);
+	  HAL_GPIO_WritePin(PULSE_PIN_GPIO_Port, PULSE_PIN_Pin, GPIO_PIN_RESET);
+	  osDelay(1);*/
+
+    osDelay(5);
   }
   /* USER CODE END StartUSBTask */
 }

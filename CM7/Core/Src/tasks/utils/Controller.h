@@ -16,9 +16,10 @@
 class Action
 {
 	public:
-		enum Type{Throttle, Brake, Steering, Gear, Lights, Horn};
+		enum Type{Throttle, Brake, Steering, Gear, Lights, Horn, Controller};
 		enum Gear{Slow, Middle, Fast};
-		enum Lights{Off, Left, Right, Star};
+		enum Signals{Left, Right, BrakeSignal, NighLight, Hazard};
+		enum ControllerEvent{Absent, Connected};
 
 	public:
 		Action(Type type)
@@ -47,6 +48,21 @@ class Action
 			return mValues[0];
 		}
 
+		int32_t inline getSteeringValue()
+		{
+			return mValues[0];
+		}
+
+		Action::Signals getLightsType()
+		{
+			return Action::Signals(mValues[0]);
+		}
+
+		bool getLightState()
+		{
+			return mValues[1];
+		}
+
 	private:
 		Type mType;
 		uint32_t mTimestamp;
@@ -59,33 +75,36 @@ class Controller
 	public:
 		Controller()
 		{
-			mQueue = xQueueCreate(30, sizeof(Action));
+			mQueue = xQueueCreate(100, sizeof(Action*));
 		}
 
 		void setThrottleCommand(uint8_t value)
 		{
-			if (mThrottle != value)
-			{
-				mThrottle = value;
-				mThrottleChanged = true;
-				pushAction(Action::Throttle, value);
-			}
-
-			else
-				mThrottleChanged = false;
+			pushAction(Action::Throttle, value);
 		}
 
 		void setBrakeCommand(uint8_t value)
 		{
-			if (mBrake != value)
-			{
-				mBrake = value;
-				mBrakeChanged = true;
-				pushAction(Action::Brake, value);
-			}
+			pushAction(Action::Brake, value);
+		}
 
-			else
-				mBrakeChanged = false;
+		void setSteeringCommand(int32_t value)
+		{
+			pushAction(Action::Steering, value);
+		}
+
+		void setLightsCommand(Action::Signals light, uint8_t value)
+		{
+			Action* action = new Action(Action::Lights);
+			action->push(uint32_t(light));
+			action->push(value);
+			pushAction(action);
+		}
+
+
+		void setControllerEvent(uint8_t event)
+		{
+			pushAction(Action::Controller, uint32_t(event));
 		}
 
 		void inline pushAction(Action::Type type, uint32_t value)
@@ -106,14 +125,6 @@ class Controller
 		}
 
 	protected:
-		uint8_t mThrottle;
-		bool mThrottleChanged;
-
-		uint8_t mBrake;
-		bool mBrakeChanged;
-
-		int8_t mSteering;
-		bool mSteeringChanged;
 
 
 		QueueHandle_t mQueue;

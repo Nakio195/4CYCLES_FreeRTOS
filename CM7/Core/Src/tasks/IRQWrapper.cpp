@@ -7,10 +7,15 @@
 
 #include "IRQWrapper.h"
 #include "CANTask.h"
+#include "DirectionTask.h"
 
 extern "C" void FDCAN_IRQ(FDCAN_HandleTypeDef* fdcan)
 {
-	SEGGER_SYSVIEW_RecordEnterISR();
 	CanHandler.IRQ_Handler(fdcan);
 	SEGGER_SYSVIEW_RecordExitISR();
+}
+
+extern "C" void TIM16_IRQ(TIM_HandleTypeDef* htim)
+{
+	DirectionHandler.tick(1);
 }

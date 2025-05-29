@@ -11,7 +11,9 @@
 #include "RTOSTask.h"
 #include "LoggerTask.h"
 #include "PS3Controller.h"
+#include "DirectionTask.h"
 #include "usbd_cdc_if.h"
+#include "usart.h"
 
 #include "FreeRTOS.h"
 #include "timers.h"
@@ -32,6 +34,7 @@ class VehicleTask : public RTOS_Task
 		void run() override;
 		void cleanup() override;
 
+		void handleLightsAction(Action* action);
 	private:
 		QueueHandle_t mControllerQueue;
 

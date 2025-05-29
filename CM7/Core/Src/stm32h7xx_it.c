@@ -58,7 +58,10 @@ extern volatile unsigned long ulHighFrequencyTimerTicks;
 /* External variables --------------------------------------------------------*/
 extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 extern FDCAN_HandleTypeDef hfdcan2;
+extern SPI_HandleTypeDef hspi5;
 extern TIM_HandleTypeDef htim14;
+extern TIM_HandleTypeDef htim16;
+extern UART_HandleTypeDef huart5;
 extern TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN EV */
@@ -89,7 +92,14 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
-
+	uint8_t Error[] = "[CRTICAL] Core M7 - Main Error ";
+	CDC_Transmit_FS(Error, sizeof(Error));
+	__disable_irq();
+	HAL_FDCAN_Stop(&hfdcan2);
+	__HAL_RCC_FDCAN_CLK_DISABLE();
+	__HAL_RCC_FDCAN_FORCE_RESET();
+	__HAL_RCC_FDCAN_RELEASE_RESET();
+	HAL_FDCAN_DeInit(&hfdcan2);
   /* USER CODE END HardFault_IRQn 0 */
   while (1)
   {
@@ -206,16 +216,42 @@ void TIM8_TRG_COM_TIM14_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles UART5 global interrupt.
+  */
+void UART5_IRQHandler(void)
+{
+  /* USER CODE BEGIN UART5_IRQn 0 */
+
+  /* USER CODE END UART5_IRQn 0 */
+  HAL_UART_IRQHandler(&huart5);
+  /* USER CODE BEGIN UART5_IRQn 1 */
+
+  /* USER CODE END UART5_IRQn 1 */
+}
+
+/**
+  * @brief This function handles SPI5 global interrupt.
+  */
+void SPI5_IRQHandler(void)
+{
+  /* USER CODE BEGIN SPI5_IRQn 0 */
+
+  /* USER CODE END SPI5_IRQn 0 */
+  HAL_SPI_IRQHandler(&hspi5);
+  /* USER CODE BEGIN SPI5_IRQn 1 */
+
+  /* USER CODE END SPI5_IRQn 1 */
+}
+
+/**
   * @brief This function handles USB On The Go FS End Point 1 Out global interrupt.
   */
 void OTG_FS_EP1_OUT_IRQHandler(void)
 {
   /* USER CODE BEGIN OTG_FS_EP1_OUT_IRQn 0 */
-	SEGGER_SYSVIEW_RecordEnterISR();
   /* USER CODE END OTG_FS_EP1_OUT_IRQn 0 */
   HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
   /* USER CODE BEGIN OTG_FS_EP1_OUT_IRQn 1 */
-  SEGGER_SYSVIEW_RecordExitISR();
   /* USER CODE END OTG_FS_EP1_OUT_IRQn 1 */
 }
 
@@ -225,11 +261,9 @@ void OTG_FS_EP1_OUT_IRQHandler(void)
 void OTG_FS_EP1_IN_IRQHandler(void)
 {
   /* USER CODE BEGIN OTG_FS_EP1_IN_IRQn 0 */
-	SEGGER_SYSVIEW_RecordEnterISR();
   /* USER CODE END OTG_FS_EP1_IN_IRQn 0 */
   HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
   /* USER CODE BEGIN OTG_FS_EP1_IN_IRQn 1 */
-  SEGGER_SYSVIEW_RecordExitISR();
   /* USER CODE END OTG_FS_EP1_IN_IRQn 1 */
 }
 
@@ -239,12 +273,24 @@ void OTG_FS_EP1_IN_IRQHandler(void)
 void OTG_FS_IRQHandler(void)
 {
   /* USER CODE BEGIN OTG_FS_IRQn 0 */
-	SEGGER_SYSVIEW_RecordEnterISR();
   /* USER CODE END OTG_FS_IRQn 0 */
   HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
   /* USER CODE BEGIN OTG_FS_IRQn 1 */
-  SEGGER_SYSVIEW_RecordExitISR();
   /* USER CODE END OTG_FS_IRQn 1 */
+}
+
+/**
+  * @brief This function handles TIM16 global interrupt.
+  */
+void TIM16_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM16_IRQn 0 */
+  TIM16_IRQ(&htim16);
+  /* USER CODE END TIM16_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim16);
+  /* USER CODE BEGIN TIM16_IRQn 1 */
+
+  /* USER CODE END TIM16_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

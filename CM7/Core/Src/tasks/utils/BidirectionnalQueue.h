@@ -23,26 +23,15 @@ class BidirectionnalQueue
 	public:
 		BidirectionnalQueue(size_t size, std::string name = "", bool owner = true)
 	    {
-	        if(!owner)
-	        {
-	            // Use the shared handles if provided
-	        	//Swappoing Receive and send queues so that the M4 can send data to the M7
-	            mQueueSend = (QueueHandle_t)(SHARED_RECEIVE_QUEUE_ADDRESS);
-	            mQueueReceive = (QueueHandle_t)(SHARED_SEND_QUEUE_ADDRESS);
-	        }
+			// Create the queues
+			mQueueSend = xQueueCreate(size, sizeof(T));
+			mQueueReceive = xQueueCreate(size, sizeof(T));
 
-	        else
-	        {
-	            // Create the queues
-	            mQueueSend = xQueueCreate(size, sizeof(T));
-	            mQueueReceive = xQueueCreate(size, sizeof(T));
-
-	            if (!name.empty())
-	            {
-	                vQueueAddToRegistry(mQueueSend, std::string(name + " M7 Send").c_str());
-	                vQueueAddToRegistry(mQueueReceive, std::string(name + " M7 Receive").c_str());
-	            }
-	        }
+			if (!name.empty())
+			{
+				vQueueAddToRegistry(mQueueSend, std::string(name + " Send").c_str());
+				vQueueAddToRegistry(mQueueReceive, std::string(name + " Receive").c_str());
+			}
 	    }
 
 		bool send(T data, TickType_t timeout = portMAX_DELAY)

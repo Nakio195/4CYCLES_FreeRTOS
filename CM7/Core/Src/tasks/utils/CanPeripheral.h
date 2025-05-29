@@ -163,7 +163,7 @@ class CanPeripheral
 		//State Machine
 		State mState;
 		uint8_t mRecoveryAttempt;
-		uint8_t mMaxRecovery;
+		uint32_t mMaxRecovery;
 		uint16_t mRecoveryTicks;
 
 

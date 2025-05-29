@@ -8,6 +8,7 @@
 
 #include "cmsis_os2.h"
 #include "usbd_cdc_if.h"
+#include "usart.h"
 
 #include "RTOSTask.h"
 #include "utils/LockGuard.hpp"
