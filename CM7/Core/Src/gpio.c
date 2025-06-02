@@ -44,13 +44,16 @@ void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOK_CLK_ENABLE();
   __HAL_RCC_GPIOG_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOE_CLK_ENABLE();
-  __HAL_RCC_GPIOK_CLK_ENABLE();
   __HAL_RCC_GPIOJ_CLK_ENABLE();
   __HAL_RCC_GPIOI_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOK, SND_0_Pin|DIR_DIR_AV_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(EN_BRK_AR_GPIO_Port, EN_BRK_AR_Pin, GPIO_PIN_RESET);
@@ -74,9 +77,6 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(EN_DIR_AV_GPIO_Port, EN_DIR_AV_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(DIR_DIR_AV_GPIO_Port, DIR_DIR_AV_Pin, GPIO_PIN_SET);
-
-  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOK, PULSE_DIR_AR_Pin|NSS_AV_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
@@ -86,7 +86,17 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(EN_BRK_AV_GPIO_Port, EN_BRK_AV_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(NSS_AR_GPIO_Port, NSS_AR_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : SND_0_Pin */
+  GPIO_InitStruct.Pin = SND_0_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(SND_0_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : EN_BRK_AR_Pin */
   GPIO_InitStruct.Pin = EN_BRK_AR_Pin;
@@ -190,6 +200,13 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(EN_BRK_AV_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : SND_1_Pin */
+  GPIO_InitStruct.Pin = SND_1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(SND_1_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : NSS_AR_Pin */
   GPIO_InitStruct.Pin = NSS_AR_Pin;

@@ -139,7 +139,7 @@ Error_Handler();
   MX_UART5_Init();
   MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Init scheduler */

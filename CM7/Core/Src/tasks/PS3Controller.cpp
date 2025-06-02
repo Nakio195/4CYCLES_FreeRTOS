@@ -183,9 +183,13 @@ void PS3Controller::ControllerData(CanPacket* packet)
 		{
 			case Switch::States::PRESSED:
 				setLightsCommand(Action::Signals::Left, true);
+				HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
+				HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_RESET);
 				break;
 			case Switch::States::RELEASED:
 				setLightsCommand(Action::Signals::Left, false);
+				HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
+				HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_SET);
 				break;
 			default:
 				break;
@@ -194,9 +198,13 @@ void PS3Controller::ControllerData(CanPacket* packet)
 		{
 			case Switch::States::PRESSED:
 				setLightsCommand(Action::Signals::Right, true);
+				HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
+				HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_RESET);
 				break;
 			case Switch::States::RELEASED:
 				setLightsCommand(Action::Signals::Right, false);
+				HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
+				HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_SET);
 				break;
 			default:
 				break;
@@ -206,9 +214,13 @@ void PS3Controller::ControllerData(CanPacket* packet)
 		{
 			case Switch::States::PRESSED:
 				setLightsCommand(Action::Signals::Hazard, true);
+				HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_RESET);
+				HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_SET);
 				break;
 			case Switch::States::RELEASED:
 				setLightsCommand(Action::Signals::Hazard, false);
+				HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
+				HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_SET);
 				break;
 			default:
 				break;
@@ -218,6 +230,8 @@ void PS3Controller::ControllerData(CanPacket* packet)
 		{
 			case Switch::States::PRESSED:
 				setLightsCommand(Action::Signals::Hazard, true);
+				HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_RESET);
+				HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_RESET);
 				break;
 			case Switch::States::RELEASED:
 				setLightsCommand(Action::Signals::Hazard, false);
@@ -233,19 +247,6 @@ void PS3Controller::ControllerData(CanPacket* packet)
 				break;
 			case Switch::States::RELEASED:
 				setLightsCommand(Action::Signals::BrakeSignal, false);
-				break;
-			default:
-				break;
-		}
-
-
-		switch (controller.buttons.triangle.read())
-		{
-			case Switch::States::PRESSED:
-				setLightsCommand(Action::Signals::Hazard, true);
-				break;
-			case Switch::States::RELEASED:
-				setLightsCommand(Action::Signals::Hazard, false);
 				break;
 			default:
 				break;

@@ -27,15 +27,32 @@ class DirectionTask: public RTOS_Task
 		void setDirectionAV(int32_t target);
 		void setDirectionAR(int32_t target);
 
+		int32_t getSensorAV()
+		{
+			return mDirSensorAV;
+		}
+
+		int32_t getSensorAR()
+		{
+			return mDirSensorAR;
+		}
+
 		void tick(uint8_t dt)
 		{
 			mMotorAV->run();
 			mMotorAR->run();
 		}
 
+
 	private:
-		uint8_t mDirSensorAV;
-		uint8_t mDirSensorAR;
+		int32_t mapSensorToStepper(uint16_t d);
+
+	private:
+		int32_t mDirSensorAV;
+		int32_t mDirSensorAR;
+
+		const int32_t mSensorCenterAR;
+		const int32_t mSensorCenterAV;
 
 		StepperMotor *mMotorAV;
 		StepperMotor *mMotorAR;

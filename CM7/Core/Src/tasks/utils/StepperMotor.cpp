@@ -7,7 +7,7 @@
 
 #include "StepperMotor.h"
 
-StepperMotor::StepperMotor(GPIO_TypeDef * stepPort, uint32_t stepPin, GPIO_TypeDef * dirPort, uint32_t dirPin)
+StepperMotor::StepperMotor(bool motPosition, GPIO_TypeDef * stepPort, uint32_t stepPin, GPIO_TypeDef * dirPort, uint32_t dirPin)
 {
 	// TODO Auto-generated constructor stub
 	mStepPort = stepPort;
@@ -19,7 +19,7 @@ StepperMotor::StepperMotor(GPIO_TypeDef * stepPort, uint32_t stepPin, GPIO_TypeD
 	HAL_GPIO_WritePin(mDirPort, mDirPin, GPIO_PIN_SET);
 
 	mPosition = 0;
-	mRealPosition = 0;
+	mRealPosition = 9999;
 	mTargetPosition = 0;
 	mDirection = 0;
 
@@ -27,7 +27,11 @@ StepperMotor::StepperMotor(GPIO_TypeDef * stepPort, uint32_t stepPin, GPIO_TypeD
 	mHighLimit = 5700;
 
 	mPulseState = true;
-	mReady = true;
+	mReady = false;
+	mResetPosition = true;
+	mResetSequence = false;
+	mMotPosition = motPosition;
+
 
 	mRunSemaphore = xSemaphoreCreateBinary();
 	xSemaphoreGive(mRunSemaphore);
@@ -52,14 +56,35 @@ void StepperMotor::setRealPosition(int32_t position)
 {
 	if (xSemaphoreTake(mRunSemaphore, 100) == pdTRUE)
 	{
-		mRealPosition = position;
+		mRealPosition = -position;
 		xSemaphoreGive(mRunSemaphore);
 	}
 }
 void StepperMotor::run()
 {
+	/*if(mResetSequence)
+	{
+		if(mMotPosition)
+			mPosition = mRealPosition;
+		else
+			mPosition = -mRealPosition;
+
+		if(mRealPosition > -500 && mRealPosition < 500)
+			mResetSequence = false;
+	}
+
+
 	if(!mReady)
-		return;
+	{
+		if(mTargetPosition < mRealPosition +500 && mTargetPosition > mRealPosition-500)
+		{
+			mReady = true;
+			mResetPosition = true;
+			mResetSequence = true;
+		}
+		else
+			return;
+	}*/
 
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	if(xSemaphoreTakeFromISR(mRunSemaphore, &xHigherPriorityTaskWoken) == pdTRUE)
@@ -72,20 +97,20 @@ void StepperMotor::run()
 			if (mPosition != mTargetPosition)
 			{
 				if (mPosition < mTargetPosition)
-					HAL_GPIO_WritePin(mDirPort, mDirPin, GPIO_PIN_RESET);
-				else
 					HAL_GPIO_WritePin(mDirPort, mDirPin, GPIO_PIN_SET);
+				else
+					HAL_GPIO_WritePin(mDirPort, mDirPin, GPIO_PIN_RESET);
 
 				if(mPulseState)
 				{
-					HAL_GPIO_WritePin(mStepPort, mStepPin, GPIO_PIN_SET);
+					HAL_GPIO_WritePin(mStepPort, mStepPin, GPIO_PIN_RESET);
 					if(mPosition < mTargetPosition)
 						mPosition++;
 					else
 						mPosition--;
 				}
 				else
-					HAL_GPIO_WritePin(mStepPort, mStepPin, GPIO_PIN_RESET);
+					HAL_GPIO_WritePin(mStepPort, mStepPin, GPIO_PIN_SET);
 
 				mPulseState = !(bool)(mPulseState);
 
