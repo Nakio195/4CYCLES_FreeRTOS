@@ -20,7 +20,6 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "tim.h"
-#include "usart.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -107,14 +106,12 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_UART4_Init();
-  MX_USART1_UART_Init();
-  MX_USART2_UART_Init();
-  MX_USART6_UART_Init();
   MX_TIM5_Init();
   MX_TIM13_Init();
   /* USER CODE BEGIN 2 */
 
+  //Stop the core
+  while(1);
   /* USER CODE END 2 */
 
   /* Init scheduler */

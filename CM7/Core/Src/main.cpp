@@ -138,6 +138,10 @@ Error_Handler();
   MX_SPI5_Init();
   MX_UART5_Init();
   MX_TIM16_Init();
+  MX_UART4_Init();
+  MX_USART1_UART_Init();
+  MX_USART2_UART_Init();
+  MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
   /* USER CODE END 2 */

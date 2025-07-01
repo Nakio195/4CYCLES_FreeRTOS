@@ -26,7 +26,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "tim.h"
-#include "tasks/utils/Phaserunner.hpp"
+//#include "tasks/utils/Phaserunner.hpp"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,7 +47,7 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 
-Phaserunner Motor(1);
+//Phaserunner Motor(1);
 
 /* USER CODE END Variables */
 /* Definitions for InitTask */
@@ -146,7 +146,8 @@ void StartInit(void *argument)
 {
   /* USER CODE BEGIN StartInit */
   /* Infinite loop */
-
+	while(1);
+/*
 
 	Motor.start("Phaserunner", 256, osPriorityNormal);
 	osDelay(500);
@@ -162,7 +163,7 @@ void StartInit(void *argument)
 			osDelay(100);
 		};
 
-	}
+	}*/
   /* USER CODE END StartInit */
 }
 
