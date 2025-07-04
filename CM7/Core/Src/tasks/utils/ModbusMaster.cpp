@@ -10,7 +10,7 @@
 #include <math.h>
 
 ModbusMaster ModbusHandler;
-
+ModbusPacketPoolHandler ModbusPacketPool;
 
 ModbusMaster::ModbusMaster()
 {
@@ -24,10 +24,16 @@ ModbusMaster::ModbusMaster()
 
 	// Initalizing and starting ModbusDriver tasks
 
-	mInterfaces[0].modbus = &Serial1;
-	mInterfaces[1].modbus = &Serial2;
+	mInterfaces[0].modbus = &Serial2;
+	mInterfaces[1].modbus = &Serial6;
 	mInterfaces[2].modbus = &Serial4;
-	mInterfaces[3].modbus = &Serial6;
+	mInterfaces[3].modbus = &Serial1;
+
+	RequestFIFO = xQueueCreate(200, sizeof(ModbusPacket*));
+	vQueueAddToRegistry(RequestFIFO, "ModBusRequest");
+	AnswerFIFO = xQueueCreate(200, sizeof(ModbusPacket*));
+	vQueueAddToRegistry(AnswerFIFO, "ModBusAnswer");
+	responseMutex = xSemaphoreCreateMutex();
 }
 
 
@@ -37,23 +43,20 @@ ModbusMaster::ModbusMaster()
 
 void ModbusMaster::setup()
 {
-	Serial6.start("Modbus_UART6", 512, osPriorityHigh);
+	Serial2.start("Modbus_UART2", 128, osPriorityHigh7);
+	Serial6.start("Modbus_UART6", 128, osPriorityHigh7);
+	Serial4.start("Modbus_UART4", 128, osPriorityHigh7);
+	Serial1.start("Modbus_UART1", 128, osPriorityHigh7);
 }
 
 
 void ModbusMaster::run()
 {
-	if(RequestFIFO.size() == 0)
-	{
-		suspend();
-		return;
-	}
+	ModbusPacket* packet = nullptr;
 
-	while(RequestFIFO.size() > 0)
-	{
-		ModbusPacket* packet = RequestFIFO.front();
-		RequestFIFO.pop_front();
 
+	if(xQueueReceive(RequestFIFO, &packet, 100) == pdTRUE)
+	{
 		// Getting packet informations
 		uint16_t startAddress = packet->registers[0].address;
 		uint16_t blockSize = packet->registers.size();
@@ -81,7 +84,7 @@ void ModbusMaster::run()
 				{
 					xSemaphoreTake(interface->DataReadySemaphore, 0);
 					interface->modbus->endMultipleWrite();
-					if(xSemaphoreTake(interface->DataReadySemaphore, pdMS_TO_TICKS(1000)) != pdTRUE)
+					if(xSemaphoreTake(interface->DataReadySemaphore, pdMS_TO_TICKS(100)) != pdTRUE)
 					{
 						failedRequest++;
 						successiveFailure++;
@@ -113,33 +116,34 @@ void ModbusMaster::run()
 				packet->success &= interface->modbus->write(packet->registers[i].value);
 			}
 
-			if(!packet->success)
-				break;
-
-			xSemaphoreTake(interface->DataReadySemaphore, 0);
-			interface->modbus->endMultipleWrite();
-			if(xSemaphoreTake(interface->DataReadySemaphore, pdMS_TO_TICKS(1000)) != pdTRUE)
+			if(packet->success)
 			{
-				failedRequest++;
-				successiveFailure++;
-				packet->success = false;
-				//TODO Warn about invalid read
-				break;
-			}
+				xSemaphoreTake(interface->DataReadySemaphore, 0);
+				interface->modbus->endMultipleWrite();
+				if(xSemaphoreTake(interface->DataReadySemaphore, pdMS_TO_TICKS(5)) != pdTRUE)
+				{
+					failedRequest++;
+					successiveFailure++;
+					packet->success = false;
+					//TODO Warn about invalid read
+				}
+				else
+				{
+					packet->success = interface->modbus->lastRequestStatus();
 
-			packet->success = interface->modbus->lastRequestStatus();
+					if(!packet->success)
+					{
+						failedRequest++;
+						successiveFailure++;
+						//TODO Warn about a failed transmission
+					}
 
-			if(!packet->success)
-			{
-				failedRequest++;
-				successiveFailure++;
-				//TODO Warn about a failed transmission
-			}
-
-			else
-			{
-				successRequest++;
-				successiveFailure = 0;
+					else
+					{
+						successRequest++;
+						successiveFailure = 0;
+					}
+				}
 			}
 		}
 
@@ -151,122 +155,149 @@ void ModbusMaster::run()
 
 			xSemaphoreTake(interface->DataReadySemaphore, 0);
 			interface->modbus->readHoldingRegister(slaveID, startAddress, blockSize, &interface->DataReadySemaphore);
-			if(xSemaphoreTake(interface->DataReadySemaphore, pdMS_TO_TICKS(1000)) != pdTRUE)
+			if(xSemaphoreTake(interface->DataReadySemaphore, pdMS_TO_TICKS(5)) != pdTRUE)
 			{
 				failedRequest++;
 				successiveFailure++;
 				packet->success = false;
 				//TODO Warn about invalid read
-				break;
-			}
 
-			if(interface->modbus->available() == blockSize)
-			{
-				for(uint8_t i = 0; i < blockSize; i++)
-				{
-					uint16_t read = interface->modbus->read();
-					if(read == -1)
-					{
-						failedRequest++;
-						successiveFailure++;
-						packet->success = false;
-						//TODO Warn about invalid read
-						break;
-					}
-					else
-						packet->registers[i].value = read;
-				}
-
-				successRequest++;
-				successiveFailure = 0;
 			}
 
 			else
 			{
-				packet->success = false;
-				failedRequest++;
-				successiveFailure++;
+				if(interface->modbus->available() == blockSize)
+				{
+					for(uint8_t i = 0; i < blockSize; i++)
+					{
+						int16_t read = interface->modbus->read();
+						if(read == -1)
+						{
+							failedRequest++;
+							successiveFailure++;
+							packet->success = false;
+							//TODO Warn about invalid read
+							break;
+						}
+						else
+							packet->registers[i].value = (uint16_t)read;
+					}
 
-				//TODO Warn about invalid read
+					if(packet->success)
+					{
+						successRequest++;
+						successiveFailure = 0;
+					}
+				}
+
+				else
+				{
+					packet->success = false;
+					failedRequest++;
+					successiveFailure++;
+
+					//TODO Warn about invalid read
+				}
 			}
-
 		}
 
 		/*
 		 * Transferring packet to Answer FIFO with results
 		 */
-		if(AnswerFIFO.size() >= PANIC_FIFO_SIZE)
+
+		if (packet->success)
 		{
-			answerPanicCounter++;
-			//TODO Use logger to warn user about a Panic situation
+		    if (xSemaphoreTake(responseMutex, pdMS_TO_TICKS(10)) == pdTRUE)
+		    {
+		        if (xQueueSend(AnswerFIFO, &packet, 0) != pdTRUE)
+		        {
+		            answerPanicCounter++;
+		            //TODO log warning
+		            ModbusPacketPool.free(packet); // Libérer si FIFO pleine
+		        }
+		        xSemaphoreGive(responseMutex);
+		    }
+		    else
+		    {
+		        // Mutex non obtenu : gérer l’erreur (log, delete packet ?)
+		    	ModbusPacketPool.free(packet);
+		    }
 		}
 
-		AnswerFIFO.push_back(packet);
+		else
+		{
+			ModbusPacketPool.free(packet); // Free memory if request failed
+		}
 	}
+
+
 }
 
 bool ModbusMaster::request(ModbusPacket *packet)
 {
-
-	if(RequestFIFO.size() >= PANIC_FIFO_SIZE)
-	{
-		requestPanicCounter++;
-		//TODO Use logger to warn user about a Panic situation
-		return false;
-	}
-
-	if(packet->registers.size() > 0)
-	{
-		RequestFIFO.push_back(packet);
-		resume();
-	}
-
-	else
-	{
-		requestPanicCounter++;
-		//TODO Use logger to warn about a malformed packet
-		return false;
-	}
-
-	return true;
-
+    return (xQueueSend(RequestFIFO, &packet, 0) == pdTRUE);
 }
 
 ModbusPacket* ModbusMaster::response(uint8_t slaveID)
 {
-	if(AnswerFIFO.size() == 0)
-		return nullptr;
+    ModbusPacket* foundPacket = nullptr;
+    ModbusPacket* tempPacket = nullptr;
+    std::vector<ModbusPacket*> tempBuffer;
 
-	if(AnswerFIFO.front()->slave == slaveID)
-	{
-		ModbusPacket* packet = AnswerFIFO.front();
-		AnswerFIFO.pop_front();
-		return packet;
-	}
+    if(xSemaphoreTake(responseMutex, pdMS_TO_TICKS(10)) == pdTRUE)
+    {
+        while(xQueueReceive(AnswerFIFO, &tempPacket, 0) == pdTRUE)
+        {
+            if(tempPacket->slave == slaveID && foundPacket == nullptr)
+            {
+                foundPacket = tempPacket;
+            }
+            else
+            {
+                tempBuffer.push_back(tempPacket);
+            }
+        }
 
-	else
-		return nullptr;
+        for(auto pkt : tempBuffer)
+        {
+            xQueueSend(AnswerFIFO, &pkt, 0);
+        }
+
+        xSemaphoreGive(responseMutex);
+    }
+    return foundPacket;
 }
 
 uint8_t ModbusMaster::available(uint8_t slaveID)
 {
-	uint8_t count = 0;
+    uint8_t count = 0;
+    ModbusPacket* tempPacket = nullptr;
+    std::vector<ModbusPacket*> tempBuffer;
 
-	if(AnswerFIFO.size() == 0)
-		return count;
+    if(xSemaphoreTake(responseMutex, pdMS_TO_TICKS(10)) == pdTRUE)
+    {
+        while(xQueueReceive(AnswerFIFO, &tempPacket, 0) == pdTRUE)
+        {
+            if(tempPacket->slave == slaveID)
+            {
+                count++;
+            }
+            tempBuffer.push_back(tempPacket);
+        }
 
-	for(uint8_t i = 0; AnswerFIFO.size(); i++)
-	{
-		if(AnswerFIFO[i]->slave == slaveID)
-			count++;
-	}
+        for(auto pkt : tempBuffer)
+        {
+            xQueueSend(AnswerFIFO, &pkt, 0);
+        }
 
-	return count;
+        xSemaphoreGive(responseMutex);
+    }
+    return count;
 }
 
 ModbusMaster::Interface* ModbusMaster::getInterface(uint8_t slaveID)
 {
-	return &mInterfaces[3];
+	return &mInterfaces[slaveID-1];
 }
 
 uint16_t ModbusMaster::calculateBlockSize(const std::vector<Register>& registers, uint8_t startIndex, uint16_t startAddress)

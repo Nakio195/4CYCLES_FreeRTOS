@@ -7,6 +7,11 @@
 
 #include "Phaserunner.hpp"
 
+Phaserunner Ph_AVG(1);
+Phaserunner Ph_AVD(2);
+Phaserunner Ph_ARG(3);
+Phaserunner Ph_ARD(4);
+
 Phaserunner::Phaserunner(uint8_t slaveID)
 {
 	mConnection.slaveID = slaveID;
@@ -16,87 +21,92 @@ Phaserunner::Phaserunner(uint8_t slaveID)
 	TimerHeartbeat.setPeriod(HeartBeat_Rate);
 	TimerHeartbeat.startTimer();
 
+	mRegistersUpdated = xSemaphoreCreateBinary();
 	//Controller initialization
 
 }
 
 void Phaserunner::setup()
 {
-	ModbusHandler.start("ModbusMaster", 128, osPriorityNormal7);
-
-	setCommunicationTimeout(0);
-	setControlSource(0);
-	setCurrentsLimits(100.0, 100.0);
-	setSpeedRegulatorMode(2);
-	setTorqueCommand(50.0);
-	stopMotor();
+	osDelay(2000);
+	setCommunicationTimeout(0); //Pas de gestion du timeout
+	setControlSource(0);	// 0 Serial
+	setCurrentsLimits(10.0, 10.0); // 100%
+	setSpeedRegulatorMode(0);
+	//setRemoteState(1); // 0 Local control
+	//setTorqueCommand(50.0);
 	clearFaults();
+	stopMotor();
 }
 
 void Phaserunner::run()
 {
+	//TimerHeartbeat.tick(osKernelGetTickCount());
 
-	if(TimerHeartbeat.triggered())
+	if(xSemaphoreTake(mRegistersUpdated, 1) == pdTRUE)
 	{
-		heartbeat();
-	}
-
-	// Check for modified register that would need writing
-	std::vector<Register> pendingRegisters;
-	bool needTransmit = false;
-
-	for(auto& r : mRegisters->map)
-	{
-		if(r.pendingWrite)
+		if(TimerHeartbeat.triggered())
 		{
-			pendingRegisters.push_back(r);
-			r.pendingWrite = false;
-			needTransmit = true;
+			//heartbeat();
 		}
-	}
 
-	if(needTransmit)
-	{
-		ModbusPacket* request = new ModbusPacket(mConnection.slaveID, ModbusPacket::Write);
-		request->registers = pendingRegisters;
-		ModbusHandler.request(request);
-	}
+		// Check for modified register that would need writing
+		std::vector<Register> pendingRegisters;
+		bool needTransmit = false;
 
-	//Check registers that would need to be read
-	pendingRegisters.clear();
-	needTransmit = false;
-
-	for(auto& r : mRegisters->map)
-	{
-		if(r.pendingRead)
+		for(auto& r : mRegisters->map)
 		{
-			pendingRegisters.push_back(r);
-			r.pendingRead = false;
-			needTransmit = true;
+			if(r.pendingWrite)
+			{
+				pendingRegisters.push_back(r);
+				r.pendingWrite = false;
+				needTransmit = true;
+			}
 		}
-	}
 
-	if(needTransmit)
-	{
-		ModbusPacket* request = new ModbusPacket(mConnection.slaveID, ModbusPacket::Read);
-		request->registers = pendingRegisters;
-		ModbusHandler.request(request);
-	}
+		if(needTransmit)
+		{
+			ModbusPacket* request = ModbusPacketPool.allocate(mConnection.slaveID, ModbusPacket::Write);
+			request->registers = pendingRegisters;
+			ModbusHandler.request(request);
+		}
 
+		//Check registers that would need to be read
+		pendingRegisters.clear();
+		needTransmit = false;
+
+		for(auto& r : mRegisters->map)
+		{
+			if(r.pendingRead)
+			{
+				pendingRegisters.push_back(r);
+				r.pendingRead = false;
+				needTransmit = true;
+			}
+		}
+
+		if(needTransmit)
+		{
+			ModbusPacket* request = ModbusPacketPool.allocate(mConnection.slaveID, ModbusPacket::Read);
+			request->registers = pendingRegisters;
+			ModbusHandler.request(request);
+		}
+
+	}
 	// Read one received Answer
-	ModbusPacket* answer = ModbusHandler.response(mConnection.slaveID);
+	ModbusPacket* answer = nullptr;
 
-	if(answer != nullptr)
+	while((answer = ModbusHandler.response(mConnection.slaveID)) != nullptr)
 	{
 		if(!answer->success)
 		{
 			//TODO Warn a about a invalid answer
 
-			for(const auto& r : answer->registers)
-			{
-				//TODO Print answer
-			}
-			delete answer;
+//			for(const auto& r : answer->registers)
+//			{:
+//				//TODO Print answer
+//			}
+			ModbusPacketPool.free(answer);
 		}
 
 		else
@@ -115,11 +125,9 @@ void Phaserunner::run()
 				}
 			}
 
-			delete answer;
+			ModbusPacketPool.free(answer);
 		}
 	}
-
-	sleep(10);
 }
 
 void Phaserunner::startMotor()
@@ -154,16 +162,18 @@ void Phaserunner::clearFaults()
 	 */
 
 	mRegisters->set(508, 1);
+
+	xSemaphoreGive(mRegistersUpdated);
 }
 
 
 
-bool Phaserunner::instantRequest(uint8_t add, uint16_t val)
-{
-	ModbusPacket* packet = new ModbusPacket(mConnection.slaveID, ModbusPacket::Write);
-	packet->push(Register(add, 0, val));
-	return ModbusHandler.request(packet);
-}
+//bool Phaserunner::instantRequest(uint8_t add, uint16_t val)
+//{
+//	ModbusPacket* packet = ModbusPacketPool.allocate(mConnection.slaveID, ModbusPacket::Write);
+//	packet->push(Register(add, 0, val));
+//	return ModbusHandler.request(packet);
+//}
 bool Phaserunner::setCommunicationTimeout(uint16_t timeout)
 {
 	/*
@@ -176,6 +186,8 @@ bool Phaserunner::setCommunicationTimeout(uint16_t timeout)
 		mRegisters->set(49, 0);
 	else
 		mRegisters->set(49, timeout);
+
+	xSemaphoreGive(mRegistersUpdated);
 
 	return true;
 }
@@ -204,6 +216,7 @@ void Phaserunner::readMotorFaults()
 	 *  Faults register
 	 */
 	mRegisters->read(258);
+	xSemaphoreGive(mRegistersUpdated);
 }
 void Phaserunner::readControllerFaults()
 {
@@ -212,6 +225,7 @@ void Phaserunner::readControllerFaults()
 	 *  Faults register
 	 */
 	mRegisters->read(299);
+	xSemaphoreGive(mRegistersUpdated);
 }
 bool Phaserunner::setControlSource(uint8_t source)
 {
@@ -224,6 +238,7 @@ bool Phaserunner::setControlSource(uint8_t source)
 		return false;
 
 	mRegisters->set(208, source);
+	xSemaphoreGive(mRegistersUpdated);
 
 	return true;
 }
@@ -238,6 +253,7 @@ bool Phaserunner::setSpeedRegulatorMode(uint8_t mode)
 		return false;
 
 	mRegisters->set(11, mode);
+	xSemaphoreGive(mRegistersUpdated);
 	return true;
 
 }
@@ -252,9 +268,17 @@ bool Phaserunner::setSpeedCommand(float speed)
 	if(speed > 100.0)
 		return false;
 
+	if(speed < -100.0)
+		return false;
+
+	if(speed > -2.0 && speed < 2.0)
+		speed = 0.0;
+
+
 	mMotorCommands.Speed = speed;
 
-	mRegisters->set(490, 4095*(speed/100.0));
+	mRegisters->set(490, (int16_t)((4095*(speed/400.0))));
+	xSemaphoreGive(mRegistersUpdated);
 	return true;
 }
 bool Phaserunner::setCurrentsLimits(float motor, float brake)
@@ -274,6 +298,7 @@ bool Phaserunner::setCurrentsLimits(float motor, float brake)
 
 	mRegisters->set(491, 4096*(motor/100.0));
 	mRegisters->set(492, 4096*(brake/100.0));
+	xSemaphoreGive(mRegistersUpdated);
 
 	return true;
 }
@@ -291,6 +316,7 @@ bool Phaserunner::setRemoteState(uint8_t state)
 	mMotorCommands.State = state;
 
 	mRegisters->set(493, state);
+	xSemaphoreGive(mRegistersUpdated);
 	return true;
 
 }
@@ -308,6 +334,7 @@ bool Phaserunner::setTorqueCommand(float torque)
 	mMotorCommands.Torque = torque;
 
 	mRegisters->set(494, 4096*(torque/100.0));
+	xSemaphoreGive(mRegistersUpdated);
 	return true;
 
 }
@@ -319,6 +346,7 @@ bool Phaserunner::setRemoteThottleVoltage(uint16_t voltage)
 	 */
 
 	mRegisters->set(495, voltage);
+	xSemaphoreGive(mRegistersUpdated);
 	return true;
 }
 

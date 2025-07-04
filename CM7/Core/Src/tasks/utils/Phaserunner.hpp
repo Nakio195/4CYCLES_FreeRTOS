@@ -68,6 +68,8 @@ class Phaserunner : public RTOS_Task
 
 	private:
 
+		SemaphoreHandle_t mRegistersUpdated;
+
 		struct MotorCommands
 		{
 			float MotoringCurrentLimit;
@@ -86,5 +88,10 @@ class Phaserunner : public RTOS_Task
 		MotorFaults mMotorFaults;
 		ControllerFaults mControllerFaults;
 };
+
+extern Phaserunner Ph_AVG;
+extern Phaserunner Ph_AVD;
+extern Phaserunner Ph_ARG;
+extern Phaserunner Ph_ARD;
 
 #endif /* UTILITIES_SRC_PHASERUNNER_H_ */

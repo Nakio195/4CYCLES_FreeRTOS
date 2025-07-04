@@ -352,7 +352,7 @@ void ModbusDriver::errorHandler()
 
 void ModbusDriver::TX_BufferWrite(uint8_t b)
 {
-	if(TX_Pointer == MB_BUFFER_SIZE)
+	if(TX_Pointer >= MB_BUFFER_SIZE)
 	{
 		mState = State::Error;
 		mError |= MB_Error::TX_Buffer_Ov;

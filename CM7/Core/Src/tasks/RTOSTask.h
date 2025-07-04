@@ -58,10 +58,13 @@ class RTOS_Task
 		inline void resume()
 		{
 			if(xHandle != 0)
+			{
 				vTaskResume(xHandle);
+				taskYIELD();
+			}
 		}
 
-	private:
+	protected:
 		virtual void setup() {}
 		virtual void run() {}
 		virtual void cleanup() {}

@@ -22,6 +22,7 @@
 #include "utils/filters/LowPassFilter.h"
 #include "utils/filters/SCurveFilter.h"
 #include "utils/filters/ThresholdFilter.h"
+#include "utils/Phaserunner.hpp"
 
 #include <string>
 
@@ -35,12 +36,26 @@ class VehicleTask : public RTOS_Task
 		void cleanup() override;
 
 		void handleLightsAction(Action* action);
+
+		void engageMotor();
+		void disengageMotor();
+
+		void setMotorSpeed(float speed, bool reverse = false);
 	private:
 		QueueHandle_t mControllerQueue;
 
+		bool mMotorEngaged; // true if motor is engaged
+
+		//Motor Reverse
+		bool mMotorReversePending; // true if reverse gear is pending engagement
+		bool mMotorReversePendingValue; // true if reverse gear is pending value change
+		bool mMotorReverseEngaged; // true if reverse gear is engaged
 		// Filters
 		FilterChain mThrottle;
 		FilterChain mBrake;
+
+		//Motor Zero crossing detection
+		bool mZeroCrossing;
 
 };
 

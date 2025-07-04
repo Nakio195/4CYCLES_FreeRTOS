@@ -48,6 +48,7 @@ class Timer
         unsigned int mMode;  // Timer mode according to enum TimerMode
         bool mRunning;
 
+        uint32_t mPreviousTick;
         uint16_t mPeriod;       //Time till event trigger in ms
         uint16_t mCounter;      //Elapsed time since start in ms
         bool mTrigger;       //Event triggered

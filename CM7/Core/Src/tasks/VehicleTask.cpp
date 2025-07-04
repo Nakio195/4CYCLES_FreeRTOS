@@ -24,11 +24,14 @@ VehicleTask::VehicleTask()
 			threshold->addThreshold(250, 255, 255);
 	}
 
-	mThrottle.addFilter(threshold);
-	mThrottle.addFilter(new SCurveFilter(5));
+	//mThrottle.addFilter(threshold);
+	//mThrottle.addFilter(new SCurveFilter(5));
 	mThrottle.addFilter(new LowPassFilter(10));
 
 	mBrake.addFilter(new LowPassFilter(10));
+
+	mMotorEngaged = false;
+	mZeroCrossing = false;
 
 
 }
@@ -42,9 +45,14 @@ void VehicleTask::setup()
 	mControllerQueue = MainController.getQueue();
 	vQueueAddToRegistry(mControllerQueue, "ControllerActions");
 
-	CanHandler.start("CAN", 256, osPriorityHigh);
-	MainController.start("PS3", 256, osPriorityAboveNormal);
-	DirectionHandler.start("Direction", 128, osPriorityHigh);
+	CanHandler.start("CAN", 256, osPriorityBelowNormal1);
+	MainController.start("PS3", 256, osPriorityBelowNormal);
+	DirectionHandler.start("Direction", 128, osPriorityHigh3);
+	ModbusHandler.start("ModbusMaster", 128, osPriorityHigh);
+	Ph_AVG.start("Ph_AVG", 256, osPriorityHigh2);
+	Ph_AVD.start("Ph_AVD", 256, osPriorityHigh2);
+	Ph_ARG.start("Ph_ARG", 256, osPriorityHigh2);
+	Ph_ARD.start("Ph_ARD", 256, osPriorityHigh2);
 	//Json.start("JSON Logger", 1024, osPriorityBelowNormal);
 }
 
@@ -53,28 +61,52 @@ void VehicleTask::run()
 	Action* action = nullptr;
 
 	// Read received action from controller
-	while(uxQueueMessagesWaiting(mControllerQueue))
+	while(xQueueReceive(mControllerQueue, &action, pdMS_TO_TICKS(10)) == pdTRUE)
 	{
-		if(xQueueReceive(mControllerQueue, &action, 0) == pdTRUE)
+		if (action != nullptr)
 		{
-			if (action != nullptr)
+			switch (action->type())
 			{
-				if(action->type() == Action::Throttle)
-				{
+				case Action::Throttle:
 					mThrottle.setInput(action->getThrottleValue());
-				}
-				else if(action->type() == Action::Brake)
+					break;
+				case Action::Brake:
 					mBrake.setInput(action->getBrakeValue());
-				else if(action->type() == Action::Type::Lights)
+					break;
+				case Action::Lights:
 					handleLightsAction(action);
-				else if(action->type() == Action::Steering)
-				{
+					break;
+				case Action::Steering:
 					DirectionHandler.setDirectionAV(action->getSteeringValue());
 					DirectionHandler.setDirectionAR(-action->getSteeringValue());
-				}
+					break;
+				case Action::Engage:
+					mMotorEngaged = !mMotorEngaged;
 
-				delete action;
+					if(mMotorEngaged)
+						engageMotor();
+					else
+						disengageMotor();
+					break;
+
+				case Action::Motor:
+					if (action->getReverse() == Action::Gear::Reverse)
+					{
+						mMotorReversePending = true;
+						mMotorReversePendingValue = true;
+					}
+					else if(action->getReverse() == Action::Gear::Forward)
+					{
+						mMotorReversePending = true;
+						mMotorReversePendingValue = false;
+					}
+					break;
+				default:
+					// TODO: log invalid type
+					break;
 			}
+
+			ActionPacketPool.free(action);
 		}
 	}
 
@@ -82,13 +114,58 @@ void VehicleTask::run()
 	mThrottle.update();
 	mBrake.update();
 
+	//Changing zero-crossing parameter
+//	if(mThrottle.getOutput() < 2.0)
+//	{
+//		mZeroCrossing = true;
+		if(mMotorReversePending)
+		{
+			mMotorReverseEngaged = mMotorReversePendingValue;
+			mMotorReversePending = false;
+		}
+//	}
+//
+//	else
+//		mZeroCrossing = false;
 
-	osDelay(10);
+	setMotorSpeed(mThrottle.getOutput(), mMotorReverseEngaged);
+	//osDelay(10);
 }
 
 void VehicleTask::cleanup()
 {
 
+}
+
+
+void VehicleTask::engageMotor()
+{
+	Ph_AVG.startMotor();
+	Ph_AVD.startMotor();
+	Ph_ARG.startMotor();
+	Ph_ARD.startMotor();
+}
+
+void VehicleTask::disengageMotor()
+{
+	Ph_AVG.stopMotor();
+	Ph_AVD.stopMotor();
+	Ph_ARG.stopMotor();
+	Ph_ARD.stopMotor();
+}
+
+void VehicleTask::setMotorSpeed(float speed, bool reverse)
+{
+	if(mMotorEngaged)
+	{
+		if(reverse)
+			speed = -speed;
+
+		Ph_AVG.setSpeed(float(speed)/255.0*100.0);
+		Ph_AVD.setSpeed(float(speed)/255.0*100.0);
+		Ph_ARG.setSpeed(float(speed)/255.0*100.0);
+		Ph_ARD.setSpeed(float(speed)/255.0*100.0);
+	}
 }
 
 void VehicleTask::handleLightsAction(Action* action)

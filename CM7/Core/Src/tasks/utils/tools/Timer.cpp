@@ -19,6 +19,9 @@ Timer::Timer(uint16_t pPeriod, unsigned int pMode)
     mTrigger = false;
     mCounts = 0;
 
+
+    mPreviousTick = 0;
+
     mToggled = false;
 
     onTriggerAction = nullptr;
@@ -50,11 +53,12 @@ float Timer::getCounter() const
 }
 
 
-void Timer::tick(uint16_t dt)
+void Timer::tick(uint16_t CurrentTick)
 {
     if(mRunning)
     {
-        mCounter += dt;
+        mCounter += CurrentTick - mPreviousTick;
+        mPreviousTick = CurrentTick;
 
         if(mCounter >= mPeriod)
         {

@@ -11,6 +11,7 @@
 #include "fdcan.h"
 #include <vector>
 
+
 class CanPacket
 {
 	public:
@@ -19,6 +20,9 @@ class CanPacket
 	public:
 		CanPacket(uint32_t id = 0) : Identifier(id)
 		{
+			direction = Invalid;
+			DataLengthCode = 0;
+			data.clear();
 		}
 
 		CanPacket(FDCAN_RxHeaderTypeDef header)
@@ -82,12 +86,91 @@ class CanPacket
 			return header;
 		}
 
+		void reset(uint32_t id)
+		{
+			direction = Invalid;
+			Identifier = id;
+			DataLengthCode = 0;
+			data.clear();
+		}
+
+		void reset(FDCAN_RxHeaderTypeDef header)
+		{
+			direction = Receive;
+			Identifier = header.Identifier;
+			DataLengthCode = header.DataLength;
+		}
+
 	public:
 		bool direction = Invalid;
 		uint32_t Identifier;
 		uint32_t DataLengthCode;
 		std::vector<uint8_t> data;
 };
+
+
+#define CAN_POOL_SIZE 500// Taille du pool de paquets CAN
+
+class CANPacketPoolHandler
+{
+	private:
+		CanPacket pool[CAN_POOL_SIZE];
+		bool used[CAN_POOL_SIZE];        // Indique si le slot est utilisé
+		SemaphoreHandle_t mutex;
+
+		uint16_t minPoolSizeEver;
+		uint16_t currentPoolUse;
+
+	public:
+		CANPacketPoolHandler()
+		{
+			mutex = xSemaphoreCreateMutex();
+			for (int i = 0; i < CAN_POOL_SIZE; i++)
+				used[i] = false;
+			minPoolSizeEver = CAN_POOL_SIZE; // Initialisation à la taille maximale
+			currentPoolUse = 0;
+		}
+
+		CanPacket* allocate(uint32_t id)
+		{
+			CanPacket* pkt = nullptr;
+			if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE)
+			{
+				for (int i = 0; i < CAN_POOL_SIZE; i++)
+				{
+					if (!used[i])
+					{
+						used[i] = true;
+						pkt = &pool[i];
+						break;
+					}
+				}
+				xSemaphoreGive(mutex);
+			}
+			if(pkt != nullptr)
+				pkt->reset(id);
+
+			assert(pkt != nullptr); // Ensure that the request was allocated successfully
+			currentPoolUse++;
+			if (CAN_POOL_SIZE - currentPoolUse < minPoolSizeEver)
+				minPoolSizeEver = CAN_POOL_SIZE - currentPoolUse;
+			return pkt; // nullptr si pool plein
+		}
+
+		void free(CanPacket* pkt)
+		{
+			if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE) {
+				int index = pkt - pool; // calcul index
+				if (index >= 0 && index < CAN_POOL_SIZE) {
+					used[index] = false;
+				}
+				xSemaphoreGive(mutex);
+				currentPoolUse--;
+			}
+		}
+};
+
+extern CANPacketPoolHandler CanPacketPool; // Global instance of the packet pool handler
 
 
 #endif /* SRC_TASKS_UTILS_CANPACKET_H_ */

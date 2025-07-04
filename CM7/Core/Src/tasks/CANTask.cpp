@@ -8,6 +8,7 @@
 #include "CANTask.h"
 
 CAN_Task CanHandler;
+CANPacketPoolHandler CanPacketPool;
 
 CAN_Task::CAN_Task()
 {
@@ -57,7 +58,7 @@ void CAN_Task::run()
 			hfdcan2.Instance->RXF0A = RxFifoIndex; // Acknowledge RX FIFO index
 
 			// Build CanPacket from received message
-			CanPacket* packet = new CanPacket(header.Identifier);
+			CanPacket* packet = CanPacketPool.allocate(header.Identifier);
 			for(uint8_t i = 0; i < CanPacket::dataLength(header.DataLength); i++)
 				packet->data.push_back(RX_Data[i]);
 
@@ -72,9 +73,9 @@ void CAN_Task::run()
 
 			if(!accepted)
 			{
-				delete packet;
+				CanPacketPool.free(packet);
 				RxErrorCounter++;
-				//TODo Notify Identifier of lost packet
+				//TODO Notify Identifier of lost packet
 			}
 
 		}
@@ -93,7 +94,7 @@ void CAN_Task::run()
 				//Error_Handler();
 			}
 
-			delete packet;
+			CanPacketPool.free(packet);
 		}
 	}
 }

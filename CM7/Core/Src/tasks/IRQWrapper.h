@@ -18,6 +18,8 @@ void FDCAN_IRQ(FDCAN_HandleTypeDef* huart);
 
 void TIM16_IRQ(TIM_HandleTypeDef* htim);
 
+void UART_IRQ(UART_HandleTypeDef* huart);
+
 #ifdef __cplusplus
 }
 #endif

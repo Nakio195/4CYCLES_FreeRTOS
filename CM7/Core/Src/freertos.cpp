@@ -171,8 +171,8 @@ void StartUSBTask(void *argument)
   std::set_new_handler(Error_Handler); // Set new exception to call ErrorHandler
   osDelay(1000);
   Vehicle.start("Vehicle", 512, osPriorityNormal);
-  osDelay(100);
-  HAL_GPIO_WritePin(DIR_PIN_GPIO_Port, DIR_PIN_Pin, GPIO_PIN_SET);
+//  osDelay(100);
+//  HAL_GPIO_WritePin(DIR_PIN_GPIO_Port, DIR_PIN_Pin, GPIO_PIN_SET);
   /* Infinite loop */
 
   for(;;)

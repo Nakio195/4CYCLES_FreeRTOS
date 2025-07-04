@@ -22,7 +22,7 @@
 #define WRITE_MULTIPLE_REGISTERS 16 // Presets values into a sequence of holding registers.
 
 #define MB_BUFFER_SIZE 128
-#define MB_DEFAULT_TIMEOUT 1000
+#define MB_DEFAULT_TIMEOUT 10
 
 class ModbusDriver : public RTOS_Task
 {

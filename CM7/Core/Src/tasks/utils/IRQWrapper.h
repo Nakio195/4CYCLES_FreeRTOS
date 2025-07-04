@@ -14,7 +14,7 @@
 extern "C" {
 #endif
 
-void UART_IRQ(UART_HandleTypeDef* huart);
+//void UART_IRQ(UART_HandleTypeDef* huart);
 
 #ifdef __cplusplus
 }

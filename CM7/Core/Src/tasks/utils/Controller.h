@@ -12,17 +12,18 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 
+#define ACTION_POOL_SIZE 500
 
 class Action
 {
 	public:
-		enum Type{Throttle, Brake, Steering, Gear, Lights, Horn, Controller};
-		enum Gear{Slow, Middle, Fast};
+		enum Type{Invalid, Throttle, Brake, Steering, Motor, Lights, Horn, Controller, Engage};
+		enum Gear{Slow, Middle, Fast, Reverse, Forward};
 		enum Signals{Left, Right, BrakeSignal, NighLight, Hazard};
 		enum ControllerEvent{Absent, Connected};
 
 	public:
-		Action(Type type)
+		Action(Type type = Invalid)
 		{
 			mType = type;
 			mTimestamp = xTaskGetTickCount();
@@ -58,9 +59,21 @@ class Action
 			return Action::Signals(mValues[0]);
 		}
 
+		Action::Gear getReverse()
+		{
+			return Action::Gear(mValues[0]);
+		}
+
 		bool getLightState()
 		{
 			return mValues[1];
+		}
+
+		void reset(Type type)
+		{
+			mType = type;
+			mTimestamp = xTaskGetTickCount();
+			mValues.clear();
 		}
 
 	private:
@@ -69,6 +82,69 @@ class Action
 		std::vector<uint32_t> mValues;
 
 };
+
+class ActionPacketPoolHandler
+{
+	private:
+		Action pool[ACTION_POOL_SIZE];
+		bool used[ACTION_POOL_SIZE];        // Indique si le slot est utilisé
+		SemaphoreHandle_t mutex;
+
+		uint16_t minPoolSizeEver;
+		uint16_t currentPoolUse;
+
+	public:
+		ActionPacketPoolHandler()
+		{
+			mutex = xSemaphoreCreateMutex();
+			for (int i = 0; i < ACTION_POOL_SIZE; i++)
+				used[i] = false;
+			minPoolSizeEver = ACTION_POOL_SIZE; // Initialisation à la taille maximale
+			currentPoolUse = 0;
+		}
+
+		Action* allocate(Action::Type type)
+		{
+			Action* pkt = nullptr;
+			if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE)
+			{
+				for (int i = 0; i < ACTION_POOL_SIZE; i++)
+				{
+					if (!used[i])
+					{
+						used[i] = true;
+						pkt = &pool[i];
+						break;
+					}
+				}
+				xSemaphoreGive(mutex);
+			}
+			if(pkt != nullptr)
+				pkt->reset(type);
+
+			assert(pkt != nullptr); // Ensure that the request was allocated successfully
+			currentPoolUse++;
+			if (ACTION_POOL_SIZE - currentPoolUse < minPoolSizeEver)
+				minPoolSizeEver = ACTION_POOL_SIZE - currentPoolUse;
+			return pkt; // nullptr si pool plein
+		}
+
+		void free(Action* pkt)
+		{
+			if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE) {
+				int index = pkt - pool; // calcul index
+				if (index >= 0 && index < ACTION_POOL_SIZE) {
+					used[index] = false;
+				}
+				xSemaphoreGive(mutex);
+				currentPoolUse--;
+			}
+		}
+};
+
+
+extern ActionPacketPoolHandler ActionPacketPool;
+
 
 class Controller
 {
@@ -93,11 +169,24 @@ class Controller
 			pushAction(Action::Steering, value);
 		}
 
+		void setMotorEngage(uint8_t value)
+		{
+			pushAction(Action::Engage, value);
+		}
+
+
 		void setLightsCommand(Action::Signals light, uint8_t value)
 		{
-			Action* action = new Action(Action::Lights);
+			Action* action = ActionPacketPool.allocate(Action::Lights);
 			action->push(uint32_t(light));
-			action->push(value);
+			action->push(uint32_t(value));
+			pushAction(action);
+		}
+
+		void setReverseCommand(Action::Gear gear)
+		{
+			Action *action = ActionPacketPool.allocate(Action::Type::Motor);
+			action->push(uint32_t(gear));
 			pushAction(action);
 		}
 
@@ -109,7 +198,7 @@ class Controller
 
 		void inline pushAction(Action::Type type, uint32_t value)
 		{
-			Action* action = new Action(type);
+			Action* action = ActionPacketPool.allocate(type);
 			action->push(value);
 			xQueueSend(mQueue, &action, 0);
 		}

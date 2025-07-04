@@ -8,6 +8,7 @@
 #include "PS3Controller.h"
 
 PS3Controller MainController;
+ActionPacketPoolHandler ActionPacketPool;
 
 PS3Controller::PS3Controller()
 {
@@ -23,7 +24,7 @@ PS3Controller::PS3Controller()
 
 void PS3Controller::init()
 {
-	CanPacket *ControllerSettings = new CanPacket(0x19);
+	CanPacket *ControllerSettings = CanPacketPool.allocate(0x19);
 	ControllerSettings->data.push_back(0x01);
 	ControllerSettings->data.push_back(0x00);
 	ControllerSettings->data.push_back(0x00);
@@ -35,7 +36,7 @@ void PS3Controller::init()
 
 void PS3Controller::reInit()
 {
-	CanPacket *ControllerSettings = new CanPacket(0x19);
+	CanPacket *ControllerSettings = CanPacketPool.allocate(0x19);
 	ControllerSettings->data.push_back(0x01);
 	ControllerSettings->data.push_back(0x00);
 	ControllerSettings->data.push_back(0x00);
@@ -85,7 +86,7 @@ void PS3Controller::run()
 				ControllerData(packet);
 			else if(packet->Identifier == 0x11)
 				ControllerStatus(packet);
-			delete packet;
+			CanPacketPool.free(packet);
 		}
 	}
 
@@ -175,8 +176,8 @@ void PS3Controller::ControllerData(CanPacket* packet)
 		controller.buttons.ps.update(packet->data[7] & 0x40);
 		controller.status.connected.update(packet->data[7] & 0x80);
 
-		setThrottleCommand(controller.trig.L);
-		setBrakeCommand(controller.trig.R);
+		setThrottleCommand(controller.trig.R);
+		setBrakeCommand(controller.trig.L);
 		setSteeringCommand(controller.sticks.L.x*48);
 
 		switch(controller.buttons.L1.read())
@@ -240,6 +241,15 @@ void PS3Controller::ControllerData(CanPacket* packet)
 				break;
 		}
 
+		switch (controller.buttons.start.read())
+		{
+			case Switch::States::RELEASED:
+				setMotorEngage(true);
+				break;
+			default:
+				break;
+		}
+
 		switch (controller.trig.L2.read())
 		{
 			case Switch::States::PRESSED:
@@ -259,6 +269,18 @@ void PS3Controller::ControllerData(CanPacket* packet)
 				break;
 			case Switch::States::RELEASED:
 				setLightsCommand(Action::Signals::NighLight, false);
+				break;
+			default:
+				break;
+		}
+
+		switch (controller.buttons.square.read())
+		{
+			case Switch::States::PRESSED:
+				setReverseCommand(Action::Gear::Reverse);
+				break;
+			case Switch::States::RELEASED:
+				setReverseCommand(Action::Gear::Forward);
 				break;
 			default:
 				break;
