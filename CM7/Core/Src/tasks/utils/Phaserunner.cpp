@@ -31,7 +31,7 @@ void Phaserunner::setup()
 	osDelay(2000);
 	setCommunicationTimeout(0); //Pas de gestion du timeout
 	setControlSource(0);	// 0 Serial
-	setCurrentsLimits(10.0, 10.0); // 100%
+	setCurrentsLimits(20.0, 15.0); // 100%
 	setSpeedRegulatorMode(0);
 	//setRemoteState(1); // 0 Local control
 	//setTorqueCommand(50.0);

@@ -23,8 +23,8 @@ StepperMotor::StepperMotor(bool motPosition, GPIO_TypeDef * stepPort, uint32_t s
 	mTargetPosition = 0;
 	mDirection = 0;
 
-	mLowLimit = -5700;
-	mHighLimit = 5700;
+	mLowLimit = -5000;
+	mHighLimit = 5000;
 
 	mPulseState = true;
 	mReady = false;
