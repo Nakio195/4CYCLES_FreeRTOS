@@ -90,11 +90,10 @@ class CanPeripheral
 			{ // Locked scope
 				LockGuard lock(mutex);
 
-				if(mState == Ready)
-				{
-					mLastCommunication += t - previousTick;
-					previousTick = t;
-				}
+
+				mLastCommunication += t - previousTick;
+				previousTick = t;
+
 				if(mLastCommunication >= mCommunicationTimeout && mState != Recovery)
 					CommunicationTimeout();
 

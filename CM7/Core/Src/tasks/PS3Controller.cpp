@@ -19,7 +19,6 @@ PS3Controller::PS3Controller()
 	mPreviousTick = 0;
 
 	CanHandler.attach(this);
-	// TODO Auto-generated constructor stub
 }
 
 void PS3Controller::init()
@@ -28,7 +27,7 @@ void PS3Controller::init()
 	ControllerSettings->data.push_back(0x01);
 	ControllerSettings->data.push_back(0x00);
 	ControllerSettings->data.push_back(0x00);
-	if(CanHandler.send(ControllerSettings))
+	if(CanHandler.send(ControllerSettings)) //TODO Handle multiple failed init
 	{
 		CanPeripheral::init();
 	}
@@ -49,23 +48,27 @@ void PS3Controller::reInit()
 
 void PS3Controller::absent()
 {
-	log(Message(Message::LogCritical) << "PS3 Controller absent from bus...");
+	log(Message(Message::LogCritical) << LOG_PS3_CONTROLLER_ABSENT);
+	while(1)
+	{
+		osDelay(10000);
+	}
 }
 
 void PS3Controller::recovery()
 {
-	log(Message(Message::LogError) << "Lost PS3 Controller, recovery...");
+	log(Message(Message::LogError) << LOG_PS3_CONTROLLER_RECOVERY_ATTEMPT);
 	reInit();
 }
 
 void PS3Controller::recovered()
 {
-	log(Message(Message::LogInfo) << "PS3 Controller recovered !");
+	log(Message(Message::LogInfo) << LOG_PS3_CONTROLLER_RECOVERED);
 }
 
 void PS3Controller::lost()
 {
-	log(Message(Message::LogCritical) << "PS3 Controller lost !");
+	log(Message(Message::LogError) << LOG_PS3_CONTROLLER_LOST);
 }
 
 void PS3Controller::setup()

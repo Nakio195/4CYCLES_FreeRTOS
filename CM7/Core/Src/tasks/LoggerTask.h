@@ -11,13 +11,14 @@
 #include "usart.h"
 
 #include "RTOSTask.h"
+#include "CANTask.h"
+#include "utils/CanPeripheral.h"
 #include "utils/LockGuard.hpp"
-#include "utils/ArduinoJson-v7.3.0.h"
 
-class JsonLogger : public RTOS_Task
+class Logger : public RTOS_Task, public CanPeripheral
 {
 	public:
-		JsonLogger();
+		Logger();
 
 		void print(Message &m);
 
@@ -27,12 +28,19 @@ class JsonLogger : public RTOS_Task
 		void run() override;
 		void cleanup() override;
 
+		void init() override;
+		void reInit();
+		void recovery();
+		void absent();
+		void recovered();
+		void lost();
+
 	private:
-		JsonDocument mDocument;
 		std::vector<QueueHandle_t> mQueues;
 		SemaphoreHandle_t mutex;
 
 		Message::Type mLogLevel = Message::LogDebug;
+		uint32_t mPreviousTick	 = 0;
 };
 
-extern JsonLogger Json;
+extern Logger LoggerTask;

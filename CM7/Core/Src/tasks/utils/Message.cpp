@@ -4,14 +4,14 @@ Message::Message(Type type)
 {
 	mType = type;
 	mTimestamp = xTaskGetTickCount();
-	mMessage = "";
 }
 
-Message::Type Message::type()
+Message::Type Message::level()
 {
 	return mType;
 }
 
+/*
 std::string Message::levelToString()
 {
 	switch (mType)
@@ -29,11 +29,11 @@ std::string Message::levelToString()
 		default:
 			return std::string("[UNKNOWN]");
 	}
-}
+}*/
 
-std::string Message::message()
+uint32_t Message::code()
 {
-	return mMessage;
+	return mMessageCode;
 }
 
 uint32_t Message::timestamp()
@@ -47,26 +47,19 @@ Message& Message::operator<<(Type type)
 	return *this;
 }
 
-
-Message& Message::operator<<(std::string text)
-{
-	mMessage += text;
-	return *this;
-}
-
 Message& Message::operator<<(uint32_t number)
 {
-	mMessage += std::to_string(number);
+	mMessageCode = number;
 	return *this;
 }
 
-Message& Message::operator<<(std::initializer_list<std::pair<const char*, JsonVariant>> values)
-{
-//	for (const auto& pair : values)
-//	{
-//		mObject.[pair.first] = pair.second;
-//	}
-//	return *this;
-}
+//Message& Message::operator<<(std::initializer_list<std::pair<const char*, JsonVariant>> values)
+//{
+////	for (const auto& pair : values)
+////	{
+////		mObject.[pair.first] = pair.second;
+////	}
+////	return *this;
+//}
 
 

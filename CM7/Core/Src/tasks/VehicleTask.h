@@ -23,6 +23,7 @@
 #include "utils/filters/SCurveFilter.h"
 #include "utils/filters/ThresholdFilter.h"
 #include "utils/Phaserunner.hpp"
+#include "utils/tools/Timer.hpp"
 
 #include <string>
 
@@ -56,6 +57,8 @@ class VehicleTask : public RTOS_Task
 
 		//Motor Zero crossing detection
 		bool mZeroCrossing;
+
+		Timer mLogDynamicsTimer;
 
 };
 

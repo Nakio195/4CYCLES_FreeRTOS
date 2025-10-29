@@ -74,7 +74,12 @@ class CanPacket
 				DataLengthCode = FDCAN_DLC_BYTES_48;
 
 			header.Identifier = Identifier;
-			header.IdType = FDCAN_STANDARD_ID;             // Standard ID type (11 bits)
+
+			if (Identifier > 0x7FF)
+				header.IdType = FDCAN_EXTENDED_ID;     // Extended ID type (29 bits)
+			else
+				header.IdType = FDCAN_STANDARD_ID;             // Standard ID type (11 bits)
+
 			header.TxFrameType = FDCAN_DATA_FRAME;         // Data frame
 			header.DataLength = DataLengthCode;         // Data length code (DLC) - 8 bytes of data
 			header.ErrorStateIndicator = FDCAN_ESI_PASSIVE; // Error state indicator (PASSIVE)

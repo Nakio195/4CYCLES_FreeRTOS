@@ -33,15 +33,19 @@ VehicleTask::VehicleTask()
 	mMotorEngaged = false;
 	mZeroCrossing = false;
 
+	mLogDynamicsTimer = Timer(100, Timer::Continuous);
+	mLogDynamicsTimer.startTimer();
+
 
 }
 
 void VehicleTask::setup()
 {
 
-	this->attachLogQueue(Json.createLogQueue());
-	CanHandler.attachLogQueue(Json.createLogQueue());
-	MainController.attachLogQueue(Json.createLogQueue());
+	this->attachLogQueue(LoggerTask.createLogQueue());
+	CanHandler.attachLogQueue(LoggerTask.createLogQueue());
+	MainController.attachLogQueue(LoggerTask.createLogQueue());
+
 	mControllerQueue = MainController.getQueue();
 	vQueueAddToRegistry(mControllerQueue, "ControllerActions");
 
@@ -53,7 +57,7 @@ void VehicleTask::setup()
 	Ph_AVD.start("Ph_AVD", 256, osPriorityHigh2);
 	Ph_ARG.start("Ph_ARG", 256, osPriorityHigh2);
 	Ph_ARD.start("Ph_ARD", 256, osPriorityHigh2);
-	//Json.start("JSON Logger", 1024, osPriorityBelowNormal);
+	LoggerTask.start("Logger", 1024, osPriorityBelowNormal);
 }
 
 void VehicleTask::run()
@@ -110,6 +114,9 @@ void VehicleTask::run()
 		}
 	}
 
+	//Update timers
+	mLogDynamicsTimer.tick(osKernelGetTickCount());
+
 	//	Computing data
 	mThrottle.update();
 	mBrake.update();
@@ -129,6 +136,17 @@ void VehicleTask::run()
 //		mZeroCrossing = false;
 
 	setMotorSpeed(mThrottle.getOutput(), mMotorReverseEngaged);
+
+	//Logging dynamics data
+	if(mLogDynamicsTimer.triggered())
+	{
+		Message::DynamicsData data;
+		data.speed = 25;
+		data.throttle = mThrottle.getOutput();
+		data.brake = mBrake.getOutput();
+		Message msg(data);
+		this->log(msg);
+	}
 	//osDelay(10);
 }
 
