@@ -176,12 +176,19 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(ALARM_BRK_AV_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : DIR_DIR_AV_Pin PULSE_DIR_AR_Pin NSS_AV_Pin */
-  GPIO_InitStruct.Pin = DIR_DIR_AV_Pin|PULSE_DIR_AR_Pin|NSS_AV_Pin;
+  /*Configure GPIO pins : DIR_DIR_AV_Pin PULSE_DIR_AR_Pin */
+  GPIO_InitStruct.Pin = DIR_DIR_AV_Pin|PULSE_DIR_AR_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOK, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : NSS_AV_Pin */
+  GPIO_InitStruct.Pin = NSS_AV_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(NSS_AV_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : DIR_PIN_Pin */
   GPIO_InitStruct.Pin = DIR_PIN_Pin;
@@ -214,7 +221,7 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin = NSS_AR_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(NSS_AR_GPIO_Port, &GPIO_InitStruct);
 
 }
