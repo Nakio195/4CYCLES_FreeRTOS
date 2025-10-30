@@ -10,7 +10,7 @@
 
 #include "RTOSTask.h"
 #include "LoggerTask.h"
-#include "PS3Controller.h"
+#include "HandleBarController.h"
 #include "DirectionTask.h"
 #include "usbd_cdc_if.h"
 #include "usart.h"

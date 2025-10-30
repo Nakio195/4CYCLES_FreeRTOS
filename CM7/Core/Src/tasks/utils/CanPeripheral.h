@@ -154,6 +154,7 @@ class CanPeripheral
 		SemaphoreHandle_t mutex;
 
 		// Connection monitoring
+		uint32_t heartbeat;
 		uint32_t previousTick;
 		uint32_t mLastCommunication;
 		uint32_t mCommunicationTimeout;

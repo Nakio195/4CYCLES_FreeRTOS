@@ -44,13 +44,13 @@ void VehicleTask::setup()
 
 	this->attachLogQueue(LoggerTask.createLogQueue());
 	CanHandler.attachLogQueue(LoggerTask.createLogQueue());
-	MainController.attachLogQueue(LoggerTask.createLogQueue());
+	HandleBarTask.attachLogQueue(LoggerTask.createLogQueue());
 
-	mControllerQueue = MainController.getQueue();
+	mControllerQueue = HandleBarTask.getQueue();
 	vQueueAddToRegistry(mControllerQueue, "ControllerActions");
 
 	CanHandler.start("CAN", 256, osPriorityBelowNormal1);
-	MainController.start("PS3", 256, osPriorityBelowNormal);
+	HandleBarTask.start("HandleBar", 256, osPriorityBelowNormal);
 	DirectionHandler.start("Direction", 128, osPriorityHigh3);
 	ModbusHandler.start("ModbusMaster", 128, osPriorityHigh);
 	Ph_AVG.start("Ph_AVG", 256, osPriorityHigh2);
