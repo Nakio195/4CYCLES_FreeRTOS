@@ -110,6 +110,6 @@ class PS3Controller: public CanPeripheral, public RTOS_Task, public Controller
 
 };
 
-extern PS3Controller MainController;
+extern PS3Controller PS3Task;
 
 #endif /* SRC_TASKS_PS3CONTROLLER_H_ */

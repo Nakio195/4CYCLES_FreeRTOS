@@ -39,8 +39,9 @@ class RTOS_Task
 
 		void inline log(Message &m)
 		{
-			Message* p = new Message(m);
-			xQueueSend(mLogQueue, &p, 100);
+			Message* p = new Message(m); // TODO Use Message pool
+			if(mLogQueue != nullptr)
+				xQueueSend(mLogQueue, &p, 100);
 		}
 
 	protected:
@@ -84,7 +85,7 @@ class RTOS_Task
 
 		bool stopCalled = false;
 		TaskHandle_t xHandle = 0;
-		QueueHandle_t mLogQueue;
+		QueueHandle_t mLogQueue = nullptr;
 };
 
 #endif /* SRC_UTILS_RTOSTASK_H_ */

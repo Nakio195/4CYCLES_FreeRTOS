@@ -7,7 +7,7 @@
 
 #include "PS3Controller.h"
 
-PS3Controller MainController;
+PS3Controller PS3Task;
 ActionPacketPoolHandler ActionPacketPool;
 
 PS3Controller::PS3Controller()
