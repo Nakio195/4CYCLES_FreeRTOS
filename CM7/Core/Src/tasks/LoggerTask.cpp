@@ -7,9 +7,9 @@ Logger::Logger()
 {
 	mutex = xSemaphoreCreateMutex();
 
-	setRangeFilter(0x1000, 0x1009);
-	setCommunicationTimeout(3000);
-	setRecoveryMode(50, 1000);
+	setRangeFilter(0x1000, 0x1019);
+	setCommunicationTimeout(5000);
+	setRecoveryMode(5, 500);
 
 	mPreviousTick = 0;
 
@@ -39,6 +39,18 @@ void Logger::setup()
 void Logger::run()
 {
 
+	CanPacket* packet = nullptr;
+	if(xQueueReceive(mPacketsQueue, &packet, 0) == pdTRUE)
+	{
+		if(packet != nullptr)
+		{
+			if(packet->Identifier == 0x1018)
+				heartbeat = packet->data[0] | (packet->data[1] << 8) | (packet->data[2] << 16) | (packet->data[3] << 24);
+
+			CanPacketPool.free(packet);
+		}
+	}
+
 	{LockGuard lock(mutex);
 		for(auto queue : mQueues)
 		{
@@ -52,7 +64,7 @@ void Logger::run()
 					{
 						if((uint32_t)(m->level()) >= mLogLevel)
 							print(*m);
-						delete m;
+						delete m; // TODO : Use Messages Pools
 					}
 				}
 			}
@@ -85,8 +97,6 @@ void Logger::reInit()
 {
 	CanPacket *LoggerControl = CanPacketPool.allocate(0x1019);
 	LoggerControl->data.push_back(0x01);
-	LoggerControl->data.push_back(0x00);
-	LoggerControl->data.push_back(0x00);
 	if(CanHandler.send(LoggerControl))
 	{
 		// Todo handle full Queue
@@ -95,7 +105,8 @@ void Logger::reInit()
 
 void Logger::recovery()
 {
-
+	log(Message(Message::LogError) << LOG_LOGGER_RECOVERY_ATTEMPT);
+	reInit();
 }
 
 void Logger::absent()
@@ -115,6 +126,9 @@ void Logger::lost()
 
 void Logger::print(Message& m)
 {
+	if (mState != CanPeripheral::State::Ready)
+		return;
+
 	uint32_t id = 0x1000;
 	if (m.level() == Message::LogCritical)
 		id = 0x1000;
