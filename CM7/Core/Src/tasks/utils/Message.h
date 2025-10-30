@@ -47,11 +47,26 @@ class Message
 };
 
 enum {
+	// CAN Peripherals
 	LOG_PS3_CONTROLLER_ABSENT, //PS3 Controller absent from bus
 	LOG_PS3_CONTROLLER_CONNECTED, //PS3 Controller connected to bus
 	LOG_PS3_CONTROLLER_RECOVERY_ATTEMPT, //PS3 Controller recovery attempt
-	LOG_PS3_CONTROLLER_LOST, //PS3 Controller lost
-	LOG_PS3_CONTROLLER_RECOVERED, //PS3 Controller recovered
+	LOG_PS3_CONTROLLER_LOST, //Logger lost
+	LOG_PS3_CONTROLLER_RECOVERED, //Logger recovered
+
+	LOG_LOGGER_ABSENT, //Logger absent from bus
+	LOG_LOGGER_CONNECTED, //Logger connected to bus
+	LOG_LOGGER_RECOVERY_ATTEMPT, //Logger recovery attempt
+	LOG_LOGGER_LOST, //Logger lost
+	LOG_LOGGER_RECOVERED, //Logger recovered
+
+	LOG_HANDLEBAR_ABSENT, //HandleBar absent from bus
+	LOG_HANDLEBAR_CONNECTED, //HandleBar connected to bus
+	LOG_HANDLEBAR_RECOVERY_ATTEMPT, //HandleBar recovery attempt
+	LOG_HANDLEBAR_LOST, //HandleBar lost
+	LOG_HANDLEBAR_RECOVERED, //HandleBar recovered
+
+	// Motor Status
 	LOG_VEHICLE_MOTOR_ENGAGED, // Vehicle motor engaged
 	LOG_VEHICLE_MOTOR_DISENGAGED, // Vehicle motor disengaged
 	LOG_VEHICLE_REVERSE_ENGAGED, // Vehicle reverse gear engaged
