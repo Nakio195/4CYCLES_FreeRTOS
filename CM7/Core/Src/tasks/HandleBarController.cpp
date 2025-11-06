@@ -13,10 +13,12 @@ extern ActionPacketPoolHandler ActionPacketPool;
 HandleBarController::HandleBarController()
 {
 	setRangeFilter(0x20, 0x29);
-	setCommunicationTimeout(5000);
-	setRecoveryMode(100, 2500);
+	setCommunicationTimeout(1000);
+	setRecoveryMode(10, 250);
 
 	mPreviousTick = 0;
+	Mut_Data = xSemaphoreCreateMutex();
+	xSemaphoreGive(Mut_Data);
 
 	CanHandler.attach(this);
 }
@@ -29,6 +31,9 @@ void HandleBarController::init()
 	{
 		CanPeripheral::init();
 	}
+
+	else
+		mState = Initialized;
 }
 
 void HandleBarController::reInit()
@@ -45,10 +50,6 @@ void HandleBarController::reInit()
 void HandleBarController::absent()
 {
 	log(Message(Message::LogCritical) << LOG_HANDLEBAR_ABSENT);
-	while(1)
-	{
-		osDelay(10000);
-	}
 }
 
 void HandleBarController::recovery()
@@ -69,9 +70,8 @@ void HandleBarController::lost()
 
 void HandleBarController::setup()
 {
-	Mut_Data = xSemaphoreCreateMutex();
-	xSemaphoreGive(Mut_Data);
-	init();
+
+	//init();
 }
 
 void HandleBarController::run()
@@ -85,6 +85,11 @@ void HandleBarController::run()
 				ControllerData(packet);
 			else if(packet->Identifier == 0x21)
 				ControllerStatus(packet);
+			else if (packet->Identifier == 0x28)
+			{
+				uint32_t hb = packet->data[0] | (packet->data[1] << 8) | (packet->data[2] << 16) | (packet->data[3] << 24);
+				heartbeat(hb);
+			}
 			CanPacketPool.free(packet);
 		}
 	}
@@ -113,10 +118,10 @@ void HandleBarController::ControllerStatus(CanPacket* packet)
 
 	if(xSemaphoreTake(Mut_Data, 10) == pdTRUE)
 	{
-		heartbeat |= packet->data[0] << 24;
-		heartbeat |= packet->data[1] << 16;
-		heartbeat |= packet->data[2] << 8;
-		heartbeat |= packet->data[3] & 0xFF;
+		mHeartbeat |= packet->data[0] << 24;
+		mHeartbeat |= packet->data[1] << 16;
+		mHeartbeat |= packet->data[2] << 8;
+		mHeartbeat |= packet->data[3] & 0xFF;
 
 		xSemaphoreGive(Mut_Data);
 	}
