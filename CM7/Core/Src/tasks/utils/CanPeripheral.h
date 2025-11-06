@@ -46,14 +46,13 @@ class CanPeripheral
 		bool inline push(CanPacket *packet)
 		{
 			//Ensure data is not being manipulated elsewhere
-			LockGuard lock(mutex);
-
 			if(accept(packet->Identifier))
 			{
+				LockGuard lock(mutex);
 				mLastCommunication = 0;
-				mResponding = true;
 
-				mState = Ready;
+				if(mState == Initialized || mState == Recovery)
+					mState = Ready;
 
 				// Add packet to Queue for children class to process
 				if(xQueueSend(mPacketsQueue, &packet, 0) == pdTRUE)
@@ -75,7 +74,19 @@ class CanPeripheral
 			if(mState == Initialized)
 				mState = Absent;
 			if(mState == Ready)
-				mState = Recovery;
+				startRecovery();
+		}
+
+		void inline heartbeat(uint32_t hb)
+		{
+			LockGuard lock(mutex);
+			mLastHeartbeat = mHeartbeat;
+			mHeartbeat = hb;
+			mDtHeartbeat = mHeartbeat - mLastHeartbeat;
+
+			if (mState == Absent || mState == Lost)
+				startRecovery();
+
 		}
 
 		void inline setCommunicationTimeout(uint32_t timeout)
@@ -90,12 +101,14 @@ class CanPeripheral
 			{ // Locked scope
 				LockGuard lock(mutex);
 
-
 				mLastCommunication += t - previousTick;
 				previousTick = t;
 
 				if(mLastCommunication >= mCommunicationTimeout && mState != Recovery)
 					CommunicationTimeout();
+
+				if (mState == Unitialized)
+					init();
 
 				if(mState == Absent)
 					absent();
@@ -123,6 +136,12 @@ class CanPeripheral
 					recovered();
 				}
 			}
+		}
+
+		void inline startRecovery()
+		{
+			mState = Recovery;
+			mRecoveryAttempt = 0;
 		}
 
 		bool inline accept(uint32_t id)
@@ -154,7 +173,9 @@ class CanPeripheral
 		SemaphoreHandle_t mutex;
 
 		// Connection monitoring
-		uint32_t heartbeat;
+		uint32_t mLastHeartbeat;
+		uint32_t mHeartbeat;
+		uint32_t mDtHeartbeat;
 		uint32_t previousTick;
 		uint32_t mLastCommunication;
 		uint32_t mCommunicationTimeout;
