@@ -18,12 +18,12 @@ void CAN_Task::setup()
 {
 	FDCAN_FilterTypeDef sFilterConfig;
 	/* Configure Rx filter */
-	sFilterConfig.IdType = FDCAN_STANDARD_ID;
+	sFilterConfig.IdType = FDCAN_EXTENDED_ID;
 	sFilterConfig.FilterIndex = 0;
 	sFilterConfig.FilterType = FDCAN_FILTER_RANGE;
 	sFilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
 	sFilterConfig.FilterID1 = 0x00;
-	sFilterConfig.FilterID2 = 0x7FF;
+	sFilterConfig.FilterID2 = 0x1FFFFFFF;
 
 	if (HAL_FDCAN_ConfigFilter(&hfdcan2, &sFilterConfig) != HAL_OK)
 		Error_Handler();
@@ -32,11 +32,19 @@ void CAN_Task::setup()
 	if (HAL_FDCAN_Start(&hfdcan2) != HAL_OK)
 		Error_Handler();
 
-	if (HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK)
-		Error_Handler();
-
 	Sem_MessageAvailable = xSemaphoreCreateBinary();
 	TX_Queue = xQueueCreate(10, sizeof(CanPacket*));
+
+	if (HAL_FDCAN_ActivateNotification(&hfdcan2, (FDCAN_IT_RX_FIFO0_NEW_MESSAGE |
+													FDCAN_IT_TX_EVT_FIFO_FULL |
+													FDCAN_IT_RX_FIFO0_FULL |
+													FDCAN_IT_ERROR_WARNING |
+													FDCAN_IT_ERROR_PASSIVE|
+													FDCAN_IT_BUS_OFF|
+													FDCAN_IT_ARB_PROTOCOL_ERROR |
+													FDCAN_IT_DATA_PROTOCOL_ERROR
+												 ) , 0) != HAL_OK)
+		Error_Handler();
 
 }
 
@@ -46,7 +54,7 @@ void CAN_Task::run()
 	// Take Semaphore and wait 10ms  for a give
 	xSemaphoreTake(Sem_MessageAvailable, 0);
 
-	if(xSemaphoreTake(Sem_MessageAvailable, 10) == pdTRUE)
+	if(xSemaphoreTake(Sem_MessageAvailable, 1) == pdTRUE)
 	{
 		while ((hfdcan2.Instance->RXF0S & FDCAN_RXF0S_F0FL) != 0)
 		{

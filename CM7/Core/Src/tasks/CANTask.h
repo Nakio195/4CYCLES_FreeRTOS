@@ -40,6 +40,22 @@ class CAN_Task : public RTOS_Task
 				portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 				__HAL_FDCAN_CLEAR_FLAG(hfdcan, FDCAN_IT_RX_FIFO0_NEW_MESSAGE);
 			}
+
+			else if(__HAL_FDCAN_GET_IT(hfdcan, FDCAN_IT_RX_FIFO0_NEW_MESSAGE) && __HAL_FDCAN_GET_IT_SOURCE(hfdcan, FDCAN_IT_RX_FIFO0_NEW_MESSAGE))
+			{
+                __HAL_FDCAN_CLEAR_FLAG(hfdcan, FDCAN_IT_RX_FIFO0_NEW_MESSAGE);
+			}
+
+
+			else
+			{
+				uint32_t error = HAL_FDCAN_GetError(hfdcan);
+				if (error & FDCAN_FLAG_ARB_PROTOCOL_ERROR)
+				{
+					__HAL_FDCAN_CLEAR_FLAG(hfdcan, FDCAN_FLAG_ARB_PROTOCOL_ERROR);
+					// Log ou action corrective
+				}
+			}
 		}
 
 	public:
