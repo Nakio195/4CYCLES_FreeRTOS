@@ -48,7 +48,7 @@ class Message
 
 enum {
 	// CAN Peripherals
-	LOG_PS3_CONTROLLER_ABSENT, //PS3 Controller absent from bus
+	LOG_PS3_CONTROLLER_ABSENT = 1, //PS3 Controller absent from bus
 	LOG_PS3_CONTROLLER_CONNECTED, //PS3 Controller connected to bus
 	LOG_PS3_CONTROLLER_RECOVERY_ATTEMPT, //PS3 Controller recovery attempt
 	LOG_PS3_CONTROLLER_LOST, //Logger lost
