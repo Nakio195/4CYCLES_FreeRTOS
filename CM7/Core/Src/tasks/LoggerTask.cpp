@@ -33,7 +33,7 @@ QueueHandle_t Logger::createLogQueue()
 void Logger::setup()
 {
 	osDelay(1000);
-	init();
+	//init();
 }
 
 void Logger::run()
@@ -45,7 +45,10 @@ void Logger::run()
 		if(packet != nullptr)
 		{
 			if(packet->Identifier == 0x1018)
-				heartbeat = packet->data[0] | (packet->data[1] << 8) | (packet->data[2] << 16) | (packet->data[3] << 24);
+			{
+				uint32_t hb = packet->data[0] | (packet->data[1] << 8) | (packet->data[2] << 16) | (packet->data[3] << 24);
+				heartbeat(hb);
+			}
 
 			CanPacketPool.free(packet);
 		}
@@ -91,6 +94,9 @@ void Logger::init()
 	{
 		CanPeripheral::init();
 	}
+
+	else
+		mState = Initialized;
 }
 
 void Logger::reInit()
@@ -111,35 +117,34 @@ void Logger::recovery()
 
 void Logger::absent()
 {
-
+	log(Message(Message::LogError) << LOG_LOGGER_ABSENT);
 }
 
 void Logger::recovered()
 {
-
+	log(Message(Message::LogInfo) << LOG_LOGGER_RECOVERED);
 }
 
 void Logger::lost()
 {
-
+	log(Message(Message::LogInfo) << LOG_LOGGER_LOST);
 }
 
 void Logger::print(Message& m)
 {
-	if (mState != CanPeripheral::State::Ready)
-		return;
 
+	uint8_t level = 0;
 	uint32_t id = 0x1000;
 	if (m.level() == Message::LogCritical)
-		id = 0x1000;
+		level = 1;
 	else if (m.level() == Message::LogError)
-		id = 0x1001;
+		level = 2;
 	else if (m.level() == Message::LogWarning)
-		id = 0x1002;
+		level = 3;
 	else if (m.level() == Message::LogInfo)
-		id = 0x1003;
+		level = 4;
 	else if (m.level() == Message::LogDebug)
-		id = 0x1004;
+		level = 5;
 	else if (m.level() == Message::Dynamics)
 		id = 0x1005;
 	else if (m.level() == Message::Electrics)
@@ -164,7 +169,7 @@ void Logger::print(Message& m)
 
 	else
 	{
-		Log->data.push_back(m.code() >> 24);
+		Log->data.push_back(level);
 		Log->data.push_back(m.code() >> 16);
 		Log->data.push_back(m.code() >> 8);
 		Log->data.push_back(m.code() & 0xFF);
