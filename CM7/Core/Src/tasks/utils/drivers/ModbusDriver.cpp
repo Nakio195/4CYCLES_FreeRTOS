@@ -70,7 +70,7 @@ void ModbusDriver::run()
 
 
         case State::InterMessageDelay:
-        	//vTaskDelay(pdMS_TO_TICKS(1));
+        	//osDelay(pdMS_TO_TICKS(1));
         	mState = State::Idle;
         	break;
 
@@ -266,6 +266,15 @@ bool ModbusDriver::processFrame()
 	}
 
 	mFrame.slaveAddress = RX_Buffer[0];
+
+	if(mFrame.slaveAddress < 1 || mFrame.slaveAddress > 4)
+	{
+		mState = State::Error;
+		mError |= Frame_InvalidSlaveID;
+		mFrame.valid = false;
+		return false;
+	}
+
 	mFrame.functionCode = RX_Buffer[1];
 
 	// Checking supported FunctionCode
