@@ -45,7 +45,7 @@ class HandleBarController: public CanPeripheral, public RTOS_Task, public Contro
 
 		uint8_t mThrottle;
 		uint8_t mBrake;
-		uint16_t mSteering;
+		int32_t mSteering;
 
 		Switch mBrakeSwitch;
 		Switch mLightsSwitch;

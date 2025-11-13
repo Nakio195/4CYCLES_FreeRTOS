@@ -137,11 +137,20 @@ void HandleBarController::ControllerData(CanPacket* packet)
 	{
 		mThrottle = uint8_t(packet->data[0]);
 		mBrake = uint8_t(packet->data[1]);
-		mSteering = uint8_t(packet->data[2]) << 8 | uint8_t(packet->data[3]);
+		mSteering = int8_t(packet->data[2])*48;
 
 		setThrottleCommand(mThrottle);
 		setBrakeCommand(mBrake);
 		setSteeringCommand(mSteering);
+
+		mParkBrakeSwitch.update(packet->data[3] & 0x80);
+		mBrakeSwitch.update((packet->data[3]) & 0x40);
+		mTurnLSwitch.update((packet->data[3]) & 0x20);
+		mTurnRSwitch.update((packet->data[3]) & 0x10);
+		mWarningSwitch.update((packet->data[3]) & 0x08);
+		mLightsSwitch.update((packet->data[3]) & 0x04);
+		mHornSwitch.update((packet->data[3]) & 0x02);
+		mReverseSwitch.update((packet->data[3]) & 0x01);
 
 		switch(mTurnLSwitch.read())
 		{
@@ -177,6 +186,18 @@ void HandleBarController::ControllerData(CanPacket* packet)
 		switch (mWarningSwitch.read())
 		{
 			case Switch::States::PRESSED:
+				setReverseCommand(Action::Gear::Reverse);
+				break;
+			case Switch::States::RELEASED:
+				setReverseCommand(Action::Gear::Forward);
+				break;
+			default:
+				break;
+		}
+
+		switch (mHornSwitch.read())
+		{
+			case Switch::States::PRESSED:
 				setLightsCommand(Action::Signals::Hazard, true);
 				HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_RESET);
 				HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_SET);
@@ -190,7 +211,7 @@ void HandleBarController::ControllerData(CanPacket* packet)
 				break;
 		}
 
-/*		switch (controller.buttons.start.read())
+		switch (mParkBrakeSwitch.read())
 		{
 			case Switch::States::RELEASED:
 				setMotorEngage(true);
@@ -198,7 +219,7 @@ void HandleBarController::ControllerData(CanPacket* packet)
 			default:
 				break;
 		}
-*/
+
 		switch (mBrakeSwitch.read())
 		{
 			case Switch::States::PRESSED:
