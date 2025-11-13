@@ -86,6 +86,9 @@ class ModbusPacketPoolHandler
 					{
 						used[i] = true;
 						pkt = &pool[i];
+						currentPoolUse++;
+						if (MODBUS_POOL_SIZE - currentPoolUse < minPoolSizeEver)
+							minPoolSizeEver = MODBUS_POOL_SIZE - currentPoolUse;
 						break;
 					}
 				}
@@ -95,21 +98,21 @@ class ModbusPacketPoolHandler
 				pkt->reset(slaveID, dir);
 
 			assert(pkt != nullptr); // Ensure that the request was allocated successfully
-			currentPoolUse++;
-			if (MODBUS_POOL_SIZE - currentPoolUse < minPoolSizeEver)
-				minPoolSizeEver = MODBUS_POOL_SIZE - currentPoolUse;
+
 			return pkt; // nullptr si pool plein
 		}
 
 		void free(ModbusPacket* pkt)
 		{
-			if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE) {
-				int index = pkt - pool; // calcul index
-				if (index >= 0 && index < MODBUS_POOL_SIZE) {
+			if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE)
+			{
+				uint32_t index = pkt - pool; // calcul index
+				if (index >= 0 && index < MODBUS_POOL_SIZE && used[index])
+				{
 					used[index] = false;
+					currentPoolUse--;
 				}
 				xSemaphoreGive(mutex);
-				currentPoolUse--;
 			}
 		}
 };
