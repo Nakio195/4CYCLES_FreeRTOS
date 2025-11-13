@@ -17,11 +17,12 @@ Phaserunner::Phaserunner(uint8_t slaveID)
 	mConnection.slaveID = slaveID;
 	mRegisters = new Registers;
 
+	mRegistersUpdated = xSemaphoreCreateBinary();
+
 	TimerHeartbeat.setMode(Timer::Continuous);
 	TimerHeartbeat.setPeriod(HeartBeat_Rate);
 	TimerHeartbeat.startTimer();
 
-	mRegistersUpdated = xSemaphoreCreateBinary();
 	//Controller initialization
 
 }
