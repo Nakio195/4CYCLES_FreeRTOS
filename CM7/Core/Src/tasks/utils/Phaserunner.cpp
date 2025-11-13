@@ -245,6 +245,23 @@ void Phaserunner::readMotorFaults()
 	mRegisters->read(258);
 	xSemaphoreGive(mRegistersUpdated);
 }
+
+
+void Phaserunner::readMotorInfo()
+{
+	/*
+	 *  @260 - 265
+	 *  Vehicle speed, motor temperature, motor current, motor rpm, motor speed, bus voltage
+	 */
+	mRegisters->read(260);
+	mRegisters->read(261);
+	mRegisters->read(262);
+	mRegisters->read(263);
+	mRegisters->read(264);
+	mRegisters->read(265);
+	xSemaphoreGive(mRegistersUpdated);
+}
+
 void Phaserunner::readControllerFaults()
 {
 	/*
