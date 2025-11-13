@@ -11,18 +11,20 @@ class Message
 {
 	public:
 
-		struct DynamicsData
+		struct ControllerData
 		{
-			uint8_t speed = 0;
+			uint8_t rawThrottle = 0;
 			uint8_t throttle = 0;
+			uint8_t rawBrake = 0;
 			uint8_t brake = 0;
+			uint8_t commands = 0;
 		};
 
 	public:
-		enum Type{LogDebug, LogInfo, LogWarning, LogError, LogCritical, Dynamics, Electrics};
+		enum Type{LogDebug, LogInfo, LogWarning, LogError, LogCritical, Controller, Electrics};
 
 		Message(Type type);
-		Message(DynamicsData data) : mDynamicsData(data), mType(Dynamics)
+		Message(ControllerData data) : mControllerData(data), mType(Controller)
 		{
 			mTimestamp = xTaskGetTickCount();
 		}
@@ -40,7 +42,7 @@ class Message
 		uint32_t mTimestamp;
 
 		uint32_t mMessageCode;
-		DynamicsData mDynamicsData;
+		ControllerData mControllerData;
 
 	protected:
 		Type mType;

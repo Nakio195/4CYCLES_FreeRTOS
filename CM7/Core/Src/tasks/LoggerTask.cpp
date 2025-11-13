@@ -145,7 +145,7 @@ void Logger::print(Message& m)
 		level = 4;
 	else if (m.level() == Message::LogDebug)
 		level = 5;
-	else if (m.level() == Message::Dynamics)
+	else if (m.level() == Message::Controller)
 		id = 0x1005;
 	else if (m.level() == Message::Electrics)
 		id = 0x1006;
@@ -156,11 +156,12 @@ void Logger::print(Message& m)
 	Log->data.push_back(m.timestamp() >> 8);
 	Log->data.push_back(m.timestamp() & 0xFF);
 
-	if (m.level() == Message::Dynamics)
+	if (m.level() == Message::Controller)
 	{
-		Log->data.push_back(m.mDynamicsData.speed);
-		Log->data.push_back(m.mDynamicsData.throttle);
-		Log->data.push_back(m.mDynamicsData.brake);
+		Log->data.push_back(m.mControllerData.rawThrottle);
+		Log->data.push_back(m.mControllerData.throttle);
+		Log->data.push_back(m.mControllerData.rawBrake);
+		Log->data.push_back(m.mControllerData.brake);
 	}
 	else if (m.level() == Message::Electrics)
 	{

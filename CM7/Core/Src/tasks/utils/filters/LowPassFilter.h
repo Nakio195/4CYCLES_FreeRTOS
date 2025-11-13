@@ -16,7 +16,7 @@
 
 #include "DigitalFilter.h"
 
-#define LOWPASSFILTER_SIZE 5
+#define LOWPASSFILTER_SIZE 50
 
 class LowPassFilter : public DigitalFilter
 {
