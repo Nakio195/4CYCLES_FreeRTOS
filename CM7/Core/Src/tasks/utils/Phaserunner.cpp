@@ -146,6 +146,32 @@ void Phaserunner::setSpeed(float speed)
 	//TODO Filter input and check motor state
 	setSpeedCommand(speed);
 }
+
+void Phaserunner::setBrake(float brake)
+{
+	//TODO Filter input and check motor state
+	setBrakeCurrent(brake);
+}
+
+MotorInfo Phaserunner::getMotorInfo()
+{
+	MotorInfo info;
+	/*
+	 *  @260 - 265
+	 *  Vehicle speed, motor temperature, motor current, motor rpm, motor speed, bus voltage
+	 */
+
+	info.vehicleSpeed = mRegisters->get(260).value / 256.0;
+	info.motorTemp = mRegisters->get(261).value;
+	info.motorCurrent = mRegisters->get(262).value / 32.0;
+	info.speedRPM = mRegisters->get(263).value;
+	info.motorSpeed = mRegisters->get(264).value / 40.96;
+	info.busVoltage = mRegisters->get(265).value / 32.0;
+	info.busCurrent = mRegisters->get(266).value / 32.0;
+
+	return info;
+}
+
 MotorFaults Phaserunner::getMotorFaults()
 {
 	return mMotorFaults;
