@@ -39,7 +39,8 @@ class ModbusDriver : public RTOS_Task
 			RX_Timeout					= 1 << 8,
 			TX_TransmitError			= 1 << 9,
 			RX_ReceiveError				= 1 << 10,
-			Slave_Timeout 				= 1 << 11
+			Slave_Timeout 				= 1 << 11,
+			Frame_InvalidSlaveID		= 1 << 12,
 		};
 
 	public:
