@@ -128,9 +128,9 @@ void Phaserunner::run()
         }
         else
         {
-            for (const Register& r : answer->registers)
+            for (Register& r : answer->registers)
             {
-                mRegisters->update(r.address, r.value);
+                r = mRegisters->update(r.address, r.value);
 
                 switch (r.address)
                 {

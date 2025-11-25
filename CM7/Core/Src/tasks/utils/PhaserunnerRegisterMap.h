@@ -116,16 +116,18 @@ struct Register
 struct Registers
 {
 
-	void update(uint16_t addr, uint16_t value)
+	Register update(uint16_t addr, uint16_t value)
 	{
 		for (auto &r : map)
 		{
 			if (r.address == addr)
 			{
 				r.value = value;
-				return;
+				return r;
 			}
 		}
+
+		return Register();
 	}
 
 	Register get(uint16_t addr)
