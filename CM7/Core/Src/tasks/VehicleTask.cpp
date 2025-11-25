@@ -186,6 +186,18 @@ void VehicleTask::setMotorSpeed(float speed, bool reverse)
 	}
 }
 
+
+void VehicleTask::setMotorEBrake(float brake)
+{
+	if(mMotorEngaged)
+	{
+		Ph_AVG.setBrake(float(brake)/255.0*100.0);
+		Ph_AVD.setBrake(float(brake)/255.0*100.0);
+		Ph_ARG.setBrake(float(brake)/255.0*100.0);
+		Ph_ARD.setBrake(float(brake)/255.0*100.0);
+	}
+}
+
 void VehicleTask::handleLightsAction(Action* action)
 {
 	switch(action->getLightsType())
