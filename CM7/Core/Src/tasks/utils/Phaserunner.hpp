@@ -88,6 +88,26 @@ class Phaserunner : public RTOS_Task
 
 		ConnectionParameters mConnection;
 		Registers *mRegisters;
+		QueueHandle_t RegisterQueue;
+
+	    static constexpr size_t MAX_PENDING_REGS = 64;
+	    static constexpr size_t MODBUS_MAX_REGS = 125;
+
+	    Register mPendingWriteRegisters[MAX_PENDING_REGS];
+	    size_t mPendingWriteCount = 0;
+
+	    Register mPendingReadRegisters[MAX_PENDING_REGS];
+	    size_t mPendingReadCount = 0;
+
+	    Register mReceivedRegisters[MODBUS_MAX_REGS];
+	    size_t mReceivedCount = 0;
+
+	    // Optional double buffer for blocks to avoid malloc
+	    Register writeBlock[MODBUS_MAX_REGS];
+	    size_t writeBlockSize = 0;
+
+	    Register readBlock[MODBUS_MAX_REGS];
+	    size_t readBlockSize = 0;
 
 		MotorInfo mMotorInfo;
 		MotorCommands mMotorCommands;

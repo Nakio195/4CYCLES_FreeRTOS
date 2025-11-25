@@ -96,27 +96,14 @@ struct Register
 
 struct Registers
 {
-	void set(uint16_t addr, uint16_t value)
+
+	void update(uint16_t addr, uint16_t value)
 	{
-		for(auto& r : map)
+		for (auto &r : map)
 		{
-			if(r.address == addr)
+			if (r.address == addr)
 			{
 				r.value = value;
-				r.pendingWrite = true;
-
-				return;
-			}
-		}
-	}
-
-	void read(uint16_t addr)
-	{
-		for(auto& r : map)
-		{
-			if(r.address == addr)
-			{
-				r.pendingRead = true;
 				return;
 			}
 		}
