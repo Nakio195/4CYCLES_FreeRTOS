@@ -74,6 +74,20 @@ struct MotorFaults
 	}
 };
 
+
+struct MotorInfo
+{
+	// @259 - 264
+	float controllerTemp = 0;
+	float vehicleSpeed = 0;
+	float motorTemp = 0;
+	float motorCurrent = 0;
+	float motorRPM = 0;
+	float motorSpeed = 0;
+	float busVoltage = 0;
+	float busCurrent = 0;
+};
+
 struct Register
 {
 	Register(uint16_t add = 0, float sca = 0, float val = 0)
@@ -83,6 +97,11 @@ struct Register
 		value = val;
 		pendingWrite = false;
 		pendingRead = false;
+	}
+
+	float getValue() const
+	{
+		return value / scale;
 	}
 
 	uint16_t address;
@@ -397,14 +416,14 @@ struct Registers
 //			{256, 1000},
 //			{257, 0},
 			{258, 0}, // faults1
-//			{259, 1},
-//			{260, 256},
-//			{261, 1},
-//			{262, 32},
-//			{263, 1},
-//			{264, 40.96},
-//			{265, 32},
-//			{266, 32},
+ 			{259, 1},
+ 			{260, 256},
+ 			{261, 1},
+ 			{262, 32},
+ 			{263, 1},
+ 			{264, 40.96},
+ 			{265, 32},
+ 			{266, 32},
 //			{267, 1},
 //			{268, 1},
 //			{269, 0},
@@ -429,7 +448,7 @@ struct Registers
 //			{288, 1000},
 //			{289, 1024},
 //			{290, 32},
-//			{291, 4096},
+			{291, 4096},
 //			{292, 4096},
 //			{293, 4096},
 //			{294, 4096},
