@@ -72,6 +72,7 @@ enum {
 	LOG_VEHICLE_MOTOR_ENGAGED, // Vehicle motor engaged
 	LOG_VEHICLE_MOTOR_DISENGAGED, // Vehicle motor disengaged
 	LOG_VEHICLE_REVERSE_ENGAGED, // Vehicle reverse gear engaged
-	LOG_VEHICLE_REVERSE_DISENGAGED // Vehicle reverse gear disengaged
+	LOG_VEHICLE_REVERSE_DISENGAGED, // Vehicle reverse gear disengaged
+	LOG_VEHICLE_MOTOR_FAULTS_DETECTED // Vehicle motor faults detected
 };
 
