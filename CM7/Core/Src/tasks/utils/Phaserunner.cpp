@@ -18,10 +18,10 @@ Phaserunner::Phaserunner(uint8_t slaveID)
 	mConnection.slaveID = slaveID;
 	mRegisters = new Registers;
 
-
 	TimerHeartbeat.setMode(Timer::Continuous);
 	TimerHeartbeat.setPeriod(HeartBeat_Rate);
 	TimerHeartbeat.startTimer();
+	mHeartbeatCounter = 0;
 
 	RegisterQueue = xQueueCreate(32, sizeof(Register));
 
@@ -30,15 +30,15 @@ Phaserunner::Phaserunner(uint8_t slaveID)
 void Phaserunner::setup()
 {
 	osDelay(2000);
-	setCommunicationTimeout(0); //Pas de gestion du timeout
+	setCommunicationTimeout(400); // Gestion timeout
 	setControlSource(0);	// 0 Serial
-	setCurrentsLimits(20.0, 15.0); // 100%
+	setCurrentsLimits(20.0, 15.0);
 	setSpeedRegulatorMode(0);
-	//setRemoteState(1); // 0 Local control
-	//setTorqueCommand(50.0);
+	setRemoteState(1); // 1 IDLE
 	clearFaults();
 	stopMotor();
 }
+
 
 void Phaserunner::run()
 {
@@ -153,6 +153,7 @@ void Phaserunner::run()
     osDelay(1); // Yield to other tasks
 }
 
+
 void Phaserunner::startMotor()
 {
 	setSpeedCommand(0);
@@ -172,26 +173,16 @@ void Phaserunner::setSpeed(float speed)
 void Phaserunner::setBrake(float brake)
 {
 	//TODO Filter input and check motor state
-	setBrakeCurrent(brake);
+	setCurrentsLimits(mMotorCommands.MotoringCurrentLimit, brake);
 }
 
 MotorInfo Phaserunner::getMotorInfo()
 {
-	MotorInfo info;
 	/*
 	 *  @260 - 265
 	 *  Vehicle speed, motor temperature, motor current, motor rpm, motor speed, bus voltage
 	 */
-
-	info.vehicleSpeed = mRegisters->get(260).value / 256.0;
-	info.motorTemp = mRegisters->get(261).value;
-	info.motorCurrent = mRegisters->get(262).value / 32.0;
-	info.speedRPM = mRegisters->get(263).value;
-	info.motorSpeed = mRegisters->get(264).value / 40.96;
-	info.busVoltage = mRegisters->get(265).value / 32.0;
-	info.busCurrent = mRegisters->get(266).value / 32.0;
-
-	return info;
+	return mMotorInfo;
 }
 
 MotorFaults Phaserunner::getMotorFaults()
@@ -255,23 +246,17 @@ bool Phaserunner::setCommunicationTimeout(uint16_t timeout)
 //	else
 		writeRegister(49, 0);
 
-	xSemaphoreGive(mRegistersUpdated);
 
 	return true;
 }
 void Phaserunner::heartbeat()
 {
-	if(mRegisters->get(493).value == 2)
-	{
-		setCurrentsLimits(mMotorCommands.MotoringCurrentLimit, mMotorCommands.BrakingCurrentLimit);
-		setSpeedCommand(mMotorCommands.Speed);
-		setTorqueCommand(mMotorCommands.Torque);
-		setRemoteState(mMotorCommands.State);
-	}
-
-	setCommunicationTimeout(0);
+	setRemoteState(mMotorCommands.State);
+	readMotorInfo();
 	readControllerFaults();
-	readMotorFaults();
+
+	if(!mMotorFaults.ready())
+		log(Message(Message::LogCritical) << LOG_VEHICLE_MOTOR_FAULTS_DETECTED);
 }
 bool Phaserunner::readAllParameters()
 {
@@ -402,6 +387,7 @@ bool Phaserunner::setBrakeCurrent(float brake)
 
 	return true;
 }
+
 bool Phaserunner::setRemoteState(uint8_t state)
 {
 	/*	CRITICAL
@@ -414,9 +400,9 @@ bool Phaserunner::setRemoteState(uint8_t state)
 		return false;
 
 	mMotorCommands.State = state;
-
-	mRegisters->set(493, state);
-	xSemaphoreGive(mRegistersUpdated);
+	mHeartbeatCounter++;
+	uint16_t value = (state | (uint16_t)(mHeartbeatCounter) << 8); // Keep upper byte for heartbeat detecti
+	writeRegister(493, value);
 	return true;
 
 }
@@ -433,8 +419,7 @@ bool Phaserunner::setTorqueCommand(float torque)
 
 	mMotorCommands.Torque = torque;
 
-	mRegisters->set(494, 4096*(torque/100.0));
-	xSemaphoreGive(mRegistersUpdated);
+	writeRegister(494, 4096*(torque/100.0));
 	return true;
 
 }
@@ -445,8 +430,7 @@ bool Phaserunner::setRemoteThottleVoltage(uint16_t voltage)
 	 *  Value is voltage of a remote throttle command
 	 */
 
-	mRegisters->set(495, voltage);
-	xSemaphoreGive(mRegistersUpdated);
+	writeRegister(495, voltage);
 	return true;
 }
 

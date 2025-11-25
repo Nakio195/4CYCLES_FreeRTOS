@@ -16,7 +16,7 @@
 
 #include "../RTOSTask.h"
 
-#define HeartBeat_Rate 100
+#define HeartBeat_Rate 200
 
 extern ModbusMaster ModbusHandler;
 
@@ -29,7 +29,6 @@ class Phaserunner : public RTOS_Task
 		{
 			bool isConnected;
 			uint8_t slaveID;
-			//Timer hearthBeat;
 		};
 
 		void setup() override;
@@ -39,14 +38,19 @@ class Phaserunner : public RTOS_Task
 		void startMotor();
 		void stopMotor();
 		void setSpeed(float speed);
+		void setBrake(float speed);
 
+		MotorInfo getMotorInfo();
 		MotorFaults getMotorFaults();
+
 		ControllerFaults getControllerFaults();
 		void clearFaults();
 
 	private:
 
 		bool readAllParameters();
+		bool readRegister(uint16_t address);
+		bool writeRegister(uint16_t address, uint16_t value);
 
 		bool setCommunicationTimeout(uint16_t timeout);
 
@@ -55,20 +59,20 @@ class Phaserunner : public RTOS_Task
 		bool setSpeedRegulatorMode(uint8_t mode);
 
 		bool setCurrentsLimits(float motor, float brake);
+		bool setBrakeCurrent(float brake);
 		bool setSpeedCommand(float speed);
 		bool setTorqueCommand(float torque);
 		bool setRemoteThottleVoltage(uint16_t voltage);
 
 		bool instantRequest(uint8_t add, uint16_t val);
 
+		void readMotorInfo();
 		void readMotorFaults();
 		void readControllerFaults();
 
 		void heartbeat();
 
 	private:
-
-		SemaphoreHandle_t mRegistersUpdated;
 
 		struct MotorCommands
 		{
@@ -80,10 +84,12 @@ class Phaserunner : public RTOS_Task
 		};
 
 		Timer TimerHeartbeat;
+		uint8_t mHeartbeatCounter;
 
 		ConnectionParameters mConnection;
 		Registers *mRegisters;
 
+		MotorInfo mMotorInfo;
 		MotorCommands mMotorCommands;
 		MotorFaults mMotorFaults;
 		ControllerFaults mControllerFaults;
