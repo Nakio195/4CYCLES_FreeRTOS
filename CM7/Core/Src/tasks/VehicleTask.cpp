@@ -75,9 +75,11 @@ void VehicleTask::run()
 			switch (action->type())
 			{
 				case Action::Throttle:
+					mRawThottle = action->getThrottleValue();
 					mThrottle.setInput(action->getThrottleValue());
 					break;
 				case Action::Brake:
+					mRawBrake = action->getBrakeValue();
 					mBrake.setInput(action->getBrakeValue());
 					break;
 				case Action::Lights:
@@ -143,9 +145,10 @@ void VehicleTask::run()
 	//Logging dynamics data
 	if(mLogDynamicsTimer.triggered())
 	{
-		Message::DynamicsData data;
-		data.speed = 25;
+		Message::ControllerData data;
+		data.rawThrottle = mRawThottle;
 		data.throttle = mThrottle.getOutput();
+		data.rawBrake = mRawBrake;
 		data.brake = mBrake.getOutput();
 		Message msg(data);
 		this->log(msg);
