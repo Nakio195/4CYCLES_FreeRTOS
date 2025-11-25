@@ -171,6 +171,10 @@ class ModbusDriver : public RTOS_Task
 		uint8_t RX_Pointer;
 
 		SemaphoreHandle_t* mDataReady;
+
+		uint32_t mRequestsPerSecond;
+		uint32_t mLastRequestTime;
+		uint32_t mMaxRequestsPerSecond;
 };
 
 extern ModbusDriver Serial1;
