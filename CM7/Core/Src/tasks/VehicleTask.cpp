@@ -36,6 +36,9 @@ VehicleTask::VehicleTask()
 	mLogDynamicsTimer = Timer(100, Timer::Continuous);
 	mLogDynamicsTimer.startTimer();
 
+	mMotorUpdateTimer = Timer(20, Timer::Continuous);
+	mMotorUpdateTimer.startTimer();
+
 
 }
 
@@ -121,6 +124,7 @@ void VehicleTask::run()
 
 	//Update timers
 	mLogDynamicsTimer.tick(osKernelGetTickCount());
+	mMotorUpdateTimer.tick(osKernelGetTickCount());
 
 	//	Computing data
 	mThrottle.update();
@@ -140,7 +144,19 @@ void VehicleTask::run()
 //	else
 //		mZeroCrossing = false;
 
-	setMotorSpeed(mThrottle.getOutput(), mMotorReverseEngaged);
+	if(mMotorUpdateTimer.triggered())
+	{
+		bool needRefresh = false;
+
+		if(mMotorUpdateTimer.counts() % 8)
+			needRefresh = true;
+
+		if(mThrottle.hasChanged() || needRefresh)
+			setMotorSpeed(mThrottle.getOutput(), mMotorReverseEngaged);
+
+		if(mBrake.hasChanged() || needRefresh)
+			setMotorEBrake(mBrake.getOutput());
+	}
 
 	//Logging dynamics data
 	if(mLogDynamicsTimer.triggered())
@@ -153,14 +169,15 @@ void VehicleTask::run()
 		Message msg(data);
 		this->log(msg);
 	}
-	//osDelay(10);
+
+	osThreadYield();
+
 }
 
 void VehicleTask::cleanup()
 {
 
 }
-
 
 void VehicleTask::engageMotor()
 {
