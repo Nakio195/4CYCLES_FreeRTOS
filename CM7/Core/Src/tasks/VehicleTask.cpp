@@ -52,11 +52,11 @@ void VehicleTask::setup()
 	CanHandler.start("CAN", 256, osPriorityBelowNormal1);
 	HandleBarTask.start("HandleBar", 256, osPriorityBelowNormal);
 	DirectionHandler.start("Direction", 128, osPriorityHigh3);
-	ModbusHandler.start("ModbusMaster", 128, osPriorityHigh);
-	Ph_AVG.start("Ph_AVG", 256, osPriorityHigh2);
-	Ph_AVD.start("Ph_AVD", 256, osPriorityHigh2);
-	Ph_ARG.start("Ph_ARG", 256, osPriorityHigh2);
-	Ph_ARD.start("Ph_ARD", 256, osPriorityHigh2);
+	ModbusHandler.start("ModbusMaster", 256, osPriorityHigh);
+	Ph_AVG.start("Ph_AVG", 512, osPriorityHigh2);
+	Ph_AVD.start("Ph_AVD", 512, osPriorityHigh2);
+	Ph_ARG.start("Ph_ARG", 512, osPriorityHigh2);
+	Ph_ARD.start("Ph_ARD", 512, osPriorityHigh2);
 	LoggerTask.start("Logger", 1024, osPriorityBelowNormal);
 }
 
