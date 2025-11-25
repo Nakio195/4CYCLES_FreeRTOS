@@ -41,7 +41,14 @@ class VehicleTask : public RTOS_Task
 		void engageMotor();
 		void disengageMotor();
 
+		MotorInfo getMotorInfo(Phaserunner &motor)
+		{
+			return motor.getMotorInfo();
+		}
+
 		void setMotorSpeed(float speed, bool reverse = false);
+		void setMotorEBrake(float brake);
+
 	private:
 		QueueHandle_t mControllerQueue;
 
@@ -54,11 +61,17 @@ class VehicleTask : public RTOS_Task
 		// Filters
 		FilterChain mThrottle;
 		FilterChain mBrake;
+		uint8_t mRawThottle;
+		uint8_t mRawBrake;
 
 		//Motor Zero crossing detection
 		bool mZeroCrossing;
 
 		Timer mLogDynamicsTimer;
+		Timer mMotorUpdateTimer;
+
+		size_t freeHeap;
+		size_t minEver;
 
 };
 
