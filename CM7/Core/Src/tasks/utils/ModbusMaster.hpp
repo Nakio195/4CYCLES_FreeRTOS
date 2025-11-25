@@ -23,7 +23,7 @@
 #include "PhaserunnerRegisterMap.h"
 
 #define PANIC_FIFO_SIZE 12
-#define MODBUS_POOL_SIZE 2000
+#define MODBUS_POOL_SIZE 250
 
 class ModbusPacket
 {
