@@ -209,7 +209,7 @@ void ModbusMaster::run()
 		{
 		    if (xSemaphoreTake(responseMutex, pdMS_TO_TICKS(10)) == pdTRUE)
 		    {
-		        if (xQueueSend(AnswerFIFO, &packet, 0) != pdTRUE)
+		        if (xQueueSend(AnswerFIFO, &packet, 5) != pdTRUE)
 		        {
 		            answerPanicCounter++;
 		            //TODO log warning
@@ -220,6 +220,7 @@ void ModbusMaster::run()
 		    else
 		    {
 		        // Mutex non obtenu : gérer l’erreur (log, delete packet ?)
+	            answerPanicCounter++;
 		    	ModbusPacketPool.free(packet);
 		    }
 		}
@@ -230,12 +231,14 @@ void ModbusMaster::run()
 		}
 	}
 
+	//osDelay(1);
+
 
 }
 
 bool ModbusMaster::request(ModbusPacket *packet)
 {
-    return (xQueueSend(RequestFIFO, &packet, 0) == pdTRUE);
+    return (xQueueSend(RequestFIFO, &packet, 5) == pdTRUE);
 }
 
 ModbusPacket* ModbusMaster::response(uint8_t slaveID)
