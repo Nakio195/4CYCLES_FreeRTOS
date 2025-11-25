@@ -65,6 +65,8 @@ void VehicleTask::run()
 	Action* action = nullptr;
 
 	freeHeap = xPortGetFreeHeapSize();
+	minEver = xPortGetMinimumEverFreeHeapSize();
+
 	// Read received action from controller
 	while(xQueueReceive(mControllerQueue, &action, pdMS_TO_TICKS(10)) == pdTRUE)
 	{
