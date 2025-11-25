@@ -6,6 +6,7 @@
  */
 
 #include "Phaserunner.hpp"
+#include <algorithm>
 
 Phaserunner Ph_AVG(1);
 Phaserunner Ph_AVD(2);
@@ -17,13 +18,12 @@ Phaserunner::Phaserunner(uint8_t slaveID)
 	mConnection.slaveID = slaveID;
 	mRegisters = new Registers;
 
-	mRegistersUpdated = xSemaphoreCreateBinary();
 
 	TimerHeartbeat.setMode(Timer::Continuous);
 	TimerHeartbeat.setPeriod(HeartBeat_Rate);
 	TimerHeartbeat.startTimer();
 
-	//Controller initialization
+	RegisterQueue = xQueueCreate(32, sizeof(Register));
 
 }
 
@@ -42,93 +42,115 @@ void Phaserunner::setup()
 
 void Phaserunner::run()
 {
-	//TimerHeartbeat.tick(osKernelGetTickCount());
+    TimerHeartbeat.tick(osKernelGetTickCount());
 
-	if(xSemaphoreTake(mRegistersUpdated, 1) == pdTRUE)
-	{
-		if(TimerHeartbeat.triggered())
-		{
-			//heartbeat();
-		}
+    if (TimerHeartbeat.triggered())
+    {
+        heartbeat();
+        getMotorInfo();
+    }
 
-		// Check for modified register that would need writing
-		std::vector<Register> pendingRegisters;
-		bool needTransmit = false;
+    // ----- Collect registers from queue -----
+    Register receivedRegister;
+    while (xQueueReceive(RegisterQueue, &receivedRegister, 0) == pdTRUE)
+    {
+        if (receivedRegister.pendingWrite && mPendingWriteCount < MAX_PENDING_REGS)
+            mPendingWriteRegisters[mPendingWriteCount++] = receivedRegister;
+        else if (receivedRegister.pendingRead && mPendingReadCount < MAX_PENDING_REGS)
+            mPendingReadRegisters[mPendingReadCount++] = receivedRegister;
+    }
 
-		for(auto& r : mRegisters->map)
-		{
-			if(r.pendingWrite)
-			{
-				pendingRegisters.push_back(r);
-				r.pendingWrite = false;
-				needTransmit = true;
-			}
-		}
+    // ----- Process write registers -----
+    size_t i = 0;
+    while (i < mPendingWriteCount)
+    {
 
-		if(needTransmit)
-		{
-			ModbusPacket* request = ModbusPacketPool.allocate(mConnection.slaveID, ModbusPacket::Write);
-			request->registers = pendingRegisters;
-			ModbusHandler.request(request);
-		}
+    	// Create a block of consecutive registers to write
+        writeBlockSize = 0;
+        writeBlock[writeBlockSize] = mPendingWriteRegisters[i];
+        writeBlockSize++;
 
-		//Check registers that would need to be read
-		pendingRegisters.clear();
-		needTransmit = false;
+        size_t j = i + 1;
+        // Find consecutive registers
+        while (j < mPendingWriteCount &&
+               mPendingWriteRegisters[j].address == writeBlock[writeBlockSize-1].address + 1 &&
+               writeBlockSize < MODBUS_MAX_REGS)
+        {
+            writeBlock[writeBlockSize++] = mPendingWriteRegisters[j];
+            j++;
+        }
 
-		for(auto& r : mRegisters->map)
-		{
-			if(r.pendingRead)
-			{
-				pendingRegisters.push_back(r);
-				r.pendingRead = false;
-				needTransmit = true;
-			}
-		}
+        // End of block found, create and send Modbus packet
 
-		if(needTransmit)
-		{
-			ModbusPacket* request = ModbusPacketPool.allocate(mConnection.slaveID, ModbusPacket::Read);
-			request->registers = pendingRegisters;
-			ModbusHandler.request(request);
-		}
+        ModbusPacket* packet = ModbusPacketPool.allocate(mConnection.slaveID, ModbusPacket::Write);
+        packet->registers.assign(writeBlock, writeBlock + writeBlockSize);
 
-	}
-	// Read one received Answer
-	ModbusPacket* answer = nullptr;
+        if (ModbusHandler.request(packet) != pdTRUE)
+            ModbusPacketPool.free(packet);
 
-	while((answer = ModbusHandler.response(mConnection.slaveID)) != nullptr)
-	{
-		if(!answer->success)
-		{
-			//TODO Warn a about a invalid answer
+        i = j;
+    }
+    mPendingWriteCount = 0;
 
-//			for(const auto& r : answer->registers)
-//			{:
-//				//TODO Print answer
-//			}
-			ModbusPacketPool.free(answer);
-		}
+    // ----- Process read registers -----
+    i = 0;
+    while (i < mPendingReadCount)
+    {
+        readBlockSize = 0;
+        readBlock[readBlockSize] = mPendingReadRegisters[i].address;
+        readBlockSize++;
 
-		else
-		{
-			for(const auto& r : answer->registers)
-			{
-				switch(r.address)
-				{
-					case 258:
-						mMotorFaults.faults = r.value;
-						break;
+        size_t j = i + 1;
+        while (j < mPendingReadCount && mPendingReadRegisters[j].address == readBlock[readBlockSize-1].address + 1 && readBlockSize < MODBUS_MAX_REGS)
+        {
+            readBlock[readBlockSize++] = mPendingReadRegisters[j].address;
+            j++;
+        }
 
-					case 299:
-						mControllerFaults.faults = r.value;
-						break;
-				}
-			}
+        ModbusPacket* packet = ModbusPacketPool.allocate(mConnection.slaveID, ModbusPacket::Read);
+        packet->registers.assign(readBlock, readBlock + readBlockSize);
 
-			ModbusPacketPool.free(answer);
-		}
-	}
+        if (ModbusHandler.request(packet) != pdTRUE)
+            ModbusPacketPool.free(packet);
+
+        i = j;
+    }
+    mPendingReadCount = 0;
+
+    // ----- Process Modbus answers -----
+    ModbusPacket* answer = nullptr;
+    while ((answer = ModbusHandler.response(mConnection.slaveID)) != nullptr)
+    {
+        if (!answer->success)
+        {
+            // TODO: Log warning for invalid answer
+            ModbusPacketPool.free(answer);
+        }
+        else
+        {
+            for (const Register& r : answer->registers)
+            {
+                mRegisters->update(r.address, r.value);
+
+                switch (r.address)
+                {
+                    case 258: mMotorFaults.faults = r.value; break;
+                    case 259: mMotorInfo.controllerTemp = r.getValue(); break;
+                    case 260: mMotorInfo.vehicleSpeed = r.getValue(); break;
+                    case 261: mMotorInfo.motorTemp = r.getValue(); break;
+                    case 262: mMotorInfo.motorCurrent = r.getValue(); break;
+                    case 263: mMotorInfo.motorRPM = r.getValue(); break;
+                    case 264: mMotorInfo.motorSpeed = r.getValue(); break;
+                    case 265: mMotorInfo.busVoltage = r.getValue(); break;
+                    case 266: mMotorInfo.busCurrent = r.getValue(); break;
+                    case 299: mControllerFaults.faults = r.value; break;
+                }
+            }
+            ModbusPacketPool.free(answer);
+        }
+    }
+
+    osDelay(1); // Yield to other tasks
 }
 
 void Phaserunner::startMotor()
@@ -180,6 +202,26 @@ ControllerFaults Phaserunner::getControllerFaults()
 {
 	return mControllerFaults;
 }
+
+
+bool Phaserunner::readRegister(uint16_t address)
+{
+	Register reg = mRegisters->get(address);
+	reg.pendingRead = true;
+	reg.pendingWrite = false;
+	return xQueueSend(RegisterQueue, &reg, 0);
+}
+
+bool Phaserunner::writeRegister(uint16_t address, uint16_t value)
+{
+	Register reg = mRegisters->get(address);
+	reg.value = value;
+	reg.pendingWrite = true;
+	reg.pendingRead = false;
+	return xQueueSend(RegisterQueue, &reg, 0);
+}
+
+
 void Phaserunner::clearFaults()
 {
 	/*
@@ -188,9 +230,8 @@ void Phaserunner::clearFaults()
 	 *  	Write non zero value clear faults
 	 */
 
-	mRegisters->set(508, 1);
+	writeRegister(508, 1);
 
-	xSemaphoreGive(mRegistersUpdated);
 }
 
 
@@ -208,11 +249,11 @@ bool Phaserunner::setCommunicationTimeout(uint16_t timeout)
 	 *  Max time before timeout
 	 *  	Value in ms
 	 */
-	mRegisters->set(32, timeout);
-	if(timeout == 0)
-		mRegisters->set(49, 0);
-	else
-		mRegisters->set(49, timeout);
+	writeRegister(32, timeout);
+//	if(timeout == 0)
+//		writeRegister(49, 0);
+//	else
+		writeRegister(49, 0);
 
 	xSemaphoreGive(mRegistersUpdated);
 
@@ -242,24 +283,24 @@ void Phaserunner::readMotorFaults()
 	 *  @258
 	 *  Faults register
 	 */
-	mRegisters->read(258);
-	xSemaphoreGive(mRegistersUpdated);
+	readRegister(258);
 }
 
 
 void Phaserunner::readMotorInfo()
 {
 	/*
-	 *  @260 - 265
-	 *  Vehicle speed, motor temperature, motor current, motor rpm, motor speed, bus voltage
+	 *  @258 - 265
+	 *  Motor Faults, Controller Temp, Vehicle speed, motor temperature, motor current, motor rpm, motor speed, bus voltage
 	 */
-	mRegisters->read(260);
-	mRegisters->read(261);
-	mRegisters->read(262);
-	mRegisters->read(263);
-	mRegisters->read(264);
-	mRegisters->read(265);
-	xSemaphoreGive(mRegistersUpdated);
+	readRegister(258);
+	readRegister(259);
+	readRegister(260);
+	readRegister(261);
+	readRegister(262);
+	readRegister(263);
+	readRegister(264);
+	readRegister(265);
 }
 
 void Phaserunner::readControllerFaults()
@@ -268,8 +309,7 @@ void Phaserunner::readControllerFaults()
 	 *  @299
 	 *  Faults register
 	 */
-	mRegisters->read(299);
-	xSemaphoreGive(mRegistersUpdated);
+	readRegister(299);
 }
 bool Phaserunner::setControlSource(uint8_t source)
 {
@@ -281,8 +321,8 @@ bool Phaserunner::setControlSource(uint8_t source)
 	if(source < 0 || source > 5)
 		return false;
 
-	mRegisters->set(208, source);
-	xSemaphoreGive(mRegistersUpdated);
+
+	writeRegister(208, source);
 
 	return true;
 }
@@ -296,8 +336,7 @@ bool Phaserunner::setSpeedRegulatorMode(uint8_t mode)
 	if(mode < 0 || mode > 2)
 		return false;
 
-	mRegisters->set(11, mode);
-	xSemaphoreGive(mRegistersUpdated);
+	writeRegister(11, mode);
 	return true;
 
 }
@@ -321,8 +360,8 @@ bool Phaserunner::setSpeedCommand(float speed)
 
 	mMotorCommands.Speed = speed;
 
-	mRegisters->set(490, (int16_t)((4095*(speed/400.0))));
-	xSemaphoreGive(mRegistersUpdated);
+	writeRegister(490, (int16_t)((4095*(speed/400.0))));
+
 	return true;
 }
 bool Phaserunner::setCurrentsLimits(float motor, float brake)
@@ -340,9 +379,26 @@ bool Phaserunner::setCurrentsLimits(float motor, float brake)
 	mMotorCommands.MotoringCurrentLimit = motor;
 	mMotorCommands.BrakingCurrentLimit = brake;
 
-	mRegisters->set(491, 4096*(motor/100.0));
-	mRegisters->set(492, 4096*(brake/100.0));
-	xSemaphoreGive(mRegistersUpdated);
+	writeRegister(491, 4096*(motor/100.0));
+	writeRegister(492, 4096*(brake/100.0));
+
+	return true;
+}
+
+bool Phaserunner::setBrakeCurrent(float brake)
+{
+	/*
+	 *  @492 - Brake current
+	 *  Value are % of Nominal currents
+	 *  	100% is 4096
+	 */
+
+	if(brake > 100.0 || brake < 0.0)
+		return false;
+
+	mMotorCommands.BrakingCurrentLimit = brake;
+
+	writeRegister(492, 4096*(brake/100.0));
 
 	return true;
 }
