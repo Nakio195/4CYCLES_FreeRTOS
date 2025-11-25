@@ -42,10 +42,18 @@ void ModbusDriver::run()
             break;
 
         case State::Idle:
-            suspend();
+			if (osKernelGetTickCount() - mLastRequestTime >= 1000)
+			{
+				if (mRequestsPerSecond > mMaxRequestsPerSecond)
+					mMaxRequestsPerSecond = mRequestsPerSecond;
+				mRequestsPerSecond = 0;
+				mLastRequestTime = osKernelGetTickCount();
+			}
+        	ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
             break;
 
         case State::SendRequest:
+        	mRequestsPerSecond++;
         	if(sendRequest())
         	{
         		mState = State::WaitResponse;
@@ -135,7 +143,7 @@ bool ModbusDriver::readHoldingRegister(uint8_t slaveId, uint16_t startAddress, u
 
 	mState = State::SendRequest;
 
-	resume();
+	xTaskNotifyGive(xHandle);
 
 	return true;
 }
@@ -187,7 +195,7 @@ bool ModbusDriver::endMultipleWrite()
 
 	mState = State::SendRequest;
 
-	resume();
+	xTaskNotifyGive(xHandle);
 
 	return true;
 }
