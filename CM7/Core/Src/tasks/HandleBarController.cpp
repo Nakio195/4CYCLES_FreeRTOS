@@ -139,12 +139,16 @@ void HandleBarController::ControllerData(CanPacket* packet)
 		mBrake = uint8_t(packet->data[1]);
 		mSteering = int8_t(packet->data[2])*48;
 
-		setThrottleCommand(mThrottle);
+		if(mBrake > 20)
+			setThrottleCommand(0);
+		else
+			setThrottleCommand(mThrottle);
+
 		setBrakeCommand(mBrake);
 		setSteeringCommand(mSteering);
 
 		mParkBrakeSwitch.update(packet->data[3] & 0x80);
-		mBrakeSwitch.update((packet->data[3]) & 0x40);
+		mBrakeSwitch.update((packet->data[1]) > 240); // Brake pressed if value > 240);
 		mTurnLSwitch.update((packet->data[3]) & 0x20);
 		mTurnRSwitch.update((packet->data[3]) & 0x10);
 		mWarningSwitch.update((packet->data[3]) & 0x08);
@@ -167,6 +171,19 @@ void HandleBarController::ControllerData(CanPacket* packet)
 			default:
 				break;
 		}
+
+		switch (mBrakeSwitch.read())
+		{
+			case Switch::States::PRESSED:
+				setLightsCommand(Action::Signals::BrakeSignal, true);
+				break;
+			case Switch::States::RELEASED:
+				setLightsCommand(Action::Signals::BrakeSignal, false);
+				break;
+			default:
+				break;
+		}
+
 		switch(mTurnRSwitch.read())
 		{
 			case Switch::States::PRESSED:
