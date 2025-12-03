@@ -16,7 +16,7 @@
 
 #include "../RTOSTask.h"
 
-#define HeartBeat_Rate 200
+#define HeartBeat_Rate 300
 
 extern ModbusMaster ModbusHandler;
 
