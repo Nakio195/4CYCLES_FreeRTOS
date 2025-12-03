@@ -48,6 +48,10 @@ void VehicleTask::setup()
 	this->attachLogQueue(LoggerTask.createLogQueue());
 	CanHandler.attachLogQueue(LoggerTask.createLogQueue());
 	HandleBarTask.attachLogQueue(LoggerTask.createLogQueue());
+	Ph_AVD.attachLogQueue(LoggerTask.createLogQueue());
+	Ph_AVG.attachLogQueue(LoggerTask.createLogQueue());
+	Ph_ARD.attachLogQueue(LoggerTask.createLogQueue());
+	Ph_ARG.attachLogQueue(LoggerTask.createLogQueue());
 
 	mControllerQueue = HandleBarTask.getQueue();
 	vQueueAddToRegistry(mControllerQueue, "ControllerActions");
@@ -163,13 +167,18 @@ void VehicleTask::run()
 	//Logging dynamics data
 	if(mLogDynamicsTimer.triggered())
 	{
-		Message::ControllerData data;
-		data.rawThrottle = mRawThottle;
-		data.throttle = mThrottle.getOutput();
-		data.rawBrake = mRawBrake;
-		data.brake = mBrake.getOutput();
-		Message msg(data);
+		Message msg(Message::Controller);
+		msg << mRawThottle;
+		msg << mThrottle.getOutput();
+		msg << mRawBrake;
+		msg << mBrake.getOutput();
 		this->log(msg);
+
+		Ph_AVD.logMotorInfo();
+		Ph_AVG.logMotorInfo();
+		Ph_ARD.logMotorInfo();
+		Ph_ARG.logMotorInfo();
+
 	}
 
 	osThreadYield();
