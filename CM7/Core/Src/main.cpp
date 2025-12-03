@@ -78,7 +78,10 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+/*  Pi Identifiants
+ *  to@board.local
+ *  Password: 123soleil
+ */
   /* USER CODE END 1 */
 /* USER CODE BEGIN Boot_Mode_Sequence_0 */
   int32_t timeout;
