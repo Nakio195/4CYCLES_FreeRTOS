@@ -211,7 +211,7 @@ void VehicleTask::setMotorSpeed(float speed, bool reverse)
 	if(mMotorEngaged)
 	{
 		if(reverse)
-			speed = -speed;
+			speed = -speed/2.0;
 
 		Ph_AVG.setSpeed(float(speed)/255.0*100.0);
 		Ph_AVD.setSpeed(float(speed)/255.0*100.0);
