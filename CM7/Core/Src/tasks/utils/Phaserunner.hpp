@@ -40,8 +40,10 @@ class Phaserunner : public RTOS_Task
 		void setSpeed(float speed);
 		void setBrake(float speed);
 
-		MotorInfo getMotorInfo();
+		MotorInfo getMotorInfo() const;
 		MotorFaults getMotorFaults();
+
+		void logMotorInfo();
 
 		ControllerFaults getControllerFaults();
 		void clearFaults();
