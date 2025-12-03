@@ -42,6 +42,8 @@ void Phaserunner::setup()
 
 void Phaserunner::run()
 {
+	uint32_t loopStartTick = osKernelGetTickCount();
+
     TimerHeartbeat.tick(osKernelGetTickCount());
 
     if (TimerHeartbeat.triggered())
@@ -150,7 +152,11 @@ void Phaserunner::run()
         }
     }
 
-    osDelay(1); // Yield to other tasks
+    // Ensure a minimum loop time
+    uint32_t loopEndTick = osKernelGetTickCount();
+    uint32_t loopDuration = loopEndTick - loopStartTick;
+    if(loopDuration < 10)
+    	osDelay(10 - loopDuration); // Yield to other tasks
 }
 
 
