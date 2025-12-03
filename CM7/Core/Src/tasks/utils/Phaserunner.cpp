@@ -381,8 +381,8 @@ bool Phaserunner::setCurrentsLimits(float motor, float brake)
 	mMotorCommands.MotoringCurrentLimit = motor;
 	mMotorCommands.BrakingCurrentLimit = brake;
 
-	writeRegister(491, 4096*(motor/100.0));
-	writeRegister(492, 4096*(brake/100.0));
+	writeRegister(491, 4095*(motor/100.0));
+	writeRegister(492, 4095*(brake/100.0));
 
 	return true;
 }
@@ -400,7 +400,7 @@ bool Phaserunner::setBrakeCurrent(float brake)
 
 	mMotorCommands.BrakingCurrentLimit = brake;
 
-	writeRegister(492, 4096*(brake/100.0));
+	writeRegister(492, 4095*(brake/100.0));
 
 	return true;
 }
@@ -436,7 +436,7 @@ bool Phaserunner::setTorqueCommand(float torque)
 
 	mMotorCommands.Torque = torque;
 
-	writeRegister(494, 4096*(torque/100.0));
+	writeRegister(494, 4095*(torque/100.0));
 	return true;
 
 }
