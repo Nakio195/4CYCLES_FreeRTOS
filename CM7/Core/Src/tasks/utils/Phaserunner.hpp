@@ -56,15 +56,19 @@ class Phaserunner : public RTOS_Task
 
 		bool setCommunicationTimeout(uint16_t timeout);
 
+		void setSpeedLimit(float limit);
 		bool setRemoteState(uint8_t state);
 		bool setControlSource(uint8_t source);
 		bool setSpeedRegulatorMode(uint8_t mode);
+		bool setRemoteCommands( float speed, float torque, float maxMotorCurrent, float maxBrakeCurrent);
 
 		bool setCurrentsLimits(float motor, float brake);
 		bool setBrakeCurrent(float brake);
 		bool setSpeedCommand(float speed);
 		bool setTorqueCommand(float torque);
 		bool setRemoteThottleVoltage(uint16_t voltage);
+		bool setPowerLimit(uint16_t powerLimit);
+		bool setBatteryLimits(uint16_t maxBatteryCurrent, uint16_t maxRegenCurrent);
 
 		bool instantRequest(uint8_t add, uint16_t val);
 

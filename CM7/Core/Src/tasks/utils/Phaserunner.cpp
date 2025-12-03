@@ -32,8 +32,11 @@ void Phaserunner::setup()
 	osDelay(2000);
 	setCommunicationTimeout(HeartBeat_Rate*2); // Gestion timeout
 	setControlSource(0);	// 0 Serial
-	setCurrentsLimits(20.0, 15.0);
-	setSpeedRegulatorMode(0);
+	setCurrentsLimits(100.0, 100.0);
+	setBatteryLimits(22, 60);
+	setPowerLimit(1000);
+	setSpeedLimit(20.0);
+	setSpeedRegulatorMode(2); // 0 Speed, 2 Torque+Speed Limit
 	setRemoteState(1); // 1 IDLE
 	clearFaults();
 	stopMotor();
@@ -136,7 +139,8 @@ void Phaserunner::run()
 
                 switch (r.address)
                 {
-                    case 258: mMotorFaults.faults = r.value; break;
+					case 229: mMotorInfo.speedLimit = r.getValue(); break;
+					case 258: mMotorFaults.faults = r.value; break;
                     case 259: mMotorInfo.controllerTemp = r.getValue(); break;
                     case 260: mMotorInfo.vehicleSpeed = r.getValue(); break;
                     case 261: mMotorInfo.motorTemp = r.getValue(); break;
@@ -173,13 +177,43 @@ void Phaserunner::stopMotor()
 void Phaserunner::setSpeed(float speed)
 {
 	//TODO Filter input and check motor state
+
+	setRemoteCommands(mMotorInfo.speedLimit*3, speed, mMotorCommands.MotoringCurrentLimit, mMotorCommands.BrakingCurrentLimit);
+}
+
+
+bool Phaserunner::setRemoteCommands(float speed, float torque, float maxMotorCurrent, float maxBrakeCurrent)
+{
+	if(maxBrakeCurrent > 5.0)
+	{
+		speed = 0;
+		torque = maxBrakeCurrent;
+	}
+
 	setSpeedCommand(speed);
+	setCurrentsLimits(maxMotorCurrent, 100);
+	setRemoteState(mMotorCommands.State);
+	setTorqueCommand(torque);
+	return true;
+}
+
+void Phaserunner::setSpeedLimit(float limit)
+{
+	/*
+	 *  @229
+	 *  Vehicle speed limit
+	 *
+	 */
+	mMotorInfo.speedLimit = limit;
+
+	uint16_t value = (uint16_t)(limit*256.0);
+	writeRegister(229, value);
 }
 
 void Phaserunner::setBrake(float brake)
 {
 	//TODO Filter input and check motor state
-	setCurrentsLimits(mMotorCommands.MotoringCurrentLimit, brake);
+	mMotorCommands.BrakingCurrentLimit = brake;
 }
 
 
@@ -268,12 +302,12 @@ bool Phaserunner::setCommunicationTimeout(uint16_t timeout)
 }
 void Phaserunner::heartbeat()
 {
-	setRemoteState(mMotorCommands.State);
+//	setRemoteState(mMotorCommands.State);
 	readMotorInfo();
 	readControllerFaults();
 
 	if(!mMotorFaults.ready())
-		log(Message(Message::LogCritical) << LOG_VEHICLE_MOTOR_FAULTS_DETECTED);
+		log(Message(Message::LogCritical, LOG_VEHICLE_MOTOR_FAULTS_DETECTED));
 }
 bool Phaserunner::readAllParameters()
 {
@@ -295,6 +329,7 @@ void Phaserunner::readMotorInfo()
 	 *  @258 - 265
 	 *  Motor Faults, Controller Temp, Vehicle speed, motor temperature, motor current, motor rpm, motor speed, bus voltage
 	 */
+	//readRegister(229); //SpeedLimit
 	readRegister(258);
 	readRegister(259);
 	readRegister(260);
@@ -362,10 +397,41 @@ bool Phaserunner::setSpeedCommand(float speed)
 
 	mMotorCommands.Speed = speed;
 
-	writeRegister(490, (int16_t)((4095*(speed/400.0))));
+	writeRegister(490, (int16_t)((4095*(speed/100.0))));
 
 	return true;
 }
+bool Phaserunner::setBatteryLimits(uint16_t maxBatteryCurrent, uint16_t maxRegenCurrent)
+{
+	/*
+	 *  @71 - Max Phase Current (2x maxBatteryCurrent) - scale 40.96
+	 *  @155 - Max battery current - scale 40.96
+	 *  @156 - Max regen current - scale 40.96
+	 *  Value are in Amps
+	 */
+
+	if (maxBatteryCurrent > 95 || maxRegenCurrent > 95)
+		return false;
+
+	writeRegister(71, maxBatteryCurrent > 40 ? 90*40.96 : maxBatteryCurrent*2*40.96); // Set current limit for overcurrent protection)
+	writeRegister(155, maxBatteryCurrent*40.96);
+	writeRegister(156, maxRegenCurrent*40.96);
+
+	return true;
+}
+
+bool Phaserunner::setPowerLimit(uint16_t powerLimit)
+{
+	/*
+	 *  @71 - Max Phase Current (2x maxBatteryCurrent) - scale 1
+	 *  Value are in Watts
+	 */
+
+	writeRegister(73, powerLimit);
+
+	return true;
+}
+
 bool Phaserunner::setCurrentsLimits(float motor, float brake)
 {
 	/*
