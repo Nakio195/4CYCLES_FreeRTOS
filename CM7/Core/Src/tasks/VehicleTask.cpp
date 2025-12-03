@@ -157,10 +157,10 @@ void VehicleTask::run()
 		if(mMotorUpdateTimer.counts() % 8)
 			needRefresh = true;
 
-		if(mThrottle.hasChanged() || needRefresh)
+//		if(mThrottle.hasChanged() || needRefresh)
 			setMotorSpeed(mThrottle.getOutput(), mMotorReverseEngaged);
 
-		if(mBrake.hasChanged() || needRefresh)
+//		if(mBrake.hasChanged() || needRefresh)
 			setMotorEBrake(mBrake.getOutput());
 	}
 
