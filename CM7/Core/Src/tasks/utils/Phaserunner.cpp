@@ -182,7 +182,18 @@ void Phaserunner::setBrake(float brake)
 	setCurrentsLimits(mMotorCommands.MotoringCurrentLimit, brake);
 }
 
-MotorInfo Phaserunner::getMotorInfo()
+
+void Phaserunner::logMotorInfo()
+{
+	Message msg(Message::Motor);
+	msg << (uint8_t)(mConnection.slaveID);
+	msg << (uint16_t)(mMotorInfo.vehicleSpeed*256.0);
+	msg << (uint16_t)(mMotorInfo.motorCurrent*32.0);
+	msg << (uint16_t)(mMotorInfo.busVoltage*32.0);
+	this->log(msg);
+}
+
+MotorInfo Phaserunner::getMotorInfo() const
 {
 	/*
 	 *  @260 - 265
