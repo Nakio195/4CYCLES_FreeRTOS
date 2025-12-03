@@ -30,7 +30,7 @@ Phaserunner::Phaserunner(uint8_t slaveID)
 void Phaserunner::setup()
 {
 	osDelay(2000);
-	setCommunicationTimeout(400); // Gestion timeout
+	setCommunicationTimeout(HeartBeat_Rate*2); // Gestion timeout
 	setControlSource(0);	// 0 Serial
 	setCurrentsLimits(20.0, 15.0);
 	setSpeedRegulatorMode(0);
