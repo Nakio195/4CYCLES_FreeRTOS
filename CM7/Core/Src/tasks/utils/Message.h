@@ -9,25 +9,11 @@
 
 class Message
 {
-	public:
-
-		struct ControllerData
-		{
-			uint8_t rawThrottle = 0;
-			uint8_t throttle = 0;
-			uint8_t rawBrake = 0;
-			uint8_t brake = 0;
-			uint8_t commands = 0;
-		};
 
 	public:
-		enum Type{LogDebug, LogInfo, LogWarning, LogError, LogCritical, Controller, Electrics};
+		enum Type{LogDebug, LogInfo, LogWarning, LogError, LogCritical, Controller, Motor, Electrics};
 
-		Message(Type type);
-		Message(ControllerData data) : mControllerData(data), mType(Controller)
-		{
-			mTimestamp = xTaskGetTickCount();
-		}
+		Message(Type type, uint32_t messageCode = 0);
 
 		Type type();
 		Type level();
@@ -35,21 +21,27 @@ class Message
 		uint32_t code();
 		uint32_t timestamp();
 
-		Message& operator<<(Type type);
+		Message& operator<<(uint8_t number);
+		Message& operator<<(uint16_t number);
 		Message& operator<<(uint32_t number);
+
+	    Message& operator<<(int32_t v)  { return *this << static_cast<uint32_t>(v); }
 		//Message& operator<<(std::initializer_list<std::pair<const char*, JsonVariant>> values);
 
 		uint32_t mTimestamp;
-
 		uint32_t mMessageCode;
-		ControllerData mControllerData;
+		uint8_t mData[8] = {0};
 
 	protected:
 		Type mType;
+		uint8_t mDataPointer;
+
+		Message& pushData(const uint32_t &data, const uint8_t length);
 };
 
 enum {
 	// CAN Peripherals
+	NONE = 0,
 	LOG_PS3_CONTROLLER_ABSENT = 1, //PS3 Controller absent from bus
 	LOG_PS3_CONTROLLER_CONNECTED, //PS3 Controller connected to bus
 	LOG_PS3_CONTROLLER_RECOVERY_ATTEMPT, //PS3 Controller recovery attempt

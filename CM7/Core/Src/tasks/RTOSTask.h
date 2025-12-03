@@ -37,7 +37,7 @@ class RTOS_Task
 				mLogQueue = q;
 		}
 
-		void inline log(Message &m)
+		void inline log(const Message &m)
 		{
 			Message* p = new Message(m); // TODO Use Message pool
 			if(mLogQueue != nullptr)

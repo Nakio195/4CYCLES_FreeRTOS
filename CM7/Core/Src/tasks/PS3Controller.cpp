@@ -48,7 +48,7 @@ void PS3Controller::reInit()
 
 void PS3Controller::absent()
 {
-	log(Message(Message::LogCritical) << LOG_PS3_CONTROLLER_ABSENT);
+	log(Message(Message::LogCritical, LOG_PS3_CONTROLLER_ABSENT));
 	while(1)
 	{
 		osDelay(10000);
@@ -57,18 +57,18 @@ void PS3Controller::absent()
 
 void PS3Controller::recovery()
 {
-	log(Message(Message::LogError) << LOG_PS3_CONTROLLER_RECOVERY_ATTEMPT);
+	log(Message(Message::LogError, LOG_PS3_CONTROLLER_RECOVERY_ATTEMPT));
 	reInit();
 }
 
 void PS3Controller::recovered()
 {
-	log(Message(Message::LogInfo) << LOG_PS3_CONTROLLER_RECOVERED);
+	log(Message(Message::LogInfo, LOG_PS3_CONTROLLER_RECOVERED));
 }
 
 void PS3Controller::lost()
 {
-	log(Message(Message::LogError) << LOG_PS3_CONTROLLER_LOST);
+	log(Message(Message::LogError, LOG_PS3_CONTROLLER_LOST));
 }
 
 void PS3Controller::setup()

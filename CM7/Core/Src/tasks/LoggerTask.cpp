@@ -76,7 +76,6 @@ void Logger::run()
 
 	osDelay(7);
 
-	uint32_t dt = xTaskGetTickCount() - mPreviousTick;
 	mPreviousTick = xTaskGetTickCount();
 	tick(xTaskGetTickCount());
 }
@@ -111,23 +110,23 @@ void Logger::reInit()
 
 void Logger::recovery()
 {
-	log(Message(Message::LogError) << LOG_LOGGER_RECOVERY_ATTEMPT);
+	log(Message(Message::LogError, LOG_LOGGER_RECOVERY_ATTEMPT));
 	reInit();
 }
 
 void Logger::absent()
 {
-	log(Message(Message::LogError) << LOG_LOGGER_ABSENT);
+	log(Message(Message::LogError, LOG_LOGGER_ABSENT));
 }
 
 void Logger::recovered()
 {
-	log(Message(Message::LogInfo) << LOG_LOGGER_RECOVERED);
+	log(Message(Message::LogInfo, LOG_LOGGER_RECOVERED));
 }
 
 void Logger::lost()
 {
-	log(Message(Message::LogInfo) << LOG_LOGGER_LOST);
+	log(Message(Message::LogInfo, LOG_LOGGER_LOST));
 }
 
 void Logger::print(Message& m)
@@ -149,23 +148,26 @@ void Logger::print(Message& m)
 		id = 0x1005;
 	else if (m.level() == Message::Electrics)
 		id = 0x1006;
+	else if (m.level() == Message::Motor)
+		id = 0x1010+m.mData[0]-1;
 
 	CanPacket *Log = CanPacketPool.allocate(id);
-	Log->data.push_back(m.timestamp() >> 24);
-	Log->data.push_back(m.timestamp() >> 16);
-	Log->data.push_back(m.timestamp() >> 8);
-	Log->data.push_back(m.timestamp() & 0xFF);
 
 	if (m.level() == Message::Controller)
 	{
-		Log->data.push_back(m.mControllerData.rawThrottle);
-		Log->data.push_back(m.mControllerData.throttle);
-		Log->data.push_back(m.mControllerData.rawBrake);
-		Log->data.push_back(m.mControllerData.brake);
+		Log->data.push_back(m.mData[0]);
+		Log->data.push_back(m.mData[1]);
+		Log->data.push_back(m.mData[2]);
+		Log->data.push_back(m.mData[3]);
 	}
-	else if (m.level() == Message::Electrics)
+	else if (m.level() == Message::Motor)
 	{
-		// TODO add electrics data
+		Log->data.push_back(m.mData[1]);
+		Log->data.push_back(m.mData[2]);
+		Log->data.push_back(m.mData[3]);
+		Log->data.push_back(m.mData[4]);
+		Log->data.push_back(m.mData[5]);
+		Log->data.push_back(m.mData[6]);
 	}
 
 	else

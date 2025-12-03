@@ -49,23 +49,23 @@ void HandleBarController::reInit()
 
 void HandleBarController::absent()
 {
-	log(Message(Message::LogCritical) << LOG_HANDLEBAR_ABSENT);
+	log(Message(Message::LogCritical, LOG_HANDLEBAR_ABSENT));
 }
 
 void HandleBarController::recovery()
 {
-	log(Message(Message::LogError) << LOG_HANDLEBAR_RECOVERY_ATTEMPT);
+	log(Message(Message::LogError, LOG_HANDLEBAR_RECOVERY_ATTEMPT));
 	reInit();
 }
 
 void HandleBarController::recovered()
 {
-	log(Message(Message::LogInfo) << LOG_HANDLEBAR_RECOVERED);
+	log(Message(Message::LogInfo, LOG_HANDLEBAR_RECOVERED));
 }
 
 void HandleBarController::lost()
 {
-	log(Message(Message::LogError) << LOG_HANDLEBAR_LOST);
+	log(Message(Message::LogError, LOG_HANDLEBAR_LOST));
 }
 
 void HandleBarController::setup()
