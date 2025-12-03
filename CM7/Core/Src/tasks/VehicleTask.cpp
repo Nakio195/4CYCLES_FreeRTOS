@@ -33,10 +33,10 @@ VehicleTask::VehicleTask()
 	mMotorEngaged = false;
 	mZeroCrossing = false;
 
-	mLogDynamicsTimer = Timer(100, Timer::Continuous);
+	mLogDynamicsTimer = Timer(300, Timer::Continuous);
 	mLogDynamicsTimer.startTimer();
 
-	mMotorUpdateTimer = Timer(20, Timer::Continuous);
+	mMotorUpdateTimer = Timer(50, Timer::Continuous);
 	mMotorUpdateTimer.startTimer();
 
 
