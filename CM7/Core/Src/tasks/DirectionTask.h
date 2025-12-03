@@ -27,6 +27,8 @@ class DirectionTask: public RTOS_Task
 		void setDirectionAV(int32_t target);
 		void setDirectionAR(int32_t target);
 
+		void setBrakeAV(int32_t target);
+		void setBrakeAR(int32_t target);
 		int32_t getSensorAV()
 		{
 			return mDirSensorAV;
@@ -41,6 +43,8 @@ class DirectionTask: public RTOS_Task
 		{
 			mMotorAV->run();
 			mMotorAR->run();
+			mBrakeAV->run();
+			mBrakeAR->run();
 		}
 
 
@@ -50,6 +54,7 @@ class DirectionTask: public RTOS_Task
 		bool checksumAMT232(uint16_t data, bool k1, bool k0);
 
 	private:
+		// Direction Sensors
 		int32_t mDirSensorAV;
 		int32_t mDirSensorAR;
 
@@ -61,8 +66,13 @@ class DirectionTask: public RTOS_Task
 		const int32_t mSensorCenterAR;
 		const int32_t mSensorCenterAV;
 
+		// Direction Motors
 		StepperMotor *mMotorAV;
 		StepperMotor *mMotorAR;
+
+		// Brake Motors
+		StepperMotor *mBrakeAV;
+		StepperMotor *mBrakeAR;
 
 };
 

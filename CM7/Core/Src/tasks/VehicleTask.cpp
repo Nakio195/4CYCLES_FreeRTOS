@@ -84,6 +84,8 @@ void VehicleTask::run()
 				case Action::Brake:
 					mRawBrake = action->getBrakeValue();
 					mBrake.setInput(action->getBrakeValue());
+					DirectionHandler.setBrakeAV(mBrake.getOutput());
+					DirectionHandler.setBrakeAR(mBrake.getOutput());
 					break;
 				case Action::Lights:
 					handleLightsAction(action);

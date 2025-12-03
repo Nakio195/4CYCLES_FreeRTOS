@@ -21,7 +21,7 @@ class StepperMotor
 	public:
 		enum Direction{Forward = 0, Backward = 1};
 	public:
-		StepperMotor(bool motPosition, GPIO_TypeDef * stepPort, uint32_t stepPin, GPIO_TypeDef * dirPort, uint32_t dirPin);
+		StepperMotor(bool motPosition, uint32_t stepTime, GPIO_TypeDef * stepPort, uint32_t stepPin, GPIO_TypeDef * dirPort, uint32_t dirPin);
 
 		void setTargetPosition(int32_t position);
 		void setRealPosition(int32_t position);
@@ -52,6 +52,7 @@ class StepperMotor
 		uint32_t mDirPin;
 
 		uint32_t mTickCount;
+		uint32_t mStepTime;
 		SemaphoreHandle_t mRunSemaphore;
 };
 

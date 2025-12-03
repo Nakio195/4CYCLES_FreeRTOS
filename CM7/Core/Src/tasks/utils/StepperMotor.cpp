@@ -7,7 +7,7 @@
 
 #include "StepperMotor.h"
 
-StepperMotor::StepperMotor(bool motPosition, GPIO_TypeDef * stepPort, uint32_t stepPin, GPIO_TypeDef * dirPort, uint32_t dirPin)
+StepperMotor::StepperMotor(bool motPosition, uint32_t stepTime, GPIO_TypeDef * stepPort, uint32_t stepPin, GPIO_TypeDef * dirPort, uint32_t dirPin)
 {
 	// TODO Auto-generated constructor stub
 	mStepPort = stepPort;
@@ -15,8 +15,8 @@ StepperMotor::StepperMotor(bool motPosition, GPIO_TypeDef * stepPort, uint32_t s
 	mDirPort = dirPort;
 	mDirPin = dirPin;
 
-	HAL_GPIO_WritePin(mStepPort, mStepPin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(mDirPort, mDirPin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(mStepPort, mStepPin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(mDirPort, mDirPin, GPIO_PIN_RESET);
 
 	mPosition = 0;
 	mRealPosition = 9999;
@@ -32,6 +32,8 @@ StepperMotor::StepperMotor(bool motPosition, GPIO_TypeDef * stepPort, uint32_t s
 	mResetSequence = false;
 	mMotPosition = motPosition;
 
+	mTickCount = 0;
+	mStepTime = stepTime;
 
 	mRunSemaphore = xSemaphoreCreateBinary();
 	xSemaphoreGive(mRunSemaphore);
@@ -91,26 +93,26 @@ void StepperMotor::run()
 	{
 		mTickCount++;
 
-		if(mTickCount >= STEPPER_MOTOR_STEP_TIME)
+		if(mTickCount >= mStepTime)
 		{
 			mTickCount = 0;
 			if (mPosition != mTargetPosition)
 			{
 				if (mPosition < mTargetPosition)
-					HAL_GPIO_WritePin(mDirPort, mDirPin, GPIO_PIN_SET);
-				else
 					HAL_GPIO_WritePin(mDirPort, mDirPin, GPIO_PIN_RESET);
+				else
+					HAL_GPIO_WritePin(mDirPort, mDirPin, GPIO_PIN_SET);
 
 				if(mPulseState)
 				{
-					HAL_GPIO_WritePin(mStepPort, mStepPin, GPIO_PIN_RESET);
+					HAL_GPIO_WritePin(mStepPort, mStepPin, GPIO_PIN_SET);
 					if(mPosition < mTargetPosition)
 						mPosition++;
 					else
 						mPosition--;
 				}
 				else
-					HAL_GPIO_WritePin(mStepPort, mStepPin, GPIO_PIN_SET);
+					HAL_GPIO_WritePin(mStepPort, mStepPin, GPIO_PIN_RESET);
 
 				mPulseState = !(bool)(mPulseState);
 

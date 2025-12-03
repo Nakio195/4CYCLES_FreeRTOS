@@ -12,7 +12,11 @@ DirectionTask DirectionHandler;
 DirectionTask::DirectionTask() : mSensorCenterAR(9312), mSensorCenterAV(8876)
 {
 	// TODO Auto-generated constructor stub
+	mMotorAV = new StepperMotor(true, 2, PULSE_DIR_AV_GPIO_Port, PULSE_DIR_AV_Pin, DIR_DIR_AV_GPIO_Port, DIR_DIR_AV_Pin);
+	mMotorAR = new StepperMotor(false, 2, PULSE_DIR_AR_GPIO_Port, PULSE_DIR_AR_Pin, DIR_DIR_AR_GPIO_Port, DIR_DIR_AR_Pin);
 
+	mBrakeAV = new StepperMotor(true, 200, PULSE_BRK_AV_GPIO_Port, PULSE_BRK_AV_Pin, DIR_BRK_AV_GPIO_Port, DIR_BRK_AV_Pin);
+	mBrakeAR = new StepperMotor(true, 200, PULSE_BRK_AR_GPIO_Port, PULSE_BRK_AR_Pin, DIR_BRK_AR_GPIO_Port, DIR_BRK_AR_Pin);
 }
 
 
@@ -26,16 +30,26 @@ void DirectionTask::setDirectionAR(int32_t target)
 	mMotorAR->setTargetPosition(target);
 }
 
+void DirectionTask::setBrakeAV(int32_t target)
+{
+	mBrakeAV->setTargetPosition(target);
+}
+
+void DirectionTask::setBrakeAR(int32_t target)
+{
+	mBrakeAR->setTargetPosition(target);
+}
+
 void DirectionTask::setup()
 {
-	mMotorAV = new StepperMotor(true, PULSE_DIR_AV_GPIO_Port, PULSE_DIR_AV_Pin, DIR_DIR_AV_GPIO_Port, DIR_DIR_AV_Pin);
-	mMotorAR = new StepperMotor(false, PULSE_DIR_AR_GPIO_Port, PULSE_DIR_AR_Pin, DIR_DIR_AR_GPIO_Port, DIR_DIR_AR_Pin);
 
 	HAL_GPIO_WritePin(NSS_AV_GPIO_Port, NSS_AV_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(NSS_AR_GPIO_Port, NSS_AR_Pin, GPIO_PIN_RESET);
 
-	HAL_GPIO_WritePin(EN_DIR_AV_GPIO_Port, EN_DIR_AV_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(EN_DIR_AR_GPIO_Port, EN_DIR_AR_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(EN_DIR_AV_GPIO_Port, EN_DIR_AV_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(EN_DIR_AR_GPIO_Port, EN_DIR_AR_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(EN_BRK_AV_GPIO_Port, EN_BRK_AV_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(EN_BRK_AR_GPIO_Port, EN_BRK_AR_Pin, GPIO_PIN_SET);
 	osDelay(200);
 	HAL_TIM_Base_Start_IT(&htim16);
 	HAL_TIM_OC_Start(&htim16, TIM_CHANNEL_1);
