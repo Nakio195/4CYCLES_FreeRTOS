@@ -12,7 +12,7 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 
-#define ACTION_POOL_SIZE 500
+#define ACTION_POOL_SIZE 50
 
 class Action
 {

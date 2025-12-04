@@ -72,6 +72,7 @@ class VehicleTask : public RTOS_Task
 
 		size_t freeHeap;
 		size_t minEver;
+		HeapStats_t stats;
 
 };
 

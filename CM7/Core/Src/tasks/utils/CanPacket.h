@@ -114,7 +114,7 @@ class CanPacket
 };
 
 
-#define CAN_POOL_SIZE 500// Taille du pool de paquets CAN
+#define CAN_POOL_SIZE 100// Taille du pool de paquets CAN
 
 class CANPacketPoolHandler
 {

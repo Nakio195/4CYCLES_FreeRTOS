@@ -23,6 +23,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "tasks/IRQWrapper.h"
+#include "FreeRTOS.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -96,6 +98,9 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
+	HeapStats_t stats;
+	vPortGetHeapStats(&stats);
+
 	uint8_t Error[] = "[CRTICAL] Core M7 - Main Error ";
 	CDC_Transmit_FS(Error, sizeof(Error));
 	__disable_irq();
