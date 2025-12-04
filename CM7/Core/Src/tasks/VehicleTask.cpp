@@ -136,6 +136,11 @@ void VehicleTask::run()
 	mThrottle.update();
 	mBrake.update();
 
+	if(HandleBarTask.status() == CanPeripheral::Lost)
+	{
+		disengageMotor();
+	}
+
 	//Changing zero-crossing parameter
 //	if(mThrottle.getOutput() < 2.0)
 //	{
