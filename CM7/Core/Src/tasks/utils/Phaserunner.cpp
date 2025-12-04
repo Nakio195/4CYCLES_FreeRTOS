@@ -178,7 +178,7 @@ void Phaserunner::setSpeed(float speed)
 {
 	//TODO Filter input and check motor state
 
-	setRemoteCommands(mMotorInfo.speedLimit*3, speed, mMotorCommands.MotoringCurrentLimit, mMotorCommands.BrakingCurrentLimit);
+	setRemoteCommands(mMotorInfo.speedLimit*3 > 99 ? 99 : mMotorInfo.speedLimit*3, speed, mMotorCommands.MotoringCurrentLimit, mMotorCommands.BrakingCurrentLimit);
 }
 
 
@@ -188,10 +188,19 @@ bool Phaserunner::setRemoteCommands(float speed, float torque, float maxMotorCur
 	{
 		speed = 0;
 		torque = maxBrakeCurrent;
+		setSpeedRegulatorMode(0); // Torque mode
+	}
+
+	else
+	{
+		setSpeedRegulatorMode(2); // Speed + Torque mode
+
+		if(torque < 0.0)
+			speed = 3*7;
 	}
 
 	setSpeedCommand(speed);
-	setCurrentsLimits(maxMotorCurrent, 100);
+	setCurrentsLimits(maxMotorCurrent, maxBrakeCurrent < 15.0 ? 15.0 : maxBrakeCurrent);
 	setRemoteState(mMotorCommands.State);
 	setTorqueCommand(torque);
 	return true;
@@ -500,9 +509,16 @@ bool Phaserunner::setTorqueCommand(float torque)
 	if(torque > 100.0)
 		return false;
 
+	if(torque < -100.0)
+		return false;
+
+	if(torque > -2.0 && torque < 2.0)
+		torque = 0.0;
+
+
 	mMotorCommands.Torque = torque;
 
-	writeRegister(494, 4095*(torque/100.0));
+	writeRegister(494, (int16_t)((4095*(torque/100.0))));
 	return true;
 
 }
