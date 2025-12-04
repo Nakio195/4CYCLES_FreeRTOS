@@ -62,6 +62,11 @@ class CanPeripheral
 			return false;
 		}
 
+		State status()
+		{
+			return mState;
+		}
+
 	protected:
 		bool inline isResponding()
 		{
@@ -112,6 +117,12 @@ class CanPeripheral
 
 				if(mState == Absent)
 					absent();
+
+				if(mState == Lost)
+				{
+					osDelay(1000);
+					mState = Unitialized;
+				}
 			}
 
 			//Release lock for CanTask to access push
