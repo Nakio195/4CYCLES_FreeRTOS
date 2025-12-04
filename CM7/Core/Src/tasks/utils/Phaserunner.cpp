@@ -33,8 +33,8 @@ void Phaserunner::setup()
 	setCommunicationTimeout(HeartBeat_Rate*2); // Gestion timeout
 	setControlSource(0);	// 0 Serial
 	setCurrentsLimits(100.0, 100.0);
-	setBatteryLimits(22, 60);
-	setPowerLimit(1000);
+	setBatteryLimits(30, 60);
+	setPowerLimit(1800);
 	setSpeedLimit(20.0);
 	setSpeedRegulatorMode(2); // 0 Speed, 2 Torque+Speed Limit
 	setRemoteState(1); // 1 IDLE

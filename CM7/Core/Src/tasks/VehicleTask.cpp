@@ -26,7 +26,7 @@ VehicleTask::VehicleTask()
 
 	//mThrottle.addFilter(threshold);
 	//mThrottle.addFilter(new SCurveFilter(5));
-	mThrottle.addFilter(new LowPassFilter(500));
+	mThrottle.addFilter(new LowPassFilter(100));
 
 	mBrake.addFilter(new LowPassFilter(10));
 
