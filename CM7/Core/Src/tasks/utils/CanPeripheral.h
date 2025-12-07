@@ -32,6 +32,7 @@ class CanPeripheral
 		}
 
 		virtual void reInit() = 0;
+		virtual void discovered() = 0;
 		virtual void recovery() = 0;
 		virtual void absent() = 0;
 		virtual void recovered() = 0;
@@ -52,7 +53,10 @@ class CanPeripheral
 				mLastCommunication = 0;
 
 				if(mState == Initialized || mState == Recovery)
+				{
+					discovered();
 					mState = Ready;
+				}
 
 				// Add packet to Queue for children class to process
 				if(xQueueSend(mPacketsQueue, &packet, 0) == pdTRUE)
@@ -77,7 +81,10 @@ class CanPeripheral
 		virtual void CommunicationTimeout()
 		{
 			if(mState == Initialized)
+			{
+				absent();
 				mState = Absent;
+			}
 			if(mState == Ready)
 				startRecovery();
 		}
@@ -115,10 +122,8 @@ class CanPeripheral
 				if (mState == Unitialized)
 					init();
 
-				if(mState == Absent)
-					absent();
 
-				if(mState == Lost)
+				if(mState == Lost || mState == Absent)
 				{
 					osDelay(1000);
 					mState = Unitialized;

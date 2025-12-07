@@ -138,8 +138,9 @@ void VehicleTask::run()
 	mThrottle.update();
 	mBrake.update();
 
-	if(HandleBarTask.status() == CanPeripheral::Lost)
+	if(HandleBarTask.status() == CanPeripheral::Lost || HandleBarTask.status() == CanPeripheral::Absent || HandleBarTask.status() == CanPeripheral::Recovery)
 	{
+		mMotorEngaged = false;
 		disengageMotor();
 	}
 

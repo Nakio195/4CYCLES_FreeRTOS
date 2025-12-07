@@ -108,6 +108,11 @@ void Logger::reInit()
 	}
 }
 
+void Logger::discovered()
+{
+	log(Message(Message::LogError, LOG_LOGGER_CONNECTED));
+}
+
 void Logger::recovery()
 {
 	log(Message(Message::LogError, LOG_LOGGER_RECOVERY_ATTEMPT));

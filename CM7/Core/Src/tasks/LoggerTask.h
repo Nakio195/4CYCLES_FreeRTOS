@@ -29,6 +29,7 @@ class Logger : public RTOS_Task, public CanPeripheral
 		void cleanup() override;
 
 		void init() override;
+		void discovered();
 		void reInit();
 		void recovery();
 		void absent();

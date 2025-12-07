@@ -13,8 +13,8 @@ extern ActionPacketPoolHandler ActionPacketPool;
 HandleBarController::HandleBarController()
 {
 	setRangeFilter(0x20, 0x29);
-	setCommunicationTimeout(1000);
-	setRecoveryMode(10, 250);
+	setCommunicationTimeout(200);
+	setRecoveryMode(5, 100);
 
 	mPreviousTick = 0;
 	Mut_Data = xSemaphoreCreateMutex();
@@ -47,6 +47,10 @@ void HandleBarController::reInit()
 
 }
 
+void HandleBarController::discovered()
+{
+	log(Message(Message::LogCritical, LOG_HANDLEBAR_CONNECTED));
+}
 void HandleBarController::absent()
 {
 	log(Message(Message::LogCritical, LOG_HANDLEBAR_ABSENT));

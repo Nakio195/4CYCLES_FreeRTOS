@@ -45,7 +45,10 @@ void PS3Controller::reInit()
 	}
 
 }
-
+void PS3Controller::discovered()
+{
+	log(Message(Message::LogCritical, LOG_PS3_CONTROLLER_CONNECTED));
+}
 void PS3Controller::absent()
 {
 	log(Message(Message::LogCritical, LOG_PS3_CONTROLLER_ABSENT));

@@ -93,6 +93,7 @@ class PS3Controller: public CanPeripheral, public RTOS_Task, public Controller
 
 		void init() override;
 		void reInit();
+		void discovered();
 		void recovery();
 		void absent();
 		void recovered();
