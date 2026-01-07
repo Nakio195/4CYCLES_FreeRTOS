@@ -9,14 +9,14 @@
 
 DirectionTask DirectionHandler;
 
-DirectionTask::DirectionTask() : mSensorCenterAR(9312), mSensorCenterAV(8876)
+DirectionTask::DirectionTask() : mSensorCenterAR(2841), mSensorCenterAV(1971)
 {
 	// TODO Auto-generated constructor stub
-	mMotorAV = new StepperMotor(true, 2, PULSE_DIR_AV_GPIO_Port, PULSE_DIR_AV_Pin, DIR_DIR_AV_GPIO_Port, DIR_DIR_AV_Pin);
-	mMotorAR = new StepperMotor(false, 2, PULSE_DIR_AR_GPIO_Port, PULSE_DIR_AR_Pin, DIR_DIR_AR_GPIO_Port, DIR_DIR_AR_Pin);
+	mMotorAV = new StepperMotor(true, 2, -5000, 5000, PULSE_DIR_AV_GPIO_Port, PULSE_DIR_AV_Pin, DIR_DIR_AV_GPIO_Port, DIR_DIR_AV_Pin);
+	mMotorAR = new StepperMotor(false, 2, -5000, 5000, PULSE_DIR_AR_GPIO_Port, PULSE_DIR_AR_Pin, DIR_DIR_AR_GPIO_Port, DIR_DIR_AR_Pin);
 
-	mBrakeAV = new StepperMotor(true, 200, PULSE_BRK_AV_GPIO_Port, PULSE_BRK_AV_Pin, DIR_BRK_AV_GPIO_Port, DIR_BRK_AV_Pin);
-	mBrakeAR = new StepperMotor(true, 200, PULSE_BRK_AR_GPIO_Port, PULSE_BRK_AR_Pin, DIR_BRK_AR_GPIO_Port, DIR_BRK_AR_Pin);
+	mBrakeAV = new StepperMotor(true, 2, -5000, 5000, PULSE_BRK_AV_GPIO_Port, PULSE_BRK_AV_Pin, DIR_BRK_AV_GPIO_Port, DIR_BRK_AV_Pin);
+	mBrakeAR = new StepperMotor(true, 2, -5000, 5000, PULSE_BRK_AR_GPIO_Port, PULSE_BRK_AR_Pin, DIR_BRK_AR_GPIO_Port, DIR_BRK_AR_Pin);
 }
 
 
@@ -43,8 +43,8 @@ void DirectionTask::setBrakeAR(int32_t target)
 void DirectionTask::setup()
 {
 
-	HAL_GPIO_WritePin(NSS_AV_GPIO_Port, NSS_AV_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(NSS_AR_GPIO_Port, NSS_AR_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(NSS_AV_GPIO_Port, NSS_AV_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(NSS_AR_GPIO_Port, NSS_AR_Pin, GPIO_PIN_SET);
 
 	HAL_GPIO_WritePin(EN_DIR_AV_GPIO_Port, EN_DIR_AV_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(EN_DIR_AR_GPIO_Port, EN_DIR_AR_Pin, GPIO_PIN_SET);
@@ -60,10 +60,10 @@ void DirectionTask::run()
 	//AV : Max Right : 3068 - Max Left 14684 - Mid 8184 -- Zero 8876
 	//AR : Max Right : 15528 - Max Left 4152 - Mid 42844 -- Zero 9944
 
-    bool Checksum_Error = false;
+    bool Checksum_Error = true;
 
     // Read AV Sensor
-	uint16_t Data = readAMT232(NSS_AV_GPIO_Port, NSS_AV_Pin, &Checksum_Error);
+	uint16_t Data = 0;//readAMT232(&hspi6, NSS_AV_GPIO_Port, NSS_AV_Pin, &Checksum_Error);
 
 	if(!Checksum_Error)
 	{
@@ -83,9 +83,9 @@ void DirectionTask::run()
 			asm("NOP");
 		}
 	}
-/*
+
 	// Read AR Sensor
-	uint16_t Data = readAMT232(NSS_AR_GPIO_Port, NSS_AR_Pin, &Checksum_Error);
+	Data = 0;//readAMT232(&hspi5, NSS_AR_GPIO_Port, NSS_AR_Pin, &Checksum_Error);
 
 	if(!Checksum_Error)
 	{
@@ -101,7 +101,7 @@ void DirectionTask::run()
 		{
 			// TODO : 10 consecutive read error, system might be damaged
 		}
-	}*/
+	}
 
 	osDelay(10);
 
@@ -115,11 +115,10 @@ void DirectionTask::run()
 //	rxData -= mSensorCenterAR;
 //	mDirSensorAR = int16_t(rxData);
 //	mMotorAR->setRealPosition(mDirSensorAR);
-//	osDelay(10);
 }
 
 
-uint16_t DirectionTask::readAMT232(GPIO_TypeDef* port, uint16_t pin, bool* error)
+uint16_t DirectionTask::readAMT232(SPI_HandleTypeDef* hspi, GPIO_TypeDef* port, uint16_t pin, bool* error)
 {
     int16_t rx = 0;
 	int16_t Data = 0;
@@ -130,7 +129,7 @@ uint16_t DirectionTask::readAMT232(GPIO_TypeDef* port, uint16_t pin, bool* error
     *error = false;
 
 	HAL_GPIO_WritePin(port, pin, GPIO_PIN_RESET);
-	HAL_SPI_TransmitReceive(&hspi5, (uint8_t*)&txDummy, (uint8_t*)&rx, 1, 100);
+	HAL_SPI_TransmitReceive(hspi, (uint8_t*)&txDummy, (uint8_t*)&rx, 1, 100);
 	HAL_GPIO_WritePin(port, pin, GPIO_PIN_SET);
 
 	Data = (rx & 0x3FFF) >> 2;

@@ -7,7 +7,7 @@
 
 #include "StepperMotor.h"
 
-StepperMotor::StepperMotor(bool motPosition, uint32_t stepTime, GPIO_TypeDef * stepPort, uint32_t stepPin, GPIO_TypeDef * dirPort, uint32_t dirPin)
+StepperMotor::StepperMotor(bool motPosition, uint32_t stepTime, int32_t lowLimit, int32_t highLimit, GPIO_TypeDef * stepPort, uint32_t stepPin, GPIO_TypeDef * dirPort, uint32_t dirPin)
 {
 	// TODO Auto-generated constructor stub
 	mStepPort = stepPort;
@@ -23,8 +23,8 @@ StepperMotor::StepperMotor(bool motPosition, uint32_t stepTime, GPIO_TypeDef * s
 	mTargetPosition = 0;
 	mDirection = 0;
 
-	mLowLimit = -5000;
-	mHighLimit = 5000;
+	mLowLimit = lowLimit;
+	mHighLimit = highLimit;
 
 	mPulseState = true;
 	mReady = false;
