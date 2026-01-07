@@ -16,12 +16,12 @@ Logger::Logger()
 	CanHandler.attach(this);
 }
 
-QueueHandle_t Logger::createLogQueue()
+QueueHandle_t Logger::createLogQueue(const char *name)
 {
 	LockGuard lock(mutex);
 	QueueHandle_t q = xQueueCreate(20, sizeof(Message*));
 
-	vQueueAddToRegistry(q, "LoggerQueue");
+	vQueueAddToRegistry(q, name);
 
 	if(q == nullptr)
 		Error_Handler();
@@ -95,16 +95,21 @@ void Logger::init()
 	}
 
 	else
-		mState = Initialized;
+	{
+		// Todo handle full Queue
+		CanPacketPool.free(LoggerControl);
+		osDelay(1);
+	}
 }
 
 void Logger::reInit()
 {
 	CanPacket *LoggerControl = CanPacketPool.allocate(0x1019);
 	LoggerControl->data.push_back(0x01);
-	if(CanHandler.send(LoggerControl))
+	if(!CanHandler.send(LoggerControl))
 	{
 		// Todo handle full Queue
+		CanPacketPool.free(LoggerControl);
 	}
 }
 
@@ -183,9 +188,10 @@ void Logger::print(Message& m)
 		Log->data.push_back(m.code() & 0xFF);
 	}
 
-	if(CanHandler.send(Log))
+	if(!CanHandler.send(Log))
 	{
 		// TODO handle full Queue
+		CanPacketPool.free(Log);
 	}
 }
 

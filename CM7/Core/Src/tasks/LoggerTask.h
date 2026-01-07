@@ -22,7 +22,7 @@ class Logger : public RTOS_Task, public CanPeripheral
 
 		void print(Message &m);
 
-		QueueHandle_t createLogQueue();
+		QueueHandle_t createLogQueue(const char *name);
 
 		void setup() override;
 		void run() override;

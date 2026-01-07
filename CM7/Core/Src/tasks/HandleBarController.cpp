@@ -33,16 +33,20 @@ void HandleBarController::init()
 	}
 
 	else
-		mState = Initialized;
+	{
+		CanPacketPool.free(HandleBarControllerSettings);
+		osDelay(1);
+	}
 }
 
 void HandleBarController::reInit()
 {
 	CanPacket *HandleBarControllerSettings = CanPacketPool.allocate(0x29);
 	HandleBarControllerSettings->data.push_back(0x01);
-	if(CanHandler.send(HandleBarControllerSettings))
+	if(!CanHandler.send(HandleBarControllerSettings))
 	{
 		// Todo handle full Queue
+		CanPacketPool.free(HandleBarControllerSettings);
 	}
 
 }

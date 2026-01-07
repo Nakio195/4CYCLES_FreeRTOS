@@ -31,6 +31,12 @@ void PS3Controller::init()
 	{
 		CanPeripheral::init();
 	}
+
+	else
+	{
+		CanPacketPool.free(ControllerSettings);
+		osDelay(1);
+	}
 }
 
 void PS3Controller::reInit()
@@ -39,9 +45,10 @@ void PS3Controller::reInit()
 	ControllerSettings->data.push_back(0x01);
 	ControllerSettings->data.push_back(0x00);
 	ControllerSettings->data.push_back(0x00);
-	if(CanHandler.send(ControllerSettings))
+	if(!CanHandler.send(ControllerSettings))
 	{
 		// Todo handle full Queue
+		CanPacketPool.free(ControllerSettings);
 	}
 
 }

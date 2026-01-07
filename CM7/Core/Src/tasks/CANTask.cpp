@@ -115,7 +115,7 @@ void CAN_Task::attach(CanPeripheral* peripheral)
 
 bool CAN_Task::send(CanPacket* packet)
 {
-	if(xQueueSend(TX_Queue, &packet, 0) != pdTRUE)
+	if(xQueueSend(TX_Queue, &packet, 1) != pdTRUE)
 		return false;
 
 	return true;
