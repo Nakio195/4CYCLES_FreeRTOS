@@ -45,13 +45,13 @@ VehicleTask::VehicleTask()
 void VehicleTask::setup()
 {
 
-	this->attachLogQueue(LoggerTask.createLogQueue());
-	CanHandler.attachLogQueue(LoggerTask.createLogQueue());
-	HandleBarTask.attachLogQueue(LoggerTask.createLogQueue());
-	Ph_AVD.attachLogQueue(LoggerTask.createLogQueue());
-	Ph_AVG.attachLogQueue(LoggerTask.createLogQueue());
-	Ph_ARD.attachLogQueue(LoggerTask.createLogQueue());
-	Ph_ARG.attachLogQueue(LoggerTask.createLogQueue());
+	this->attachLogQueue(LoggerTask.createLogQueue("Vehicle"));
+	CanHandler.attachLogQueue(LoggerTask.createLogQueue("CanHandler"));
+	HandleBarTask.attachLogQueue(LoggerTask.createLogQueue("HandleBar"));
+	Ph_AVD.attachLogQueue(LoggerTask.createLogQueue("Ph_AVD"));
+	Ph_AVG.attachLogQueue(LoggerTask.createLogQueue("Ph_AVG"));
+	Ph_ARD.attachLogQueue(LoggerTask.createLogQueue("Ph_ARD"));
+	Ph_ARG.attachLogQueue(LoggerTask.createLogQueue("Ph_ARG"));
 
 	mControllerQueue = HandleBarTask.getQueue();
 	vQueueAddToRegistry(mControllerQueue, "ControllerActions");
