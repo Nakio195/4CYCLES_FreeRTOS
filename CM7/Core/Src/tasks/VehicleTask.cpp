@@ -90,15 +90,15 @@ void VehicleTask::run()
 				case Action::Brake:
 					mRawBrake = action->getBrakeValue();
 					mBrake.setInput(action->getBrakeValue());
-					DirectionHandler.setBrakeAV(mBrake.getOutput());
-					DirectionHandler.setBrakeAR(mBrake.getOutput());
+					DirectionHandler.setBrakeAV(-mBrake.getOutput()*13);
+					DirectionHandler.setBrakeAR(-mBrake.getOutput()*13);
 					break;
 				case Action::Lights:
 					handleLightsAction(action);
 					break;
 				case Action::Steering:
-					DirectionHandler.setDirectionAV(action->getSteeringValue());
-					DirectionHandler.setDirectionAR(-action->getSteeringValue());
+					mSteeringCommand_AV = action->getSteeringValue();
+					mSteeringCommand_AR = action->getSteeringValue();
 					break;
 				case Action::Engage:
 					mMotorEngaged = !mMotorEngaged;
@@ -137,6 +137,10 @@ void VehicleTask::run()
 	//	Computing data
 	mThrottle.update();
 	mBrake.update();
+
+
+	DirectionHandler.setDirectionAV(mSteeringCommand_AV);
+	DirectionHandler.setDirectionAR(-mSteeringCommand_AR);
 
 	if(HandleBarTask.status() == CanPeripheral::Lost || HandleBarTask.status() == CanPeripheral::Absent || HandleBarTask.status() == CanPeripheral::Recovery)
 	{

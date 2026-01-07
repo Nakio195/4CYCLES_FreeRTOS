@@ -22,6 +22,7 @@
 #include "utils/filters/LowPassFilter.h"
 #include "utils/filters/SCurveFilter.h"
 #include "utils/filters/ThresholdFilter.h"
+#include "utils/filters/LUTs.h"
 #include "utils/Phaserunner.hpp"
 #include "utils/tools/Timer.hpp"
 
@@ -50,9 +51,19 @@ class VehicleTask : public RTOS_Task
 		void setMotorEBrake(float brake);
 
 	private:
+		float getMeanSpeed();
+		float getMaxSpeed();
+
+		int32_t normalizeSterring(int32_t);
+
+	private:
 		QueueHandle_t mControllerQueue;
 
 		bool mMotorEngaged; // true if motor is engaged
+
+		//Direction values
+		uint32_t mSteeringCommand_AV;
+		uint32_t mSteeringCommand_AR;
 
 		//Motor Reverse
 		bool mMotorReversePending; // true if reverse gear is pending engagement
