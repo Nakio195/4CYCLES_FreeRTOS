@@ -311,3 +311,34 @@ void VehicleTask::handleLightsAction(Action* action)
 	}
 }
 
+float VehicleTask::getMeanSpeed()
+{
+	return (Ph_AVG.getMotorInfo().motorSpeed +
+			Ph_AVD.getMotorInfo().motorSpeed +
+			Ph_ARG.getMotorInfo().motorSpeed +
+			Ph_ARD.getMotorInfo().motorSpeed)
+			/ 4.0;
+}
+
+float VehicleTask::getMaxSpeed()
+{
+	return Ph_AVD.getMotorInfo().speedLimit;
+}
+
+
+int32_t VehicleTask::normalizeSterring(int32_t steering)
+{
+	int16_t indice = 0;
+	float meanSpeed = getMeanSpeed();
+
+	if(meanSpeed > 19.9)
+		meanSpeed = 19.9;
+	indice = (meanSpeed / 20.0) *255;
+
+	indice = indice > 255 ? 255 : indice;
+	indice = indice < 0 ? 0 : indice;
+
+	float coeff = float(LUT_DirectionVsSpeed[indice])/255.0;
+	return int32_t(float(steering) * coeff);
+}
+
