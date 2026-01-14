@@ -1,11 +1,7 @@
 .metadata
 .settings
-.mxproject
 librairies
 Release
-.cproject
-.project
-.sproject
 spec.d
 .o
 Common
