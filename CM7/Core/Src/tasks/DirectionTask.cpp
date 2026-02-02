@@ -12,9 +12,13 @@ DirectionTask DirectionHandler;
 DirectionTask::DirectionTask() : mSensorCenterAR(2841), mSensorCenterAV(1971)
 {
 	// TODO Auto-generated constructor stub
+	//Direction
 	mMotorAV = new StepperMotor(true, 2, -5000, 5000, PULSE_DIR_AV_GPIO_Port, PULSE_DIR_AV_Pin, DIR_DIR_AV_GPIO_Port, DIR_DIR_AV_Pin);
-	mMotorAR = new StepperMotor(false, 2, -5000, 5000, PULSE_DIR_AR_GPIO_Port, PULSE_DIR_AR_Pin, DIR_DIR_AR_GPIO_Port, DIR_DIR_AR_Pin);
+	mMotorAV->configureSensor(StepperMotor::RotationSensor(124, 1397, 2673));
 
+	mMotorAR = new StepperMotor(false, 2, -5000, 5000, PULSE_DIR_AR_GPIO_Port, PULSE_DIR_AR_Pin, DIR_DIR_AR_GPIO_Port, DIR_DIR_AR_Pin);
+	mMotorAR->configureSensor(StepperMotor::RotationSensor(1545, 2789, 4045));
+	//Braking
 	mBrakeAV = new StepperMotor(true, 2, -5000, 5000, PULSE_BRK_AV_GPIO_Port, PULSE_BRK_AV_Pin, DIR_BRK_AV_GPIO_Port, DIR_BRK_AV_Pin);
 	mBrakeAR = new StepperMotor(true, 2, -5000, 5000, PULSE_BRK_AR_GPIO_Port, PULSE_BRK_AR_Pin, DIR_BRK_AR_GPIO_Port, DIR_BRK_AR_Pin);
 }
@@ -57,13 +61,11 @@ void DirectionTask::setup()
 
 void DirectionTask::run()
 {
-	//AV : Max Right : 3068 - Max Left 14684 - Mid 8184 -- Zero 8876
-	//AR : Max Right : 15528 - Max Left 4152 - Mid 42844 -- Zero 9944
 
     bool Checksum_Error = true;
 
     // Read AV Sensor
-	uint16_t Data = 0;//readAMT232(&hspi6, NSS_AV_GPIO_Port, NSS_AV_Pin, &Checksum_Error);
+	uint16_t Data = readAMT232(&hspi6, NSS_AV_GPIO_Port, NSS_AV_Pin, &Checksum_Error);
 
 	if(!Checksum_Error)
 	{
@@ -85,7 +87,7 @@ void DirectionTask::run()
 	}
 
 	// Read AR Sensor
-	Data = 0;//readAMT232(&hspi5, NSS_AR_GPIO_Port, NSS_AR_Pin, &Checksum_Error);
+	Data = readAMT232(&hspi5, NSS_AR_GPIO_Port, NSS_AR_Pin, &Checksum_Error);
 
 	if(!Checksum_Error)
 	{

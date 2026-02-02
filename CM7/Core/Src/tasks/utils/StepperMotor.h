@@ -20,11 +20,25 @@ class StepperMotor
 {
 	public:
 		enum Direction{Forward = 0, Backward = 1};
+
+		struct RotationSensor
+		{
+			RotationSensor(int16_t pMin = 0, int16_t pCenter = 0, int16_t pMax = 0) : min(pMin), center(pCenter), max(pMax)
+			{}
+
+			int16_t min;
+			int16_t center;
+			int16_t max;
+			bool enabled = false;
+			bool ready = false;
+		};
+
 	public:
 		StepperMotor(bool motPosition, uint32_t stepTime, int32_t lowLimit, int32_t highLimit, GPIO_TypeDef * stepPort, uint32_t stepPin, GPIO_TypeDef * dirPort, uint32_t dirPin);
 
 		void setTargetPosition(int32_t position);
 		void setRealPosition(int32_t position);
+		void configureSensor(const RotationSensor sensor);
 		void run();
 
 	private:
@@ -33,6 +47,8 @@ class StepperMotor
 
 	private:
 		bool mMotPosition; // true = Front Motor
+
+		RotationSensor mSensor;
 
 		int32_t mPosition;
 		int32_t mTargetPosition;
@@ -53,6 +69,7 @@ class StepperMotor
 
 		uint32_t mTickCount;
 		uint32_t mStepTime;
+		uint32_t mStepTimeResetSequence;
 		SemaphoreHandle_t mRunSemaphore;
 };
 

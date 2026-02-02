@@ -29,11 +29,12 @@ StepperMotor::StepperMotor(bool motPosition, uint32_t stepTime, int32_t lowLimit
 	mPulseState = true;
 	mReady = false;
 	mResetPosition = true;
-	mResetSequence = false;
+	mResetSequence = true;
 	mMotPosition = motPosition;
 
 	mTickCount = 0;
 	mStepTime = stepTime;
+	mStepTimeResetSequence = stepTime;
 
 	mRunSemaphore = xSemaphoreCreateBinary();
 	xSemaphoreGive(mRunSemaphore);
@@ -43,6 +44,7 @@ void StepperMotor::setTargetPosition(int32_t position)
 {
 	if (xSemaphoreTake(mRunSemaphore, 100) == pdTRUE)
 	{
+		// Constrain between limit
 		if (position < mLowLimit)
 			mTargetPosition = mLowLimit;
 		else if (position > mHighLimit)
@@ -58,35 +60,44 @@ void StepperMotor::setRealPosition(int32_t position)
 {
 	if (xSemaphoreTake(mRunSemaphore, 100) == pdTRUE)
 	{
-		mRealPosition = -position;
+		if(mSensor.enabled)
+		{
+			float a = 10000.0 / (mSensor.max - mSensor.min);
+
+			mRealPosition = a*(-position + mSensor.center); //Add
+		}
 		xSemaphoreGive(mRunSemaphore);
 	}
 }
+
+void StepperMotor::configureSensor(const RotationSensor sensor)
+{
+	if (xSemaphoreTake(mRunSemaphore, 100) == pdTRUE)
+	{
+		mSensor = sensor;
+		mSensor.enabled = true;
+		xSemaphoreGive(mRunSemaphore);
+	}
+}
+
 void StepperMotor::run()
 {
-	/*if(mResetSequence)
+	if(mResetSequence && mSensor.enabled)
 	{
-		if(mMotPosition)
-			mPosition = mRealPosition;
-		else
-			mPosition = -mRealPosition;
-
-		if(mRealPosition > -500 && mRealPosition < 500)
+		mPosition = mRealPosition;
+		mStepTime = 10;
+		if(mRealPosition > mTargetPosition -7 && mRealPosition < mTargetPosition +7)
+		{
 			mResetSequence = false;
+			mStepTime = mStepTimeResetSequence;
+		}
 	}
 
-
-	if(!mReady)
+	else
 	{
-		if(mTargetPosition < mRealPosition +500 && mTargetPosition > mRealPosition-500)
-		{
-			mReady = true;
-			mResetPosition = true;
-			mResetSequence = true;
-		}
-		else
-			return;
-	}*/
+		mResetSequence = false;
+		mStepTime = mStepTimeResetSequence;
+	}
 
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	if(xSemaphoreTakeFromISR(mRunSemaphore, &xHigherPriorityTaskWoken) == pdTRUE)
@@ -98,6 +109,7 @@ void StepperMotor::run()
 			mTickCount = 0;
 			if (mPosition != mTargetPosition)
 			{
+				//Handle Pulse
 				if (mPosition < mTargetPosition)
 					HAL_GPIO_WritePin(mDirPort, mDirPin, GPIO_PIN_RESET);
 				else
