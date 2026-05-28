@@ -25,6 +25,7 @@ class CanPeripheral
 		enum State{Unitialized, Initialized, Ready, Recovery, Lost, Absent};
 		enum PeripheralType{Controller, Logger, Battery, Accessory};
 		enum ControllerType{Unknown, Handlebar, Remote};
+
 	public:
 		CanPeripheral();
 
@@ -72,6 +73,12 @@ class CanPeripheral
 		{
 			return mState;
 		}
+
+		void inline attachPeripheralQueue(QueueHandle_t queue)
+		{
+			mPeripheralQueue = queue;
+		}
+
 
 	protected:
 		bool inline isResponding()
@@ -189,6 +196,12 @@ class CanPeripheral
 	protected:
 		// Mutex
 		SemaphoreHandle_t mutex;
+
+		QueueHandle_t mPeripheralQueue;
+
+		// Informations
+		uint8_t mPeripheralType;
+		uint8_t mControllerType;
 
 		// Connection monitoring
 		uint32_t mLastHeartbeat;

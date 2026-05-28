@@ -24,5 +24,6 @@ CanPeripheral::CanPeripheral()
 	mState = Unitialized;
 
 	mPacketsQueue = xQueueCreate(10, sizeof(CanPacket*));
+	mPeripheralQueue = nullptr;
 	mutex = xSemaphoreCreateRecursiveMutex();
 }

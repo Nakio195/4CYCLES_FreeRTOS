@@ -39,6 +39,7 @@ VehicleTask::VehicleTask()
 	mMotorUpdateTimer = Timer(50, Timer::Continuous);
 	mMotorUpdateTimer.startTimer();
 
+	mCanPeripheralsQueue = xQueueCreate(40, sizeof(Action*));
 
 }
 
@@ -53,7 +54,9 @@ void VehicleTask::setup()
 	Ph_ARD.attachLogQueue(LoggerTask.createLogQueue("Ph_ARD"));
 	Ph_ARG.attachLogQueue(LoggerTask.createLogQueue("Ph_ARG"));
 
-	mControllerQueue = HandleBarTask.getQueue();
+	mControllerQueue = HandleBarTask.getControllerQueue();
+	HandleBarTask.attachPeripheralQueue(mCanPeripheralsQueue);
+
 	vQueueAddToRegistry(mControllerQueue, "ControllerActions");
 
 	CanHandler.start("CAN", 256, osPriorityBelowNormal1);
