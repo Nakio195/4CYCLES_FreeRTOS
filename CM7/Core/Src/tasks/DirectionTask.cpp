@@ -19,8 +19,8 @@ DirectionTask::DirectionTask() : mSensorCenterAR(2841), mSensorCenterAV(1971)
 	mMotorAR = new StepperMotor(false, 3, -5000, 5000, PULSE_DIR_AR_GPIO_Port, PULSE_DIR_AR_Pin, DIR_DIR_AR_GPIO_Port, DIR_DIR_AR_Pin);
 	mMotorAR->configureSensor(StepperMotor::RotationSensor(1545, 2789, 4045));
 	//Braking
-	mBrakeAV = new StepperMotor(true, 2, -5000, 5000, PULSE_BRK_AV_GPIO_Port, PULSE_BRK_AV_Pin, DIR_BRK_AV_GPIO_Port, DIR_BRK_AV_Pin);
-	mBrakeAR = new StepperMotor(true, 2, -5000, 5000, PULSE_BRK_AR_GPIO_Port, PULSE_BRK_AR_Pin, DIR_BRK_AR_GPIO_Port, DIR_BRK_AR_Pin);
+	mBrakeAV = new StepperMotor(true, 1, -100000, 100000, PULSE_BRK_AV_GPIO_Port, PULSE_BRK_AV_Pin, DIR_BRK_AV_GPIO_Port, DIR_BRK_AV_Pin);
+	mBrakeAR = new StepperMotor(false, 1, -500000, 500000, PULSE_BRK_AR_GPIO_Port, PULSE_BRK_AR_Pin, DIR_BRK_AR_GPIO_Port, DIR_BRK_AR_Pin);
 }
 
 
