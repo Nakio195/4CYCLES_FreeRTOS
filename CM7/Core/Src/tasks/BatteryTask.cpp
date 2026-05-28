@@ -19,6 +19,8 @@ BatteryTask::BatteryTask()
 	Mut_Data = xSemaphoreCreateMutex();
 	xSemaphoreGive(Mut_Data);
 
+	mPeripheralType = Battery;
+
 	CanHandler.attach(this);
 }
 

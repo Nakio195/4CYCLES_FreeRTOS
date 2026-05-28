@@ -23,6 +23,8 @@ class CanPeripheral
 	public:
 		enum FilterMode{Range, Mask};
 		enum State{Unitialized, Initialized, Ready, Recovery, Lost, Absent};
+		enum PeripheralType{Controller, Logger, Battery, Accessory};
+		enum ControllerType{Unknown, Handlebar, Remote};
 	public:
 		CanPeripheral();
 
