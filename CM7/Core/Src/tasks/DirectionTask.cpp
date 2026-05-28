@@ -13,10 +13,10 @@ DirectionTask::DirectionTask() : mSensorCenterAR(2841), mSensorCenterAV(1971)
 {
 	// TODO Auto-generated constructor stub
 	//Direction
-	mMotorAV = new StepperMotor(true, 2, -5000, 5000, PULSE_DIR_AV_GPIO_Port, PULSE_DIR_AV_Pin, DIR_DIR_AV_GPIO_Port, DIR_DIR_AV_Pin);
+	mMotorAV = new StepperMotor(true, 3, -5000, 5000, PULSE_DIR_AV_GPIO_Port, PULSE_DIR_AV_Pin, DIR_DIR_AV_GPIO_Port, DIR_DIR_AV_Pin);
 	mMotorAV->configureSensor(StepperMotor::RotationSensor(124, 1397, 2673));
 
-	mMotorAR = new StepperMotor(false, 2, -5000, 5000, PULSE_DIR_AR_GPIO_Port, PULSE_DIR_AR_Pin, DIR_DIR_AR_GPIO_Port, DIR_DIR_AR_Pin);
+	mMotorAR = new StepperMotor(false, 3, -5000, 5000, PULSE_DIR_AR_GPIO_Port, PULSE_DIR_AR_Pin, DIR_DIR_AR_GPIO_Port, DIR_DIR_AR_Pin);
 	mMotorAR->configureSensor(StepperMotor::RotationSensor(1545, 2789, 4045));
 	//Braking
 	mBrakeAV = new StepperMotor(true, 2, -5000, 5000, PULSE_BRK_AV_GPIO_Port, PULSE_BRK_AV_Pin, DIR_BRK_AV_GPIO_Port, DIR_BRK_AV_Pin);
