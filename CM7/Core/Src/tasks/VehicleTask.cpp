@@ -133,6 +133,26 @@ void VehicleTask::run()
 		}
 	}
 
+	while(xQueueReceive(mControllerQueue, &action, pdMS_TO_TICKS(10)) == pdTRUE)
+		{
+			if (action != nullptr)
+			{
+				switch (action->type())
+				{
+					case Action::PeripheralDiscovered:
+						mRawThottle = action->getThrottleValue();
+						mThrottle.setInput(action->getThrottleValue());
+						break;
+
+					default:
+						// TODO: log invalid type
+						break;
+				}
+
+				ActionPacketPool.free(action);
+			}
+		}
+
 	//Update timers
 	mLogDynamicsTimer.tick(osKernelGetTickCount());
 	mMotorUpdateTimer.tick(osKernelGetTickCount());

@@ -58,6 +58,7 @@ class VehicleTask : public RTOS_Task
 
 	private:
 		QueueHandle_t mControllerQueue;
+		QueueHandle_t mCanPeripheralsQueue;
 
 		bool mMotorEngaged; // true if motor is engaged
 
