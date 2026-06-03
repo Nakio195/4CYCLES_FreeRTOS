@@ -5,34 +5,6 @@
  *      Author: To
  */
 
-/*
- * CanPeripheral.h
- *
- *   [Any state]  ──── Heartbeat ──────────────────────────────► Initialized
- *   Initialized  ──── Packet received ───────────────────────► Ready
- *   Initialized  ──── Timeout, retry < MAX ─────────────────► Initialized  (resend settings)
- *   Initialized  ──── Timeout, retry >= MAX ────────────────► Absent ──► (reset) Uninitialized
- *   Ready        ──── Timeout ─────────────────────────────► Recovery
- *   Recovery     ──── Packet received ───────────────────────► Ready
- *   Recovery     ──── retry >= MAX ─────────────────────────► Lost ───► (reset) Uninitialized
- *
- * Thread safety:
- *   push()      — may be called from a separate CAN receive task concurrently with tick().
- *   heartbeat() — called from the peripheral's own task (inside run()).
- *   tick()      — called from the peripheral's own task (inside run()).
- *
- *
- *
- * API changes vs original (update subclasses accordingly):
- *   init()       → onInit()       — no longer calls CanPeripheral::init() to advance state
- *   discovered() → onDiscovered()
- *   recovery()   → onRecovery()   — replaces reInit() call; just resend settings here
- *   recovered()  → onRecovered()
- *   lost()       → onLost()
- *   absent()     → onAbsent()
- *   reInit()        removed       — fold logic into onRecovery()
- */
-
 #ifndef SRC_TASKS_UTILS_CANPERIPHERAL_H_
 #define SRC_TASKS_UTILS_CANPERIPHERAL_H_
 
@@ -71,11 +43,20 @@ class CanPeripheral
 			mDtHeartbeat = 0;
 			mPeripheralId = Unknown;
 			mPeripheralType = Controller;
+
 			mFilterMode = Range;
 			mFilterLow = 0;
 			mFilterHigh = 0;
 			mFilterId = 0;
 			mFilterMask = 0;
+
+			mDataFilterEnabled = false;
+			mDataFilterMode    = Range;
+			mDataFilterLow     = 0;
+			mDataFilterHigh    = 0;
+			mDataFilterId      = 0;
+			mDataFilterMask    = 0;
+
 			mHeartbeatRequired = true;
 
 			mMutex        = xSemaphoreCreateMutex();
@@ -116,7 +97,7 @@ class CanPeripheral
 
 				mLastCommunication = 0;
 
-				if(mState == Initialized || mState == Recovery)
+				if(isData(packet->Identifier) && (mState == Initialized || mState == Recovery))
 				{
 					prev        = mState;
 					mState      = Ready;
@@ -139,9 +120,8 @@ class CanPeripheral
 			if(promoted)
 			{
 				if(prev == Recovery) onRecovered();
-				else                 onDiscovered();
+				onReady();
 			}
-
 			else if(doInit)
 			{
 				transition(Initialized); // validates mState == Uninitialized, calls onInit()
@@ -171,6 +151,23 @@ class CanPeripheral
 		void setHeartbeatRequired(bool required)
 		{
 			mHeartbeatRequired = required;
+		}
+
+		// Set the filter for active Data to switch from Initialized to Ready
+		void setDataRangeFilter(uint32_t low, uint32_t high)
+		{
+		    mDataFilterEnabled = true;
+		    mDataFilterMode    = Range;
+		    mDataFilterLow     = low;
+		    mDataFilterHigh    = high;
+		}
+
+		void setDataMaskFilter(uint32_t id, uint32_t mask)
+		{
+		    mDataFilterEnabled = true;
+		    mDataFilterMode    = Mask;
+		    mDataFilterId      = id;
+		    mDataFilterMask    = mask;
 		}
 
 		/**
@@ -207,17 +204,26 @@ class CanPeripheral
 		// ── Subclass callbacks ────────────────────────────────────────────────
 
 		/**
-		 * Entering Initialized: send initial configuration settings to the device.
-		 * Called when the device (re)appears after Uninitialized, Lost, or Absent.
-		 * Also called on timeout retries while still in Initialized state.
-		 * A heartbeat received in Ready or Recovery does NOT trigger this.
+		 * Entering Initialized: device detected for the first time or after
+		 * reappesaring (post-Lost, post-Absent, post-Disabled, or on first heartbeat).
+		 * Use this to log the detection and emit a discovery event.
+		 * Called once per discovery, NOT on subsequent timeout retries.
+		 */
+		virtual void onDiscovered() = 0;
+
+		/**
+		 * Send configuration settings to the device.
+		 * Called immediately after onDiscovered() on Initialized entry,
+		 * and again on each timeout retry while still in Initialized state.
 		 */
 		virtual void onInit()       = 0;
 
 		/**
-		 * Entering Ready from Initialized: first successful response received.
+		 * Entering Ready: business data is now flowing from the device.
+		 * Called on every Initialized→Ready and Recovery→Ready transition,
+		 * after onRecovered() in the latter case.
 		 */
-		virtual void onDiscovered() = 0;
+		virtual void onReady()      = 0;
 
 		/**
 		 * One recovery attempt: resend settings. Called once per retry interval.
@@ -504,10 +510,13 @@ class CanPeripheral
 			// Entry actions — called outside lock
 			switch(next)
 			{
-				case Initialized:   onInit();       break;
+				case Initialized:
+					onDiscovered(); // device (re)appeared — log/event here
+					onInit();       // send settings
+					break;
 				case Ready:
 					if(prev == Recovery) onRecovered();
-					else                 onDiscovered();
+					onReady(); // business data now flowing
 					break;
 				case Lost:          onLost();       break;
 				case Absent:        onAbsent();     break;
@@ -521,6 +530,14 @@ class CanPeripheral
 			if(mFilterMode == Range) return id >= mFilterLow && id <= mFilterHigh;
 			if(mFilterMode == Mask)  return (id & mFilterMask) == (mFilterId & mFilterMask);
 			return false;
+		}
+
+		bool isData(uint32_t id) const
+		{
+		    if(!mDataFilterEnabled) return true;
+		    if(mDataFilterMode == Range) return id >= mDataFilterLow && id <= mDataFilterHigh;
+		    if(mDataFilterMode == Mask)  return (id & mDataFilterMask) == (mDataFilterId & mDataFilterMask);
+		    return false;
 		}
 
 	protected:
@@ -540,7 +557,6 @@ class CanPeripheral
 		// State machine
 		State    mState;
 		bool     mHeartbeatRequired; // false → any packet can trigger Uninitialized→Initialized
-
 		uint8_t  mRetryCount;        // shared between Initialized retries and Recovery
 		uint8_t  mMaxRetries;
 		uint16_t mRecoveryTicks;     // ms between recovery attempts
@@ -557,7 +573,14 @@ class CanPeripheral
 		uint32_t mFilterHigh;
 		uint32_t mFilterId;
 		uint32_t mFilterMask;
+
+		// CAN ID Data filtering
+		bool     mDataFilterEnabled;
+		uint8_t  mDataFilterMode;
+		uint32_t mDataFilterLow;
+		uint32_t mDataFilterHigh;
+		uint32_t mDataFilterId;
+		uint32_t mDataFilterMask;
 };
 
-
-#endif
+#endif /* SRC_TASKS_UTILS_CANPERIPHERAL_H_ */
