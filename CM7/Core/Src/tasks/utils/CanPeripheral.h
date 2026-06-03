@@ -76,6 +76,7 @@ class CanPeripheral
 			mFilterHigh = 0;
 			mFilterId = 0;
 			mFilterMask = 0;
+			mHeartbeatRequired = true;
 
 			mMutex        = xSemaphoreCreateMutex();
 			mPacketsQueue = xQueueCreate(16, sizeof(CanPacket*));
@@ -98,8 +99,9 @@ class CanPeripheral
 				return false;
 
 			State prev;
-			bool  promoted = false;
-			bool  queued   = false;
+			bool  promoted  = false;
+			bool  doInit    = false;
+			bool  queued    = false;
 
 			{
 				LockGuard lock(mMutex);
@@ -121,6 +123,13 @@ class CanPeripheral
 					mRetryCount = 0;
 					promoted    = true;
 				}
+				else if(mState == Uninitialized && !mHeartbeatRequired)
+				{
+					// Peripheral has no heartbeat: first received frame acts as
+					// presence signal. transition(Initialized) is called outside
+					// the lock (it re-acquires internally).
+					doInit = true;
+				}
 
 				// Queue under the same lock to prevent double-access
 				queued = (xQueueSend(mPacketsQueue, &packet, 0) == pdTRUE);
@@ -131,6 +140,11 @@ class CanPeripheral
 			{
 				if(prev == Recovery) onRecovered();
 				else                 onDiscovered();
+			}
+
+			else if(doInit)
+			{
+				transition(Initialized); // validates mState == Uninitialized, calls onInit()
 			}
 
 			return queued;
@@ -146,6 +160,17 @@ class CanPeripheral
 		{
 			mMaxRetries    = maxRetries;
 			mRecoveryTicks = retryTicks;
+		}
+
+		/**
+		 * Call this in the subclass constructor for peripherals that do not emit
+		 * a dedicated heartbeat frame. Any matching packet will then act as a
+		 * presence signal and trigger Uninitialized → Initialized automatically.
+		 * Timeout monitoring (Lost/Absent) remains active as normal.
+		 */
+		void setHeartbeatRequired(bool required)
+		{
+			mHeartbeatRequired = required;
 		}
 
 		/**
@@ -514,6 +539,8 @@ class CanPeripheral
 	private:
 		// State machine
 		State    mState;
+		bool     mHeartbeatRequired; // false → any packet can trigger Uninitialized→Initialized
+
 		uint8_t  mRetryCount;        // shared between Initialized retries and Recovery
 		uint8_t  mMaxRetries;
 		uint16_t mRecoveryTicks;     // ms between recovery attempts

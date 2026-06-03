@@ -32,8 +32,6 @@ void HandleBarController::onInit()
     settings->data.push_back(0x01);
     if(!CanHandler.send(settings))
         CanPacketPool.free(settings);
-    // L'échec est géré par la machine d'états : un nouveau timeout
-    // déclenchera un retry via onInit(), puis Absent si MAX_RETRIES atteint.
 }
 
 void HandleBarController::onDiscovered()
