@@ -103,13 +103,13 @@ class BatteryTask: public CanPeripheral, public RTOS_Task
 		void run() override;
 		void cleanup() override;
 
-		void init() override;
-		void reInit();
-		void discovered();
-		void recovery();
-		void absent();
-		void recovered();
-		void lost();
+		void onInit() override;
+		void onDiscovered() override;
+		void onRecovery() override;
+		void onAbsent() override;
+		void onRecovered() override;
+		void onLost() override;
+		void onDisabled() override;
 
 		BatteryStatus status();
 

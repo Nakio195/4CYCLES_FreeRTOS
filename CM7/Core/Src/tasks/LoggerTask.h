@@ -28,13 +28,13 @@ class Logger : public RTOS_Task, public CanPeripheral
 		void run() override;
 		void cleanup() override;
 
-		void init() override;
-		void discovered();
-		void reInit();
-		void recovery();
-		void absent();
-		void recovered();
-		void lost();
+		void onInit() override;
+		void onDiscovered() override;
+		void onRecovery() override;
+		void onAbsent() override;
+		void onRecovered() override;
+		void onLost() override;
+		void onDisabled() override;
 
 	private:
 		std::vector<QueueHandle_t> mQueues;

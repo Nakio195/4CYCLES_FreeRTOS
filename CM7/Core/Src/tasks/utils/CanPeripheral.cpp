@@ -5,25 +5,25 @@
  *      Author: To
  */
 
-#include "CanPeripheral.h"
+//#include "CanPeripheral.h"
 
-CanPeripheral::CanPeripheral()
-{
-	mLastCommunication = 0;
-	mCommunicationTimeout = 0xFFFFFFFF;
-
-	mMaxRecovery = 99999;
-	mRecoveryTicks = 1000;
-
-	mFilterMode = Range;
-	mFilterLow = 0x00;
-	mFilterHigh = 0x00;
-	mFilterId = 0x00;
-	mFilterMask = 0x000;
-
-	mState = Unitialized;
-
-	mPacketsQueue = xQueueCreate(10, sizeof(CanPacket*));
-	mPeripheralQueue = nullptr;
-	mutex = xSemaphoreCreateRecursiveMutex();
-}
+//CanPeripheral::CanPeripheral()
+//{
+//	mLastCommunication = 0;
+//	mCommunicationTimeout = 0xFFFFFFFF;
+//
+//	mMaxRecovery = 99999;
+//	mRecoveryTicks = 1000;
+//
+//	mFilterMode = Range;
+//	mFilterLow = 0x00;
+//	mFilterHigh = 0x00;
+//	mFilterId = 0x00;
+//	mFilterMask = 0x000;
+//
+//	mState = Unitialized;
+//
+//	mPacketsQueue = xQueueCreate(10, sizeof(CanPacket*));
+//	mPeripheralQueue = nullptr;
+//	mutex = xSemaphoreCreateRecursiveMutex();
+//}

@@ -23,42 +23,22 @@ PS3Controller::PS3Controller()
 	CanHandler.attach(this);
 }
 
-void PS3Controller::init()
+void PS3Controller::onInit()
 {
 	CanPacket *ControllerSettings = CanPacketPool.allocate(0x19);
 	ControllerSettings->data.push_back(0x01);
 	ControllerSettings->data.push_back(0x00);
 	ControllerSettings->data.push_back(0x00);
-	if(CanHandler.send(ControllerSettings)) //TODO Handle multiple failed init
-	{
-		CanPeripheral::init();
-	}
-
-	else
-	{
+	if(!CanHandler.send(ControllerSettings)) //TODO Handle multiple failed init
 		CanPacketPool.free(ControllerSettings);
-		osDelay(1);
-	}
+
 }
 
-void PS3Controller::reInit()
-{
-	CanPacket *ControllerSettings = CanPacketPool.allocate(0x19);
-	ControllerSettings->data.push_back(0x01);
-	ControllerSettings->data.push_back(0x00);
-	ControllerSettings->data.push_back(0x00);
-	if(!CanHandler.send(ControllerSettings))
-	{
-		// Todo handle full Queue
-		CanPacketPool.free(ControllerSettings);
-	}
-
-}
-void PS3Controller::discovered()
+void PS3Controller::onDiscovered()
 {
 	log(Message(Message::LogCritical, LOG_PS3_CONTROLLER_CONNECTED));
 }
-void PS3Controller::absent()
+void PS3Controller::onAbsent()
 {
 	log(Message(Message::LogCritical, LOG_PS3_CONTROLLER_ABSENT));
 	while(1)
@@ -67,18 +47,17 @@ void PS3Controller::absent()
 	}
 }
 
-void PS3Controller::recovery()
+void PS3Controller::onRecovery()
 {
 	log(Message(Message::LogError, LOG_PS3_CONTROLLER_RECOVERY_ATTEMPT));
-	reInit();
 }
 
-void PS3Controller::recovered()
+void PS3Controller::onRecovered()
 {
 	log(Message(Message::LogInfo, LOG_PS3_CONTROLLER_RECOVERED));
 }
 
-void PS3Controller::lost()
+void PS3Controller::onLost()
 {
 	log(Message(Message::LogError, LOG_PS3_CONTROLLER_LOST));
 }
@@ -87,8 +66,18 @@ void PS3Controller::setup()
 {
 	Mut_Data = xSemaphoreCreateMutex();
 	xSemaphoreGive(Mut_Data);
-	init();
 }
+
+void PS3Controller::onDisabled()
+{
+    log(Message(Message::LogInfo, LOG_HANDLEBAR_DISABLED));
+
+    Event e;
+    e.type = Event::PeripheralDisconnect;
+    e.PeripheralDiscovered.id = mPeripheralId;
+    emit(e);
+}
+
 
 void PS3Controller::run()
 {

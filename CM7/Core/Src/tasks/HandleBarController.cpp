@@ -26,68 +26,64 @@ HandleBarController::HandleBarController()
 	CanHandler.attach(this);
 }
 
-void HandleBarController::init()
+void HandleBarController::onInit()
 {
-	CanPacket *HandleBarControllerSettings = CanPacketPool.allocate(0x29);
-	HandleBarControllerSettings->data.push_back(0x01);
-	if(CanHandler.send(HandleBarControllerSettings)) //TODO Handle multiple failed init
-	{
-		CanPeripheral::init();
-	}
-
-	// Failed to send init settings
-	else
-	{
-		CanPacketPool.free(HandleBarControllerSettings);
-		osDelay(1);
-	}
+    CanPacket *settings = CanPacketPool.allocate(0x29);
+    settings->data.push_back(0x01);
+    if(!CanHandler.send(settings))
+        CanPacketPool.free(settings);
+    // L'échec est géré par la machine d'états : un nouveau timeout
+    // déclenchera un retry via onInit(), puis Absent si MAX_RETRIES atteint.
 }
 
-void HandleBarController::reInit()
+void HandleBarController::onDiscovered()
 {
-	CanPacket *HandleBarControllerSettings = CanPacketPool.allocate(0x29);
-	HandleBarControllerSettings->data.push_back(0x01);
-	if(!CanHandler.send(HandleBarControllerSettings))
-	{
-		// Todo handle full Queue
-		CanPacketPool.free(HandleBarControllerSettings);
-	}
+    log(Message(Message::LogCritical, LOG_HANDLEBAR_CONNECTED));
 
+    Event e;
+    e.type = Event::PeripheralDiscover;
+    e.PeripheralDiscovered.id = mPeripheralId;
+    emit(e);
 }
 
-void HandleBarController::discovered()
+void HandleBarController::onRecovery()
 {
-	log(Message(Message::LogCritical, LOG_HANDLEBAR_CONNECTED));
+    log(Message(Message::LogError, LOG_HANDLEBAR_RECOVERY_ATTEMPT));
 
-	Event e;
-	e.type = Event::PeripheralDiscover;
-	e.PeripheralDiscovered.id = mPeripheralId;
-	emit(e);
-}
-void HandleBarController::absent()
-{
-	log(Message(Message::LogCritical, LOG_HANDLEBAR_ABSENT));
+    CanPacket *settings = CanPacketPool.allocate(0x29);
+    settings->data.push_back(0x01);
+    if(!CanHandler.send(settings))
+        CanPacketPool.free(settings);
 }
 
-void HandleBarController::recovery()
+void HandleBarController::onRecovered()
 {
-	log(Message(Message::LogError, LOG_HANDLEBAR_RECOVERY_ATTEMPT));
-	reInit();
+    log(Message(Message::LogInfo, LOG_HANDLEBAR_RECOVERED));
 }
 
-void HandleBarController::recovered()
+void HandleBarController::onLost()
 {
-	log(Message(Message::LogInfo, LOG_HANDLEBAR_RECOVERED));
+    log(Message(Message::LogError, LOG_HANDLEBAR_LOST));
+
+    Event e;
+    e.type = Event::PeripheralDisconnect;
+    e.PeripheralDiscovered.id = mPeripheralId;
+    emit(e);
 }
 
-void HandleBarController::lost()
+void HandleBarController::onAbsent()
 {
-	log(Message(Message::LogError, LOG_HANDLEBAR_LOST));
+    log(Message(Message::LogCritical, LOG_HANDLEBAR_ABSENT));
+}
 
-	Event e;
-	e.type = Event::PeripheralDisconnect;
-	e.PeripheralDiscovered.id = mPeripheralId;
-	emit(e);
+void HandleBarController::onDisabled()
+{
+    log(Message(Message::LogInfo, LOG_HANDLEBAR_DISABLED));
+
+    Event e;
+    e.type = Event::PeripheralDisconnect;
+    e.PeripheralDiscovered.id = mPeripheralId;
+    emit(e);
 }
 
 void HandleBarController::setup()

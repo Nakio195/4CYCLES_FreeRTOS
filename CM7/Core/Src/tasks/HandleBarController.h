@@ -27,13 +27,13 @@ class HandleBarController: public CanPeripheral, public RTOS_Task, public Contro
 		void run() override;
 		void cleanup() override;
 
-		void init() override;
-		void reInit() override;
-		void discovered() override;
-		void recovery() override;
-		void absent() override;
-		void recovered() override;
-		void lost() override;
+		void onInit() override;
+		void onDiscovered() override;
+		void onRecovery() override;
+		void onAbsent() override;
+		void onRecovered() override;
+		void onLost() override;
+		void onDisabled() override;
 
 	private:
 		void ControllerStatus(CanPacket* packet);

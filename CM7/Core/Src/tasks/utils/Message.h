@@ -47,18 +47,21 @@ enum {
 	LOG_PS3_CONTROLLER_RECOVERY_ATTEMPT, //PS3 Controller recovery attempt
 	LOG_PS3_CONTROLLER_LOST, //Logger lost
 	LOG_PS3_CONTROLLER_RECOVERED, //Logger recovered
+	LOG_PS3_CONTROLLER_DISABLED, // HandleBar disabled
 
 	LOG_LOGGER_ABSENT, //Logger absent from bus
 	LOG_LOGGER_CONNECTED, //Logger connected to bus
 	LOG_LOGGER_RECOVERY_ATTEMPT, //Logger recovery attempt
 	LOG_LOGGER_LOST, //Logger lost
 	LOG_LOGGER_RECOVERED, //Logger recovered
+	LOG_LOGGER_DISABLED, // HandleBar disabled
 
 	LOG_HANDLEBAR_ABSENT, //HandleBar absent from bus
 	LOG_HANDLEBAR_CONNECTED, //HandleBar connected to bus
 	LOG_HANDLEBAR_RECOVERY_ATTEMPT, //HandleBar recovery attempt
 	LOG_HANDLEBAR_LOST, //HandleBar lost
 	LOG_HANDLEBAR_RECOVERED, //HandleBar recovered
+	LOG_HANDLEBAR_DISABLED, // HandleBar disabled
 
 	// Motor Status
 	LOG_VEHICLE_MOTOR_ENGAGED, // Vehicle motor engaged

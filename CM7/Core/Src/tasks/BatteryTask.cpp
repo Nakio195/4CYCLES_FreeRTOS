@@ -20,6 +20,7 @@ BatteryTask::BatteryTask()
 	xSemaphoreGive(Mut_Data);
 
 	mPeripheralType = Battery;
+	mPeripheralId = BatteryTYVA;
 
 	CanHandler.attach(this);
 }
@@ -148,39 +149,44 @@ void BatteryTask::processBatteryCurrent(CanPacket* packet)
 
 // ############ CAN Peripheral Methods ############
 
-void BatteryTask::init()
+void BatteryTask::onInit()
 {
 
 }
 
-void BatteryTask::reInit()
+void BatteryTask::onDiscovered()
 {
 
 }
 
-void BatteryTask::discovered()
+void BatteryTask::onRecovery()
 {
 
 }
 
-void BatteryTask::recovery()
+void BatteryTask::onAbsent()
 {
 
 }
 
-void BatteryTask::absent()
+void BatteryTask::onRecovered()
 {
 
 }
 
-void BatteryTask::recovered()
+void BatteryTask::onLost()
 {
 
 }
 
-void BatteryTask::lost()
+void BatteryTask::onDisabled()
 {
+    log(Message(Message::LogInfo, LOG_HANDLEBAR_DISABLED));
 
+    Event e;
+    e.type = Event::PeripheralDisconnect;
+    e.PeripheralDiscovered.id = mPeripheralId;
+    emit(e);
 }
 
 BatteryStatus BatteryTask::status()
