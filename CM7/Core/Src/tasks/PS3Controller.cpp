@@ -17,6 +17,8 @@ PS3Controller::PS3Controller()
 	setRecoveryMode(50, 1000);
 
 	mPreviousTick = 0;
+	mPeripheralId = PeripheralId::RemoteController;
+	mPeripheralType = PeripheralType::Controller;
 
 	CanHandler.attach(this);
 }

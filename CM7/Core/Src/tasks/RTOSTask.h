@@ -13,6 +13,7 @@
 #include "queue.h"
 #include "semphr.h"
 #include "utils/Message.h"
+#include "utils/Event.h"
 #include "utils/Controller.h"
 //Toto
 class RTOS_Task
@@ -37,11 +38,31 @@ class RTOS_Task
 				mLogQueue = q;
 		}
 
+		void inline attachEventQueue(QueueHandle_t q)
+		{
+			if(q != nullptr)
+				mEventQueue = q;
+		}
+
+		QueueHandle_t inline getEventQueue()
+		{
+			if(mEventQueue != nullptr)
+				return mEventQueue;
+
+			return nullptr;
+		}
+
 		void inline log(const Message &m)
 		{
 			Message* p = new Message(m); // TODO Use Message pool
 			if(mLogQueue != nullptr)
 				xQueueSend(mLogQueue, &p, 100);
+		}
+
+		void inline emit(const Event e)
+		{
+			if(mEventQueue != nullptr)
+				xQueueSend(mEventQueue, &e, 100);
 		}
 
 	protected:
@@ -86,6 +107,7 @@ class RTOS_Task
 		bool stopCalled = false;
 		TaskHandle_t xHandle = 0;
 		QueueHandle_t mLogQueue = nullptr;
+		QueueHandle_t mEventQueue = nullptr;
 };
 
 #endif /* SRC_UTILS_RTOSTASK_H_ */

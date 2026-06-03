@@ -17,6 +17,9 @@ HandleBarController::HandleBarController()
 	setRecoveryMode(5, 100);
 
 	mPreviousTick = 0;
+	mPeripheralId = PeripheralId::HandlebarController;
+	mPeripheralType = PeripheralType::Controller;
+
 	Mut_Data = xSemaphoreCreateMutex();
 	xSemaphoreGive(Mut_Data);
 
@@ -32,6 +35,7 @@ void HandleBarController::init()
 		CanPeripheral::init();
 	}
 
+	// Failed to send init settings
 	else
 	{
 		CanPacketPool.free(HandleBarControllerSettings);
@@ -54,6 +58,11 @@ void HandleBarController::reInit()
 void HandleBarController::discovered()
 {
 	log(Message(Message::LogCritical, LOG_HANDLEBAR_CONNECTED));
+
+	Event e;
+	e.type = Event::PeripheralDiscover;
+	e.PeripheralDiscovered.id = mPeripheralId;
+	emit(e);
 }
 void HandleBarController::absent()
 {
@@ -74,6 +83,11 @@ void HandleBarController::recovered()
 void HandleBarController::lost()
 {
 	log(Message(Message::LogError, LOG_HANDLEBAR_LOST));
+
+	Event e;
+	e.type = Event::PeripheralDisconnect;
+	e.PeripheralDiscovered.id = mPeripheralId;
+	emit(e);
 }
 
 void HandleBarController::setup()

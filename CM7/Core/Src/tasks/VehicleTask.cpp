@@ -39,7 +39,7 @@ VehicleTask::VehicleTask()
 	mMotorUpdateTimer = Timer(50, Timer::Continuous);
 	mMotorUpdateTimer.startTimer();
 
-	mCanPeripheralsQueue = xQueueCreate(40, sizeof(Action*));
+	mEventsQueue = xQueueCreate(40, sizeof(Event));
 
 }
 
@@ -55,7 +55,9 @@ void VehicleTask::setup()
 	Ph_ARG.attachLogQueue(LoggerTask.createLogQueue("Ph_ARG"));
 
 	mControllerQueue = HandleBarTask.getControllerQueue();
-	HandleBarTask.attachPeripheralQueue(mCanPeripheralsQueue);
+
+	HandleBarTask.attachEventQueue(mEventsQueue);
+	PS3Task.attachEventQueue(mEventsQueue);
 
 	vQueueAddToRegistry(mControllerQueue, "ControllerActions");
 
@@ -133,22 +135,20 @@ void VehicleTask::run()
 		}
 	}
 
-	while(xQueueReceive(mCanPeripheralsQueue, &action, pdMS_TO_TICKS(5)) == pdTRUE)
+	//Read received action from can Peripherals
+	Event event;
+
+	while(xQueueReceive(mEventsQueue, &event, pdMS_TO_TICKS(5)) == pdTRUE)
 	{
-		if (action != nullptr)
+		switch (event.type)
 		{
-			switch (action->type())
-			{
-				case Action::PeripheralDiscovered:
-//					uint8_t PeripheralType
-					break;
+			case Event::PeripheralDiscover :
+//					uint8_t PeripheralType = action->
+				break;
 
-				default:
-					// TODO: log invalid type
-					break;
-			}
-
-			ActionPacketPool.free(action);
+			default:
+				// TODO: log invalid type
+				break;
 		}
 	}
 

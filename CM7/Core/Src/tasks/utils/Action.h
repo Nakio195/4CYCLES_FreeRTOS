@@ -14,8 +14,7 @@
 class Action
 {
 	public:
-		enum Type{Invalid, Throttle, Brake, Steering, Motor, Lights, Horn, Controller, Engage,
-					PeripheralDiscovered, PeripheralConnected, PeripheralLost, PeripheralRecovery};
+		enum Type{Invalid, Throttle, Brake, Steering, Motor, Lights, Horn, Controller, Engage};
 		enum Gear{Slow, Middle, Fast, Reverse, Forward};
 		enum Signals{Left, Right, BrakeSignal, NighLight, Hazard};
 		enum ControllerEvent{Absent, Connected};
@@ -27,6 +26,7 @@ class Action
 			mTimestamp = xTaskGetTickCount();
 		}
 
+		//Generic
 		Type inline type()
 		{
 			return mType;
@@ -34,9 +34,18 @@ class Action
 
 		void inline push(uint32_t value)
 		{
+			//TODO Check array size before
 			mValues.push_back(value);
 		}
 
+		void reset(Type type)
+		{
+			mType = type;
+			mTimestamp = xTaskGetTickCount();
+			mValues.clear();
+		}
+
+		// Controller Oriented
 		uint8_t inline getThrottleValue()
 		{
 			return mValues[0];
@@ -67,12 +76,7 @@ class Action
 			return mValues[1];
 		}
 
-		void reset(Type type)
-		{
-			mType = type;
-			mTimestamp = xTaskGetTickCount();
-			mValues.clear();
-		}
+
 
 	private:
 		Type mType;

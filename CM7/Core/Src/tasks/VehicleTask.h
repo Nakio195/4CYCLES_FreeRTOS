@@ -11,6 +11,7 @@
 #include "RTOSTask.h"
 #include "LoggerTask.h"
 #include "HandleBarController.h"
+#include "PS3Controller.h"
 #include "DirectionTask.h"
 #include "usbd_cdc_if.h"
 #include "usart.h"
@@ -25,6 +26,7 @@
 #include "utils/filters/LUTs.h"
 #include "utils/Phaserunner.hpp"
 #include "utils/tools/Timer.hpp"
+#include "utils/Event.h"
 
 #include <string>
 
@@ -58,7 +60,7 @@ class VehicleTask : public RTOS_Task
 
 	private:
 		QueueHandle_t mControllerQueue;
-		QueueHandle_t mCanPeripheralsQueue;
+		QueueHandle_t mEventsQueue;
 
 		bool mMotorEngaged; // true if motor is engaged
 

@@ -92,12 +92,12 @@ class PS3Controller: public CanPeripheral, public RTOS_Task, public Controller
 		void cleanup() override;
 
 		void init() override;
-		void reInit();
-		void discovered();
-		void recovery();
-		void absent();
-		void recovered();
-		void lost();
+		void reInit() override;
+		void discovered() override;
+		void recovery() override;
+		void absent() override;
+		void recovered() override;
+		void lost() override;
 
 	private:
 		void ControllerStatus(CanPacket* packet);

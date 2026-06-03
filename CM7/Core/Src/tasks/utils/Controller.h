@@ -81,6 +81,7 @@ class Controller
 			return mQueue;
 		}
 
+
 	protected:
 		QueueHandle_t mQueue;
 

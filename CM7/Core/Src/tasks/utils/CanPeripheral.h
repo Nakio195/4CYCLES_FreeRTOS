@@ -17,14 +17,25 @@
 #include "LockGuard.hpp"
 #include "CanPacket.h"
 #include "Message.h"
+#include "Event.h"
 
 class CanPeripheral
 {
 	public:
-		enum FilterMode{Range, Mask};
-		enum State{Unitialized, Initialized, Ready, Recovery, Lost, Absent};
-		enum PeripheralType{Controller, Logger, Battery, Accessory};
-		enum ControllerType{Unknown, Handlebar, Remote};
+		enum FilterMode : uint8_t {Range, Mask};
+		enum State : uint8_t {Unitialized, Initialized, Ready, Recovery, Lost, Absent};
+		enum PeripheralType : uint8_t {Controller, Logger, Battery, Accessory};
+		enum PeripheralId : uint8_t
+		{
+			Unknown,
+			HandlebarController,
+			RemoteController,
+			BatteryTYVA,
+
+			Count
+		};
+
+
 
 	public:
 		CanPeripheral();
@@ -61,7 +72,7 @@ class CanPeripheral
 					mState = Ready;
 				}
 
-				// Add packet to Queue for children class to process
+				// Store packet to Queue for children class to process
 				if(xQueueSend(mPacketsQueue, &packet, 0) == pdTRUE)
 					return true;
 			}
@@ -73,12 +84,6 @@ class CanPeripheral
 		{
 			return mState;
 		}
-
-		void inline attachPeripheralQueue(QueueHandle_t queue)
-		{
-			mPeripheralQueue = queue;
-		}
-
 
 	protected:
 		bool inline isResponding()
@@ -200,8 +205,8 @@ class CanPeripheral
 		QueueHandle_t mPeripheralQueue;
 
 		// Informations
+		uint8_t mPeripheralId;
 		uint8_t mPeripheralType;
-		uint8_t mControllerType;
 
 		// Connection monitoring
 		uint32_t mLastHeartbeat;
