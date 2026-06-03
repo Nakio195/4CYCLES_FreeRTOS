@@ -12,6 +12,9 @@ Logger::Logger()
 	setRecoveryMode(5, 500);
 
 	mPreviousTick = 0;
+	mPeripheralId = MainLogger;
+	mPeripheralType = PeripheralType::Logger;
+
 
 	CanHandler.attach(this);
 }
@@ -33,7 +36,6 @@ QueueHandle_t Logger::createLogQueue(const char *name)
 void Logger::setup()
 {
 	osDelay(1000);
-	//init();
 }
 
 void Logger::run()
@@ -85,56 +87,41 @@ void Logger::cleanup()
 
 }
 
-void Logger::init()
+void Logger::onInit()
 {
 	CanPacket *LoggerControl = CanPacketPool.allocate(0x1019);
 	LoggerControl->data.push_back(0x01);
-	if(CanHandler.send(LoggerControl)) //TODO Handle multiple failed init
-	{
-		CanPeripheral::init();
-	}
-
-	else
-	{
-		// Todo handle full Queue
+	if(!CanHandler.send(LoggerControl)) //TODO Handle multiple failed init
 		CanPacketPool.free(LoggerControl);
-		osDelay(1);
-	}
+
 }
 
-void Logger::reInit()
-{
-	CanPacket *LoggerControl = CanPacketPool.allocate(0x1019);
-	LoggerControl->data.push_back(0x01);
-	if(!CanHandler.send(LoggerControl))
-	{
-		// Todo handle full Queue
-		CanPacketPool.free(LoggerControl);
-	}
-}
-
-void Logger::discovered()
+void Logger::onDiscovered()
 {
 	log(Message(Message::LogError, LOG_LOGGER_CONNECTED));
 }
 
-void Logger::recovery()
+void Logger::onRecovery()
 {
 	log(Message(Message::LogError, LOG_LOGGER_RECOVERY_ATTEMPT));
-	reInit();
 }
 
-void Logger::absent()
+void Logger::onAbsent()
 {
 	log(Message(Message::LogError, LOG_LOGGER_ABSENT));
 }
 
-void Logger::recovered()
+void Logger::onRecovered()
 {
 	log(Message(Message::LogInfo, LOG_LOGGER_RECOVERED));
 }
 
-void Logger::lost()
+void Logger::onLost()
+{
+	log(Message(Message::LogInfo, LOG_LOGGER_LOST));
+}
+
+void Logger::onDisabled()
 {
 	log(Message(Message::LogInfo, LOG_LOGGER_LOST));
 }
