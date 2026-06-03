@@ -222,7 +222,7 @@ void Phaserunner::setSpeedLimit(float limit)
 void Phaserunner::setBrake(float brake)
 {
 	//TODO Filter input and check motor state
-	mMotorCommands.BrakingCurrentLimit = brake;
+	mMotorCommands.BrakingCurrentLimit = 0;//brake;
 }
 
 

@@ -80,7 +80,7 @@ void VehicleTask::run()
 	vPortGetHeapStats(&stats);
 
 	// Read received action from controller
-	while(xQueueReceive(mControllerQueue, &action, pdMS_TO_TICKS(10)) == pdTRUE)
+	while(xQueueReceive(mControllerQueue, &action, pdMS_TO_TICKS(5)) == pdTRUE)
 	{
 		if (action != nullptr)
 		{
@@ -133,25 +133,24 @@ void VehicleTask::run()
 		}
 	}
 
-	while(xQueueReceive(mControllerQueue, &action, pdMS_TO_TICKS(10)) == pdTRUE)
+	while(xQueueReceive(mCanPeripheralsQueue, &action, pdMS_TO_TICKS(5)) == pdTRUE)
+	{
+		if (action != nullptr)
 		{
-			if (action != nullptr)
+			switch (action->type())
 			{
-				switch (action->type())
-				{
-					case Action::PeripheralDiscovered:
-						mRawThottle = action->getThrottleValue();
-						mThrottle.setInput(action->getThrottleValue());
-						break;
+				case Action::PeripheralDiscovered:
+//					uint8_t PeripheralType
+					break;
 
-					default:
-						// TODO: log invalid type
-						break;
-				}
-
-				ActionPacketPool.free(action);
+				default:
+					// TODO: log invalid type
+					break;
 			}
+
+			ActionPacketPool.free(action);
 		}
+	}
 
 	//Update timers
 	mLogDynamicsTimer.tick(osKernelGetTickCount());
