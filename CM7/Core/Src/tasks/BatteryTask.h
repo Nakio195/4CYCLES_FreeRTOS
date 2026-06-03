@@ -105,6 +105,7 @@ class BatteryTask: public CanPeripheral, public RTOS_Task
 
 		void onInit() override;
 		void onDiscovered() override;
+		void onReady() override;
 		void onRecovery() override;
 		void onAbsent() override;
 		void onRecovered() override;

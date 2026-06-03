@@ -44,6 +44,15 @@ void HandleBarController::onDiscovered()
     emit(e);
 }
 
+
+void HandleBarController::onReady()
+{
+    Event e;
+    e.type = Event::PeripheralConnect;
+    e.PeripheralDiscovered.id = mPeripheralId;
+    emit(e);
+}
+
 void HandleBarController::onRecovery()
 {
     log(Message(Message::LogError, LOG_HANDLEBAR_RECOVERY_ATTEMPT));

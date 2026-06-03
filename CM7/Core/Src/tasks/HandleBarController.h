@@ -29,6 +29,7 @@ class HandleBarController: public CanPeripheral, public RTOS_Task, public Contro
 
 		void onInit() override;
 		void onDiscovered() override;
+		void onReady() override;
 		void onRecovery() override;
 		void onAbsent() override;
 		void onRecovered() override;

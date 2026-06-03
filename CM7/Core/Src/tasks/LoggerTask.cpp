@@ -106,6 +106,11 @@ void Logger::onRecovery()
 	log(Message(Message::LogError, LOG_LOGGER_RECOVERY_ATTEMPT));
 }
 
+void Logger::onReady()
+{
+
+}
+
 void Logger::onAbsent()
 {
 	log(Message(Message::LogError, LOG_LOGGER_ABSENT));

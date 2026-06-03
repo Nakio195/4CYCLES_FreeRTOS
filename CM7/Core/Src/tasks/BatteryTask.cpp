@@ -159,6 +159,11 @@ void BatteryTask::onDiscovered()
 
 }
 
+void BatteryTask::onReady()
+{
+
+}
+
 void BatteryTask::onRecovery()
 {
 

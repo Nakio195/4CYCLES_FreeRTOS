@@ -38,6 +38,12 @@ void PS3Controller::onDiscovered()
 {
 	log(Message(Message::LogCritical, LOG_PS3_CONTROLLER_CONNECTED));
 }
+
+void PS3Controller::onReady()
+{
+
+}
+
 void PS3Controller::onAbsent()
 {
 	log(Message(Message::LogCritical, LOG_PS3_CONTROLLER_ABSENT));

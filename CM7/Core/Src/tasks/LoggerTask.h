@@ -30,6 +30,7 @@ class Logger : public RTOS_Task, public CanPeripheral
 
 		void onInit() override;
 		void onDiscovered() override;
+		void onReady() override;
 		void onRecovery() override;
 		void onAbsent() override;
 		void onRecovered() override;
