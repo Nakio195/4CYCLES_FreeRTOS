@@ -77,7 +77,8 @@ class Controller
 
 			Action* action = ActionPacketPool.allocate(type);
 			action->push(value);
-			xQueueSend(mQueue, &action, 0);
+			if(xQueueSend(mQueue, &action, 0)  != pdTRUE)
+				ActionPacketPool.free(action);
 		}
 
 		void inline pushAction(Action *action)
@@ -88,7 +89,8 @@ class Controller
 				return;
 			}
 
-			xQueueSend(mQueue, &action, 0);
+			if(xQueueSend(mQueue, &action, 0)  != pdTRUE)
+				ActionPacketPool.free(action);
 		}
 
 		QueueHandle_t inline getControllerQueue()

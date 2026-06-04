@@ -54,9 +54,13 @@ class RTOS_Task
 
 		void inline log(const Message &m)
 		{
-			Message* p = new Message(m); // TODO Use Message pool
+
 			if(mLogQueue != nullptr)
-				xQueueSend(mLogQueue, &p, 100);
+			{
+				Message* p = new Message(m); // TODO Use Message pool
+				if(xQueueSend(mLogQueue, &p, 100)  != pdTRUE)
+					delete p;
+			}
 		}
 
 		void inline emit(const Event e)

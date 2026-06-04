@@ -267,8 +267,8 @@ void PS3Controller::onInit()
 	ControllerSettings->data.push_back(0x01);
 	ControllerSettings->data.push_back(0x00);
 	ControllerSettings->data.push_back(0x00);
-	CanHandler.send(ControllerSettings); //TODO Handle send failed
-	CanPacketPool.free(ControllerSettings);
+	if(!CanHandler.send(ControllerSettings)) //TODO Handle send failed
+		CanPacketPool.free(ControllerSettings);
 }
 
 void PS3Controller::onDiscovered()
@@ -309,8 +309,8 @@ void PS3Controller::onRecovery()
 	ControllerSettings->data.push_back(0x01);
 	ControllerSettings->data.push_back(0x00);
 	ControllerSettings->data.push_back(0x00);
-	CanHandler.send(ControllerSettings); //TODO Handle send failed
-	CanPacketPool.free(ControllerSettings);
+	if(!CanHandler.send(ControllerSettings)) //TODO Handle send failed
+		CanPacketPool.free(ControllerSettings);
 }
 
 void PS3Controller::onRecovered()
@@ -338,6 +338,13 @@ void PS3Controller::onLost()
 void PS3Controller::onDisabled()
 {
     log(Message(Message::LogInfo, LOG_PS3_CONTROLLER_DISABLED));
+
+	CanPacket *ControllerSettings = CanPacketPool.allocate(0x19);
+	ControllerSettings->data.push_back(0x00);
+	ControllerSettings->data.push_back(0x00);
+	ControllerSettings->data.push_back(0x00);
+	if(!CanHandler.send(ControllerSettings)) //TODO Handle send failed
+		CanPacketPool.free(ControllerSettings);
 
     Event e;
     e.type = Event::PeripheralDisabled;

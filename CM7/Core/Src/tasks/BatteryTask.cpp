@@ -156,12 +156,7 @@ BatteryStatus BatteryTask::status()
 
 void BatteryTask::onInit()
 {
-	CanPacket *ControllerSettings = CanPacketPool.allocate(0x19);
-	ControllerSettings->data.push_back(0x01);
-	ControllerSettings->data.push_back(0x00);
-	ControllerSettings->data.push_back(0x00);
-	CanHandler.send(ControllerSettings); //TODO Handle send failed
-	CanPacketPool.free(ControllerSettings);
+
 }
 
 void BatteryTask::onDiscovered()

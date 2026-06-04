@@ -263,7 +263,10 @@ ModbusPacket* ModbusMaster::response(uint8_t slaveID)
 
         for(auto pkt : tempBuffer)
         {
-            xQueueSend(AnswerFIFO, &pkt, 0);
+            if(xQueueSend(AnswerFIFO, &pkt, 0) != pdTRUE)
+            {
+            	ModbusPacketPool.free(pkt);
+            }
         }
 
         xSemaphoreGive(responseMutex);
@@ -290,7 +293,8 @@ uint8_t ModbusMaster::available(uint8_t slaveID)
 
         for(auto pkt : tempBuffer)
         {
-            xQueueSend(AnswerFIFO, &pkt, 0);
+            if(xQueueSend(AnswerFIFO, &pkt, 0) != pdTRUE)
+            	ModbusPacketPool.free(pkt);
         }
 
         xSemaphoreGive(responseMutex);

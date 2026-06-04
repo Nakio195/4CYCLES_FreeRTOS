@@ -152,8 +152,8 @@ void Logger::onInit()
 {
 	CanPacket *LoggerControl = CanPacketPool.allocate(0x1019);
 	LoggerControl->data.push_back(0x01);
-	CanHandler.send(LoggerControl); //TODO Handle send fail
-	CanPacketPool.free(LoggerControl);
+	if(!CanHandler.send(LoggerControl)) //TODO Handle send fail
+		CanPacketPool.free(LoggerControl);
 }
 
 void Logger::onDiscovered()
@@ -166,8 +166,8 @@ void Logger::onRecovery()
 	log(Message(Message::LogError, LOG_LOGGER_RECOVERY_ATTEMPT));
 	CanPacket *LoggerControl = CanPacketPool.allocate(0x1019);
 	LoggerControl->data.push_back(0x01);
-	CanHandler.send(LoggerControl); //TODO Handle send fail
-	CanPacketPool.free(LoggerControl);
+	if(!CanHandler.send(LoggerControl)) //TODO Handle send fail
+		CanPacketPool.free(LoggerControl);
 }
 
 void Logger::onReady()
@@ -193,6 +193,10 @@ void Logger::onLost()
 void Logger::onDisabled()
 {
 	log(Message(Message::LogInfo, LOG_LOGGER_LOST));
+	CanPacket *LoggerControl = CanPacketPool.allocate(0x1019);
+	LoggerControl->data.push_back(0x00);
+	if(!CanHandler.send(LoggerControl)) //TODO Handle send fail
+		CanPacketPool.free(LoggerControl);
 }
 
 

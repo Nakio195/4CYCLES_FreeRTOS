@@ -235,8 +235,8 @@ void HandleBarController::onInit()
 {
     CanPacket *settings = CanPacketPool.allocate(0x29);
     settings->data.push_back(0x01);
-    CanHandler.send(settings); // TODO Handle send fail
-	CanPacketPool.free(settings);
+    if(!CanHandler.send(settings)) // TODO Handle send fail
+    	CanPacketPool.free(settings);
 }
 
 void HandleBarController::onDiscovered()
@@ -270,8 +270,8 @@ void HandleBarController::onRecovery()
 
     CanPacket *settings = CanPacketPool.allocate(0x29);
     settings->data.push_back(0x01);
-    CanHandler.send(settings); // TODO Handle send fail
-	CanPacketPool.free(settings);
+    if(!CanHandler.send(settings)) // TODO Handle send fail
+    	CanPacketPool.free(settings);
 }
 
 void HandleBarController::onRecovered()
@@ -299,6 +299,11 @@ void HandleBarController::onLost()
 void HandleBarController::onDisabled()
 {
     log(Message(Message::LogInfo, LOG_HANDLEBAR_DISABLED));
+
+    CanPacket *settings = CanPacketPool.allocate(0x29);
+    settings->data.push_back(0x00);
+    if(!CanHandler.send(settings)) // TODO Handle send fail
+    	CanPacketPool.free(settings);
 
     Event e;
     e.type = Event::PeripheralDisabled;
