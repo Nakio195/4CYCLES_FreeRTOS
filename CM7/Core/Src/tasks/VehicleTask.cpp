@@ -44,6 +44,8 @@ VehicleTask::VehicleTask()
 
 	mEventsQueue = xQueueCreate(40, sizeof(Event));
 
+	mCurrentController = CanPeripheral::PeripheralId::Unknown;
+
 }
 
 void VehicleTask::setup()
@@ -52,20 +54,18 @@ void VehicleTask::setup()
 	this->attachLogQueue(LoggerTask.createLogQueue("Vehicle"));
 	CanHandler.attachLogQueue(LoggerTask.createLogQueue("CanHandler"));
 	HandleBarTask.attachLogQueue(LoggerTask.createLogQueue("HandleBar"));
+	PS3Task.attachLogQueue(LoggerTask.createLogQueue("HandleBar"));
 	Ph_AVD.attachLogQueue(LoggerTask.createLogQueue("Ph_AVD"));
 	Ph_AVG.attachLogQueue(LoggerTask.createLogQueue("Ph_AVG"));
 	Ph_ARD.attachLogQueue(LoggerTask.createLogQueue("Ph_ARD"));
 	Ph_ARG.attachLogQueue(LoggerTask.createLogQueue("Ph_ARG"));
 
-	mControllerQueue = HandleBarTask.getControllerQueue();
-
 	HandleBarTask.attachEventQueue(mEventsQueue);
 	PS3Task.attachEventQueue(mEventsQueue);
 
-	vQueueAddToRegistry(mControllerQueue, "ControllerActions");
-
 	CanHandler.start("CAN", 256, osPriorityBelowNormal1);
 	HandleBarTask.start("HandleBar", 256, osPriorityBelowNormal);
+	PS3Task.start("PS3", 256, osPriorityBelowNormal);
 	DirectionHandler.start("Direction", 128, osPriorityHigh3);
 	ModbusHandler.start("ModbusMaster", 256, osPriorityHigh);
 	Ph_AVG.start("Ph_AVG", 512, osPriorityHigh2);
@@ -75,6 +75,17 @@ void VehicleTask::setup()
 	LoggerTask.start("Logger", 1024, osPriorityBelowNormal);
 
 	mLastWakeTime = osKernelGetTickCount();
+
+	//Wait for at least a Controller to be Ready
+	while(!mRemoteControllerAvailable && !mLocalControllerAvailable)
+	{
+		processEvents();
+	    mLastWakeTime += VEHICLE_TICK_MS;
+	    osDelayUntil(mLastWakeTime);
+	}
+
+	updateControllerSelection();
+	vQueueAddToRegistry(mControllerQueue, "ControllerActions");
 }
 
 void VehicleTask::run()
@@ -114,8 +125,21 @@ void VehicleTask::processEvents()
 	{
 		switch (event.type)
 		{
-			case Event::PeripheralDiscover :
-
+			case Event::PeripheralDisabled:
+			case Event::PeripheralLost:
+			case Event::PeripheralMissing:
+				if(event.peripheral.id == CanPeripheral::RemoteController)
+					mRemoteControllerAvailable = false;
+				else if(event.peripheral.id == CanPeripheral::HandlebarController)
+					mLocalControllerAvailable = false;
+				updateControllerSelection();
+				break;
+			case Event::PeripheralReady:
+				if(event.peripheral.id == CanPeripheral::RemoteController)
+					mRemoteControllerAvailable = true;
+				else if(event.peripheral.id == CanPeripheral::HandlebarController)
+					mLocalControllerAvailable = true;
+				updateControllerSelection();
 				break;
 
 			default:
@@ -196,16 +220,6 @@ void VehicleTask::compute()
 
 void VehicleTask::updateVehicle()
 {
-    // Safety: désengager si le contrôleur est absent
-    auto hbStatus = HandleBarTask.status();
-    if (hbStatus == CanPeripheral::Lost    ||
-        hbStatus == CanPeripheral::Absent  ||
-        hbStatus == CanPeripheral::Recovery)
-    {
-        mMotorEngaged = false;
-        disengageMotor();
-    }
-
     DirectionHandler.setDirectionAV(mSteeringCommand_AV);
     DirectionHandler.setDirectionAR(-mSteeringCommand_AR);
     DirectionHandler.setBrakeAV( mBrake.getOutput() * 200);
@@ -220,8 +234,7 @@ void VehicleTask::updateVehicle()
     if (mLogDynamicsTimer.triggered())
     {
         Message msg(Message::Controller);
-        msg << mRawThottle << mThrottle.getOutput()
-            << mRawBrake   << mBrake.getOutput();
+        msg << mRawThottle << mThrottle.getOutput() << mRawBrake << mBrake.getOutput();
         log(msg);
 
         Ph_AVD.logMotorInfo();
@@ -234,6 +247,73 @@ void VehicleTask::updateVehicle()
 void VehicleTask::cleanup()
 {
 
+}
+
+void VehicleTask::enterCriticalError()
+{
+	log(Message(Message::LogCritical, LOG_VEHICLE_CRITICAL_STATE));
+	disengageMotor();
+
+	suspend();
+	while(1); // Should never reach this point
+}
+
+void VehicleTask::updateControllerSelection()
+{
+	if(mCurrentController == CanPeripheral::RemoteController)
+	{
+		if(mRemoteControllerAvailable)
+			return;
+		else
+		{
+			if(mLocalControllerAvailable)
+				changeController(CanPeripheral::HandlebarController);
+			else
+				enterCriticalError();
+		}
+	}
+
+	if(mCurrentController == CanPeripheral::HandlebarController)
+	{
+		if(mLocalControllerAvailable)
+			return;
+		else
+		{
+			if(mRemoteControllerAvailable)
+				changeController(CanPeripheral::RemoteController);
+			else
+				enterCriticalError();
+		}
+	}
+
+	if(mCurrentController == CanPeripheral::PeripheralId::Unknown)
+	{
+		if(mLocalControllerAvailable)
+			changeController(CanPeripheral::RemoteController);
+		else if(mRemoteControllerAvailable)
+			changeController(CanPeripheral::HandlebarController);
+		else
+			enterCriticalError();
+	}
+}
+
+void VehicleTask::changeController(CanPeripheral::PeripheralId newController)
+{
+	if(newController == CanPeripheral::RemoteController)
+	{
+		HandleBarTask.setActive(false);
+		mControllerQueue = PS3Task.getControllerQueue();
+		PS3Task.setActive(true);
+		mCurrentController = CanPeripheral::RemoteController;
+	}
+
+	else if(newController == CanPeripheral::HandlebarController)
+	{
+		PS3Task.setActive(false);
+		mControllerQueue = HandleBarTask.getControllerQueue();
+		HandleBarTask.setActive(true);
+		mCurrentController = CanPeripheral::HandlebarController;
+	}
 }
 
 void VehicleTask::engageMotor()

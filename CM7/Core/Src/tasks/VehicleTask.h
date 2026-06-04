@@ -55,6 +55,10 @@ class VehicleTask : public RTOS_Task
 		void setMotorEBrake(float brake);
 
 	private:
+		void updateControllerSelection();
+		void changeController(CanPeripheral::PeripheralId);
+
+		void enterCriticalError();
 		float getMeanSpeed();
 		float getMaxSpeed();
 
@@ -70,6 +74,13 @@ class VehicleTask : public RTOS_Task
 		QueueHandle_t mControllerQueue;
 		QueueHandle_t mEventsQueue;
 
+		//Controllers
+		uint8_t mControllersAvailables;
+		bool mRemoteControllerAvailable;
+		bool mLocalControllerAvailable;
+		CanPeripheral::PeripheralId mCurrentController;
+
+		//Motors
 		bool mMotorEngaged; // true if motor is engaged
 
 		//Direction values
@@ -89,7 +100,7 @@ class VehicleTask : public RTOS_Task
 		//Motor Zero crossing detection
 		bool mZeroCrossing;
 
-		// Task Control
+		// Thread Control
 		Timer mLogDynamicsTimer;
 		Timer mMotorUpdateTimer;
 		uint32_t mLastWakeTime;

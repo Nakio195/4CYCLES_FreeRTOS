@@ -17,7 +17,7 @@ class Action
 		enum Type{Invalid, Throttle, Brake, Steering, Motor, Lights, Horn, Controller, Engage};
 		enum Gear{Slow, Middle, Fast, Reverse, Forward};
 		enum Signals{Left, Right, BrakeSignal, NighLight, Hazard};
-		enum ControllerEvent{Absent, Connected};
+		enum Controller{Unknown, Local, Remote};
 
 	public:
 		Action(Type type = Invalid)

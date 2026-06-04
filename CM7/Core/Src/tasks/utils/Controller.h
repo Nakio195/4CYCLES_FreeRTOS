@@ -23,14 +23,9 @@ class Controller
 			mActive = false;
 		}
 
-		void activate()
+		void setActive(bool state)
 		{
-			mActive = true;
-		}
-
-		void deactivate()
-		{
-			mActive = false;
+			mActive = state;
 		}
 
 		void setThrottleCommand(uint8_t value)
