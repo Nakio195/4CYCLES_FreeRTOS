@@ -63,7 +63,7 @@ void VehicleTask::setup()
 	HandleBarTask.attachEventQueue(mEventsQueue);
 	PS3Task.attachEventQueue(mEventsQueue);
 
-	CanHandler.start("CAN", 256, osPriorityBelowNormal1);
+	CanHandler.start("CAN", 256, osPriorityAboveNormal);
 	HandleBarTask.start("HandleBar", 256, osPriorityBelowNormal);
 	PS3Task.start("PS3", 256, osPriorityBelowNormal);
 	DirectionHandler.start("Direction", 128, osPriorityHigh3);
