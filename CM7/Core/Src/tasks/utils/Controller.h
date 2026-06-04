@@ -20,6 +20,17 @@ class Controller
 		Controller()
 		{
 			mQueue = xQueueCreate(100, sizeof(Action*));
+			mActive = false;
+		}
+
+		void activate()
+		{
+			mActive = true;
+		}
+
+		void deactivate()
+		{
+			mActive = false;
 		}
 
 		void setThrottleCommand(uint8_t value)
@@ -66,6 +77,9 @@ class Controller
 
 		void inline pushAction(Action::Type type, uint32_t value)
 		{
+			if(!mActive)
+				return;
+
 			Action* action = ActionPacketPool.allocate(type);
 			action->push(value);
 			xQueueSend(mQueue, &action, 0);
@@ -73,6 +87,12 @@ class Controller
 
 		void inline pushAction(Action *action)
 		{
+			if(!mActive)
+			{
+				ActionPacketPool.free(action);
+				return;
+			}
+
 			xQueueSend(mQueue, &action, 0);
 		}
 
@@ -84,6 +104,7 @@ class Controller
 
 	protected:
 		QueueHandle_t mQueue;
+		bool mActive; 	// Indicate that it should generate Actions
 
 };
 

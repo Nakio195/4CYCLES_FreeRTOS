@@ -104,6 +104,8 @@ void PS3Controller::ControllerData(CanPacket* packet)
 
 	if(xSemaphoreTake(Mut_Data, 10) == pdTRUE)
 	{
+
+		//Update internal states
 		controller.sticks.L.x = int8_t(packet->data[0]);
 		controller.sticks.L.y = int8_t(packet->data[1]);
 		controller.sticks.R.x = int8_t(packet->data[2]);
@@ -133,114 +135,118 @@ void PS3Controller::ControllerData(CanPacket* packet)
 		controller.buttons.ps.update(packet->data[7] & 0x40);
 		controller.status.connected.update(packet->data[7] & 0x80);
 
-		setThrottleCommand(controller.trig.R);
-		setBrakeCommand(controller.trig.L);
-		setSteeringCommand(controller.sticks.L.x*48);
+		// Generate Actions only if Controller is active
+		if(mActive)
+		{
+			setThrottleCommand(controller.trig.R);
+			setBrakeCommand(controller.trig.L);
+			setSteeringCommand(controller.sticks.L.x*48);
 
-		switch(controller.buttons.L1.read())
-		{
-			case Switch::States::PRESSED:
-				setLightsCommand(Action::Signals::Left, true);
-				HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
-				HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_RESET);
-				break;
-			case Switch::States::RELEASED:
-				setLightsCommand(Action::Signals::Left, false);
-				HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
-				HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_SET);
-				break;
-			default:
-				break;
-		}
-		switch(controller.buttons.R1.read())
-		{
-			case Switch::States::PRESSED:
-				setLightsCommand(Action::Signals::Right, true);
-				HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
-				HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_RESET);
-				break;
-			case Switch::States::RELEASED:
-				setLightsCommand(Action::Signals::Right, false);
-				HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
-				HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_SET);
-				break;
-			default:
-				break;
-		}
+			switch(controller.buttons.L1.read())
+			{
+				case Switch::States::PRESSED:
+					setLightsCommand(Action::Signals::Left, true);
+					HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
+					HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_RESET);
+					break;
+				case Switch::States::RELEASED:
+					setLightsCommand(Action::Signals::Left, false);
+					HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
+					HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_SET);
+					break;
+				default:
+					break;
+			}
+			switch(controller.buttons.R1.read())
+			{
+				case Switch::States::PRESSED:
+					setLightsCommand(Action::Signals::Right, true);
+					HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
+					HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_RESET);
+					break;
+				case Switch::States::RELEASED:
+					setLightsCommand(Action::Signals::Right, false);
+					HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
+					HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_SET);
+					break;
+				default:
+					break;
+			}
 
-		switch (controller.buttons.triangle.read())
-		{
-			case Switch::States::PRESSED:
-				setLightsCommand(Action::Signals::Hazard, true);
-				HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_RESET);
-				HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_SET);
-				break;
-			case Switch::States::RELEASED:
-				setLightsCommand(Action::Signals::Hazard, false);
-				HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
-				HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_SET);
-				break;
-			default:
-				break;
-		}
+			switch (controller.buttons.triangle.read())
+			{
+				case Switch::States::PRESSED:
+					setLightsCommand(Action::Signals::Hazard, true);
+					HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_RESET);
+					HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_SET);
+					break;
+				case Switch::States::RELEASED:
+					setLightsCommand(Action::Signals::Hazard, false);
+					HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
+					HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_SET);
+					break;
+				default:
+					break;
+			}
 
-		switch (controller.status.connected.read())
-		{
-			case Switch::States::PRESSED:
-				setLightsCommand(Action::Signals::Hazard, true);
-				HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_RESET);
-				HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_RESET);
-				break;
-			case Switch::States::RELEASED:
-				setLightsCommand(Action::Signals::Hazard, false);
-				break;
-			default:
-				break;
-		}
+			switch (controller.status.connected.read())
+			{
+				case Switch::States::PRESSED:
+					setLightsCommand(Action::Signals::Hazard, true);
+					HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_RESET);
+					HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_RESET);
+					break;
+				case Switch::States::RELEASED:
+					setLightsCommand(Action::Signals::Hazard, false);
+					break;
+				default:
+					break;
+			}
 
-		switch (controller.buttons.start.read())
-		{
-			case Switch::States::RELEASED:
-				setMotorEngage(true);
-				break;
-			default:
-				break;
-		}
+			switch (controller.buttons.start.read())
+			{
+				case Switch::States::RELEASED:
+					setMotorEngage(true);
+					break;
+				default:
+					break;
+			}
 
-		switch (controller.trig.L2.read())
-		{
-			case Switch::States::PRESSED:
-				setLightsCommand(Action::Signals::BrakeSignal, true);
-				break;
-			case Switch::States::RELEASED:
-				setLightsCommand(Action::Signals::BrakeSignal, false);
-				break;
-			default:
-				break;
-		}
+			switch (controller.trig.L2.read())
+			{
+				case Switch::States::PRESSED:
+					setLightsCommand(Action::Signals::BrakeSignal, true);
+					break;
+				case Switch::States::RELEASED:
+					setLightsCommand(Action::Signals::BrakeSignal, false);
+					break;
+				default:
+					break;
+			}
 
-		switch (controller.buttons.circle.read())
-		{
-			case Switch::States::PRESSED:
-				setLightsCommand(Action::Signals::NighLight, true);
-				break;
-			case Switch::States::RELEASED:
-				setLightsCommand(Action::Signals::NighLight, false);
-				break;
-			default:
-				break;
-		}
+			switch (controller.buttons.circle.read())
+			{
+				case Switch::States::PRESSED:
+					setLightsCommand(Action::Signals::NighLight, true);
+					break;
+				case Switch::States::RELEASED:
+					setLightsCommand(Action::Signals::NighLight, false);
+					break;
+				default:
+					break;
+			}
 
-		switch (controller.buttons.square.read())
-		{
-			case Switch::States::PRESSED:
-				setReverseCommand(Action::Gear::Reverse);
-				break;
-			case Switch::States::RELEASED:
-				setReverseCommand(Action::Gear::Forward);
-				break;
-			default:
-				break;
+			switch (controller.buttons.square.read())
+			{
+				case Switch::States::PRESSED:
+					setReverseCommand(Action::Gear::Reverse);
+					break;
+				case Switch::States::RELEASED:
+					setReverseCommand(Action::Gear::Forward);
+					break;
+				default:
+					break;
+			}
 		}
 
 		xSemaphoreGive(Mut_Data);

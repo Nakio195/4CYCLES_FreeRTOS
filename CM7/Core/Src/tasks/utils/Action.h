@@ -133,9 +133,11 @@ class ActionPacketPoolHandler
 
 		void free(Action* pkt)
 		{
-			if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE) {
+			if (xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE)
+			{
 				int index = pkt - pool; // calcul index
-				if (index >= 0 && index < ACTION_POOL_SIZE) {
+				if (index >= 0 && index < ACTION_POOL_SIZE)
+				{
 					used[index] = false;
 				}
 				xSemaphoreGive(mutex);

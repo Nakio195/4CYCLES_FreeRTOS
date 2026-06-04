@@ -98,15 +98,6 @@ void HandleBarController::ControllerData(CanPacket* packet)
 		mThrottle = uint8_t(packet->data[0]);
 		mBrake = uint8_t(packet->data[1]);
 		mSteering = int8_t(packet->data[2])*48;
-
-		if(mBrake > 20)
-			setThrottleCommand(0);
-		else
-			setThrottleCommand(mThrottle);
-
-		setBrakeCommand(mBrake);
-		setSteeringCommand(mSteering);
-
 		mParkBrakeSwitch.update(packet->data[3] & 0x80);
 		mBrakeSwitch.update((packet->data[1]) > 240); // Brake pressed if value > 240);
 		mTurnLSwitch.update((packet->data[3]) & 0x20);
@@ -116,123 +107,133 @@ void HandleBarController::ControllerData(CanPacket* packet)
 		mHornSwitch.update((packet->data[3]) & 0x02);
 		mReverseSwitch.update((packet->data[3]) & 0x01);
 
-		switch(mTurnLSwitch.read())
+		if(mActive)
 		{
-			case Switch::States::PRESSED:
-				setLightsCommand(Action::Signals::Left, true);
-				HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
-				HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_RESET);
-				break;
-			case Switch::States::RELEASED:
-				setLightsCommand(Action::Signals::Left, false);
-				HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
-				HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_SET);
-				break;
-			default:
-				break;
-		}
+			if(mBrake > 20)
+				setThrottleCommand(0);
+			else
+				setThrottleCommand(mThrottle);
 
-		switch (mBrakeSwitch.read())
-		{
-			case Switch::States::PRESSED:
-				setLightsCommand(Action::Signals::BrakeSignal, true);
-				break;
-			case Switch::States::RELEASED:
-				setLightsCommand(Action::Signals::BrakeSignal, false);
-				break;
-			default:
-				break;
-		}
+			setBrakeCommand(mBrake);
+			setSteeringCommand(mSteering);
 
-		switch(mTurnRSwitch.read())
-		{
-			case Switch::States::PRESSED:
-				setLightsCommand(Action::Signals::Right, true);
-				HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
-				HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_RESET);
-				break;
-			case Switch::States::RELEASED:
-				setLightsCommand(Action::Signals::Right, false);
-				HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
-				HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_SET);
-				break;
-			default:
-				break;
-		}
+			switch(mTurnLSwitch.read())
+			{
+				case Switch::States::PRESSED:
+					setLightsCommand(Action::Signals::Left, true);
+					HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
+					HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_RESET);
+					break;
+				case Switch::States::RELEASED:
+					setLightsCommand(Action::Signals::Left, false);
+					HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
+					HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_SET);
+					break;
+				default:
+					break;
+			}
 
-		switch (mWarningSwitch.read())
-		{
-			case Switch::States::PRESSED:
-				setReverseCommand(Action::Gear::Reverse);
-				break;
-			case Switch::States::RELEASED:
-				setReverseCommand(Action::Gear::Forward);
-				break;
-			default:
-				break;
-		}
+			switch (mBrakeSwitch.read())
+			{
+				case Switch::States::PRESSED:
+					setLightsCommand(Action::Signals::BrakeSignal, true);
+					break;
+				case Switch::States::RELEASED:
+					setLightsCommand(Action::Signals::BrakeSignal, false);
+					break;
+				default:
+					break;
+			}
 
-		switch (mHornSwitch.read())
-		{
-			case Switch::States::PRESSED:
-				setLightsCommand(Action::Signals::Hazard, true);
-				HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_RESET);
-				HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_SET);
-				break;
-			case Switch::States::RELEASED:
-				setLightsCommand(Action::Signals::Hazard, false);
-				HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
-				HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_SET);
-				break;
-			default:
-				break;
-		}
+			switch(mTurnRSwitch.read())
+			{
+				case Switch::States::PRESSED:
+					setLightsCommand(Action::Signals::Right, true);
+					HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
+					HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_RESET);
+					break;
+				case Switch::States::RELEASED:
+					setLightsCommand(Action::Signals::Right, false);
+					HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
+					HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_SET);
+					break;
+				default:
+					break;
+			}
 
-		switch (mParkBrakeSwitch.read())
-		{
-			case Switch::States::RELEASED:
-				setMotorEngage(true);
-				break;
-			default:
-				break;
-		}
+			switch (mWarningSwitch.read())
+			{
+				case Switch::States::PRESSED:
+					setReverseCommand(Action::Gear::Reverse);
+					break;
+				case Switch::States::RELEASED:
+					setReverseCommand(Action::Gear::Forward);
+					break;
+				default:
+					break;
+			}
 
-		switch (mBrakeSwitch.read())
-		{
-			case Switch::States::PRESSED:
-				setLightsCommand(Action::Signals::BrakeSignal, true);
-				break;
-			case Switch::States::RELEASED:
-				setLightsCommand(Action::Signals::BrakeSignal, false);
-				break;
-			default:
-				break;
-		}
+			switch (mHornSwitch.read())
+			{
+				case Switch::States::PRESSED:
+					setLightsCommand(Action::Signals::Hazard, true);
+					HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_RESET);
+					HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_SET);
+					break;
+				case Switch::States::RELEASED:
+					setLightsCommand(Action::Signals::Hazard, false);
+					HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_SET);
+					HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_SET);
+					break;
+				default:
+					break;
+			}
 
-		switch (mLightsSwitch.read())
-		{
-			case Switch::States::PRESSED:
-				setLightsCommand(Action::Signals::NighLight, true);
-				break;
-			case Switch::States::RELEASED:
-				setLightsCommand(Action::Signals::NighLight, false);
-				break;
-			default:
-				break;
-		}
+			switch (mParkBrakeSwitch.read())
+			{
+				case Switch::States::RELEASED:
+					setMotorEngage(true);
+					break;
+				default:
+					break;
+			}
 
-		switch (mReverseSwitch.read())
-		{
-			case Switch::States::PRESSED:
-				setReverseCommand(Action::Gear::Reverse);
-				break;
-			case Switch::States::RELEASED:
-				setReverseCommand(Action::Gear::Forward);
-				break;
-			default:
-				break;
-		}
+			switch (mBrakeSwitch.read())
+			{
+				case Switch::States::PRESSED:
+					setLightsCommand(Action::Signals::BrakeSignal, true);
+					break;
+				case Switch::States::RELEASED:
+					setLightsCommand(Action::Signals::BrakeSignal, false);
+					break;
+				default:
+					break;
+			}
 
+			switch (mLightsSwitch.read())
+			{
+				case Switch::States::PRESSED:
+					setLightsCommand(Action::Signals::NighLight, true);
+					break;
+				case Switch::States::RELEASED:
+					setLightsCommand(Action::Signals::NighLight, false);
+					break;
+				default:
+					break;
+			}
+
+			switch (mReverseSwitch.read())
+			{
+				case Switch::States::PRESSED:
+					setReverseCommand(Action::Gear::Reverse);
+					break;
+				case Switch::States::RELEASED:
+					setReverseCommand(Action::Gear::Forward);
+					break;
+				default:
+					break;
+			}
+		}
 		xSemaphoreGive(Mut_Data);
 	}
 }
