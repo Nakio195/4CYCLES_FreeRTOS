@@ -13,6 +13,8 @@ BatteryTask::BatteryTask()
 {
 	// TODO Auto-generated constructor stub
 	setRangeFilter(0x18FF0009, 0x18FF1591);
+	setHeartbeatRequired(false);
+
 	setCommunicationTimeout(200);
 	setRecoveryMode(5, 100);
 
@@ -146,55 +148,89 @@ void BatteryTask::processBatteryCurrent(CanPacket* packet)
 
 }
 
+BatteryStatus BatteryTask::status()
+{
+	return mStatus;
+}
 
 // ############ CAN Peripheral Methods ############
 
 void BatteryTask::onInit()
 {
-
+	CanPacket *ControllerSettings = CanPacketPool.allocate(0x19);
+	ControllerSettings->data.push_back(0x01);
+	ControllerSettings->data.push_back(0x00);
+	ControllerSettings->data.push_back(0x00);
+	CanHandler.send(ControllerSettings); //TODO Handle send failed
+	CanPacketPool.free(ControllerSettings);
 }
 
 void BatteryTask::onDiscovered()
 {
-
+	log(Message(Message::LogInfo, LOG_BATTERY_DISCOVERED));
+	Event e;
+	e.type = Event::PeripheralDiscover;
+	e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
+	emit(e);
 }
 
 void BatteryTask::onReady()
 {
-
-}
-
-void BatteryTask::onRecovery()
-{
-
+	log(Message(Message::LogInfo, LOG_BATTERY_READY));
+	Event e;
+	e.type = Event::PeripheralReady;
+	e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
+	emit(e);
 }
 
 void BatteryTask::onAbsent()
 {
+	log(Message(Message::LogCritical, LOG_BATTERY_ABSENT));
+	Event e;
+	e.type = Event::PeripheralMissing;
+	e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
+	emit(e);
+}
 
+void BatteryTask::onRecovery()
+{
+	log(Message(Message::LogError, LOG_BATTERY_RECOVERY_ATTEMPT));
 }
 
 void BatteryTask::onRecovered()
 {
+	log(Message(Message::LogInfo, LOG_BATTERY_RECOVERED));
 
+	Event e;
+	e.type = Event::PeripheralRecovered;
+	e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
+	emit(e);
 }
 
 void BatteryTask::onLost()
 {
+	log(Message(Message::LogCritical, LOG_BATTERY_LOST));
 
+	Event e;
+	e.type = Event::PeripheralLost;
+	e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
+	emit(e);
 }
 
 void BatteryTask::onDisabled()
 {
-    log(Message(Message::LogInfo, LOG_HANDLEBAR_DISABLED));
+    log(Message(Message::LogInfo, LOG_BATTERY_DISABLED));
 
     Event e;
-    e.type = Event::PeripheralDisconnect;
-    e.PeripheralDiscovered.id = mPeripheralId;
+    e.type = Event::PeripheralDisabled;
+    e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
     emit(e);
 }
 
-BatteryStatus BatteryTask::status()
-{
-	return mStatus;
-}
+

@@ -12,9 +12,12 @@ ActionPacketPoolHandler ActionPacketPool;
 
 PS3Controller::PS3Controller()
 {
-	setRangeFilter(0x10, 0x15);
-	setCommunicationTimeout(3000);
-	setRecoveryMode(50, 1000);
+	setRangeFilter(0x10, 0x19);
+	setDataRangeFilter(0x10, 0x11);
+	setHeartbeatRequired(true);
+
+	setCommunicationTimeout(200);
+	setRecoveryMode(5, 100);
 
 	mPreviousTick = 0;
 	mPeripheralId = PeripheralId::RemoteController;
@@ -23,67 +26,11 @@ PS3Controller::PS3Controller()
 	CanHandler.attach(this);
 }
 
-void PS3Controller::onInit()
-{
-	CanPacket *ControllerSettings = CanPacketPool.allocate(0x19);
-	ControllerSettings->data.push_back(0x01);
-	ControllerSettings->data.push_back(0x00);
-	ControllerSettings->data.push_back(0x00);
-	if(!CanHandler.send(ControllerSettings)) //TODO Handle multiple failed init
-		CanPacketPool.free(ControllerSettings);
-
-}
-
-void PS3Controller::onDiscovered()
-{
-	log(Message(Message::LogCritical, LOG_PS3_CONTROLLER_CONNECTED));
-}
-
-void PS3Controller::onReady()
-{
-
-}
-
-void PS3Controller::onAbsent()
-{
-	log(Message(Message::LogCritical, LOG_PS3_CONTROLLER_ABSENT));
-	while(1)
-	{
-		osDelay(10000);
-	}
-}
-
-void PS3Controller::onRecovery()
-{
-	log(Message(Message::LogError, LOG_PS3_CONTROLLER_RECOVERY_ATTEMPT));
-}
-
-void PS3Controller::onRecovered()
-{
-	log(Message(Message::LogInfo, LOG_PS3_CONTROLLER_RECOVERED));
-}
-
-void PS3Controller::onLost()
-{
-	log(Message(Message::LogError, LOG_PS3_CONTROLLER_LOST));
-}
-
 void PS3Controller::setup()
 {
 	Mut_Data = xSemaphoreCreateMutex();
 	xSemaphoreGive(Mut_Data);
 }
-
-void PS3Controller::onDisabled()
-{
-    log(Message(Message::LogInfo, LOG_HANDLEBAR_DISABLED));
-
-    Event e;
-    e.type = Event::PeripheralDisconnect;
-    e.PeripheralDiscovered.id = mPeripheralId;
-    emit(e);
-}
-
 
 void PS3Controller::run()
 {
@@ -303,4 +250,92 @@ void PS3Controller::ControllerData(CanPacket* packet)
 void PS3Controller::cleanup()
 {
 
+}
+
+
+// ############## CAN Peripheral methods ###############
+
+void PS3Controller::onInit()
+{
+	CanPacket *ControllerSettings = CanPacketPool.allocate(0x19);
+	ControllerSettings->data.push_back(0x01);
+	ControllerSettings->data.push_back(0x00);
+	ControllerSettings->data.push_back(0x00);
+	CanHandler.send(ControllerSettings); //TODO Handle send failed
+	CanPacketPool.free(ControllerSettings);
+}
+
+void PS3Controller::onDiscovered()
+{
+	log(Message(Message::LogInfo, LOG_PS3_CONTROLLER_DISCOVERED));
+	Event e;
+	e.type = Event::PeripheralDiscover;
+	e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
+	emit(e);
+}
+
+void PS3Controller::onReady()
+{
+	log(Message(Message::LogInfo, LOG_PS3_CONTROLLER_READY));
+	Event e;
+	e.type = Event::PeripheralReady;
+	e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
+	emit(e);
+}
+
+void PS3Controller::onAbsent()
+{
+	log(Message(Message::LogCritical, LOG_PS3_CONTROLLER_ABSENT));
+	Event e;
+	e.type = Event::PeripheralMissing;
+	e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
+	emit(e);
+}
+
+void PS3Controller::onRecovery()
+{
+	log(Message(Message::LogError, LOG_PS3_CONTROLLER_RECOVERY_ATTEMPT));
+
+	CanPacket *ControllerSettings = CanPacketPool.allocate(0x19);
+	ControllerSettings->data.push_back(0x01);
+	ControllerSettings->data.push_back(0x00);
+	ControllerSettings->data.push_back(0x00);
+	CanHandler.send(ControllerSettings); //TODO Handle send failed
+	CanPacketPool.free(ControllerSettings);
+}
+
+void PS3Controller::onRecovered()
+{
+	log(Message(Message::LogInfo, LOG_PS3_CONTROLLER_RECOVERED));
+
+	Event e;
+	e.type = Event::PeripheralRecovered;
+	e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
+	emit(e);
+}
+
+void PS3Controller::onLost()
+{
+	log(Message(Message::LogCritical, LOG_PS3_CONTROLLER_LOST));
+
+	Event e;
+	e.type = Event::PeripheralLost;
+	e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
+	emit(e);
+}
+
+void PS3Controller::onDisabled()
+{
+    log(Message(Message::LogInfo, LOG_PS3_CONTROLLER_DISABLED));
+
+    Event e;
+    e.type = Event::PeripheralDisabled;
+    e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
+    emit(e);
 }

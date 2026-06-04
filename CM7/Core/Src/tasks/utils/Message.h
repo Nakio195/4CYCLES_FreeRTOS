@@ -43,25 +43,41 @@ enum {
 	// CAN Peripherals
 	NONE = 0,
 	LOG_PS3_CONTROLLER_ABSENT = 1, //PS3 Controller absent from bus
+	LOG_PS3_CONTROLLER_DISCOVERED, //PS3 Controller connected to bus
 	LOG_PS3_CONTROLLER_CONNECTED, //PS3 Controller connected to bus
 	LOG_PS3_CONTROLLER_RECOVERY_ATTEMPT, //PS3 Controller recovery attempt
 	LOG_PS3_CONTROLLER_LOST, //Logger lost
 	LOG_PS3_CONTROLLER_RECOVERED, //Logger recovered
 	LOG_PS3_CONTROLLER_DISABLED, // HandleBar disabled
+	LOG_PS3_CONTROLLER_READY, // HandleBar enabled
 
 	LOG_LOGGER_ABSENT, //Logger absent from bus
 	LOG_LOGGER_CONNECTED, //Logger connected to bus
+	LOG_LOGGER_DISCOVERED, //Logger connected to bus
 	LOG_LOGGER_RECOVERY_ATTEMPT, //Logger recovery attempt
 	LOG_LOGGER_LOST, //Logger lost
 	LOG_LOGGER_RECOVERED, //Logger recovered
 	LOG_LOGGER_DISABLED, // HandleBar disabled
+	LOG_LOGGER_READY, // HandleBar enabled
 
 	LOG_HANDLEBAR_ABSENT, //HandleBar absent from bus
 	LOG_HANDLEBAR_CONNECTED, //HandleBar connected to bus
+	LOG_HANDLEBAR_DISCOVERED, //HandleBar connected to bus
 	LOG_HANDLEBAR_RECOVERY_ATTEMPT, //HandleBar recovery attempt
 	LOG_HANDLEBAR_LOST, //HandleBar lost
 	LOG_HANDLEBAR_RECOVERED, //HandleBar recovered
 	LOG_HANDLEBAR_DISABLED, // HandleBar disabled
+	LOG_HANDLEBAR_READY, // HandleBar disabled
+
+
+	LOG_BATTERY_ABSENT, //BATTERY absent from bus
+	LOG_BATTERY_CONNECTED, //BATTERY connected to bus
+	LOG_BATTERY_DISCOVERED, //BATTERY connected to bus
+	LOG_BATTERY_RECOVERY_ATTEMPT, //BATTERY recovery attempt
+	LOG_BATTERY_LOST, //BATTERY lost
+	LOG_BATTERY_RECOVERED, //BATTERY recovered
+	LOG_BATTERY_DISABLED, // BATTERY disabled
+	LOG_BATTERY_READY, // BATTERY disabled
 
 	// Motor Status
 	LOG_VEHICLE_MOTOR_ENGAGED, // Vehicle motor engaged

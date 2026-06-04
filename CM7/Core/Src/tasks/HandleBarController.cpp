@@ -13,6 +13,9 @@ extern ActionPacketPoolHandler ActionPacketPool;
 HandleBarController::HandleBarController()
 {
 	setRangeFilter(0x20, 0x29);
+	setDataRangeFilter(0x20, 0x21);
+	setHeartbeatRequired(true);
+
 	setCommunicationTimeout(200);
 	setRecoveryMode(5, 100);
 
@@ -26,77 +29,9 @@ HandleBarController::HandleBarController()
 	CanHandler.attach(this);
 }
 
-void HandleBarController::onInit()
-{
-    CanPacket *settings = CanPacketPool.allocate(0x29);
-    settings->data.push_back(0x01);
-    if(!CanHandler.send(settings))
-        CanPacketPool.free(settings);
-}
-
-void HandleBarController::onDiscovered()
-{
-    log(Message(Message::LogCritical, LOG_HANDLEBAR_CONNECTED));
-
-    Event e;
-    e.type = Event::PeripheralDiscover;
-    e.PeripheralDiscovered.id = mPeripheralId;
-    emit(e);
-}
-
-
-void HandleBarController::onReady()
-{
-    Event e;
-    e.type = Event::PeripheralConnect;
-    e.PeripheralDiscovered.id = mPeripheralId;
-    emit(e);
-}
-
-void HandleBarController::onRecovery()
-{
-    log(Message(Message::LogError, LOG_HANDLEBAR_RECOVERY_ATTEMPT));
-
-    CanPacket *settings = CanPacketPool.allocate(0x29);
-    settings->data.push_back(0x01);
-    if(!CanHandler.send(settings))
-        CanPacketPool.free(settings);
-}
-
-void HandleBarController::onRecovered()
-{
-    log(Message(Message::LogInfo, LOG_HANDLEBAR_RECOVERED));
-}
-
-void HandleBarController::onLost()
-{
-    log(Message(Message::LogError, LOG_HANDLEBAR_LOST));
-
-    Event e;
-    e.type = Event::PeripheralDisconnect;
-    e.PeripheralDiscovered.id = mPeripheralId;
-    emit(e);
-}
-
-void HandleBarController::onAbsent()
-{
-    log(Message(Message::LogCritical, LOG_HANDLEBAR_ABSENT));
-}
-
-void HandleBarController::onDisabled()
-{
-    log(Message(Message::LogInfo, LOG_HANDLEBAR_DISABLED));
-
-    Event e;
-    e.type = Event::PeripheralDisconnect;
-    e.PeripheralDiscovered.id = mPeripheralId;
-    emit(e);
-}
-
 void HandleBarController::setup()
 {
 
-	//init();
 }
 
 void HandleBarController::run()
@@ -306,3 +241,82 @@ void HandleBarController::cleanup()
 {
 
 }
+
+// ############## CAN Peripheral methods ###############
+
+void HandleBarController::onInit()
+{
+    CanPacket *settings = CanPacketPool.allocate(0x29);
+    settings->data.push_back(0x01);
+    CanHandler.send(settings); // TODO Handle send fail
+	CanPacketPool.free(settings);
+}
+
+void HandleBarController::onDiscovered()
+{
+	log(Message(Message::LogInfo, LOG_HANDLEBAR_DISCOVERED));
+	Event e;
+	e.type = Event::PeripheralDiscover;
+	e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
+	emit(e);
+}
+
+void HandleBarController::onReady()
+{
+
+}
+
+void HandleBarController::onAbsent()
+{
+	log(Message(Message::LogCritical, LOG_HANDLEBAR_ABSENT));
+	Event e;
+	e.type = Event::PeripheralMissing;
+	e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
+	emit(e);
+}
+
+void HandleBarController::onRecovery()
+{
+	log(Message(Message::LogError, LOG_HANDLEBAR_RECOVERY_ATTEMPT));
+
+    CanPacket *settings = CanPacketPool.allocate(0x29);
+    settings->data.push_back(0x01);
+    CanHandler.send(settings); // TODO Handle send fail
+	CanPacketPool.free(settings);
+}
+
+void HandleBarController::onRecovered()
+{
+	log(Message(Message::LogInfo, LOG_HANDLEBAR_RECOVERED));
+
+	Event e;
+	e.type = Event::PeripheralRecovered;
+	e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
+	emit(e);
+}
+
+void HandleBarController::onLost()
+{
+	log(Message(Message::LogCritical, LOG_HANDLEBAR_LOST));
+
+	Event e;
+	e.type = Event::PeripheralLost;
+	e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
+	emit(e);
+}
+
+void HandleBarController::onDisabled()
+{
+    log(Message(Message::LogInfo, LOG_HANDLEBAR_DISABLED));
+
+    Event e;
+    e.type = Event::PeripheralDisabled;
+    e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
+    emit(e);
+}
+

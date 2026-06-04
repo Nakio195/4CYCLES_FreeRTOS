@@ -91,6 +91,7 @@ class PS3Controller: public CanPeripheral, public RTOS_Task, public Controller
 		void run() override;
 		void cleanup() override;
 
+	private:
 		void onInit() override;
 		void onDiscovered() override;
 		void onReady() override;

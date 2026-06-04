@@ -11,41 +11,29 @@
 class Event
 {
 	public:
-//		Event() ;
 
-		struct PeripheralDiscoveredEvent
+		struct PeripheralEvent
 		{
 			uint8_t type;
 			uint8_t id;
 		};
-
-		struct PeripheralConnectedEvent
-		{
-			uint8_t type;
-			uint8_t id;
-		};
-
-		struct PeripheralDisconnectedEvent
-		{
-			uint8_t type;
-			uint8_t id;
-		};
-
 
 	public:
 		enum EventType : uint8_t {
 			PeripheralDiscover,
-			PeripheralConnect,
-			PeripheralDisconnect
+			PeripheralReady,
+			PeripheralEnabled,
+			PeripheralDisabled,
+			PeripheralMissing,
+			PeripheralLost,
+			PeripheralRecovered
 		};
 
 		EventType type;
 
 		union
 		{
-			PeripheralDiscoveredEvent PeripheralDiscovered;
-			PeripheralConnectedEvent PeripheralConnected;
-			PeripheralDisconnectedEvent PeripheralDisconnected;
+			PeripheralEvent peripheral;
 		};
 };
 

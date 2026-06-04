@@ -8,13 +8,15 @@ Logger::Logger()
 	mutex = xSemaphoreCreateMutex();
 
 	setRangeFilter(0x1000, 0x1019);
+	setDataRangeFilter(0x1000, 0x1017);
+	setHeartbeatRequired(true);
+
 	setCommunicationTimeout(5000);
 	setRecoveryMode(5, 500);
 
 	mPreviousTick = 0;
 	mPeripheralId = MainLogger;
 	mPeripheralType = PeripheralType::Logger;
-
 
 	CanHandler.attach(this);
 }
@@ -87,50 +89,6 @@ void Logger::cleanup()
 
 }
 
-void Logger::onInit()
-{
-	CanPacket *LoggerControl = CanPacketPool.allocate(0x1019);
-	LoggerControl->data.push_back(0x01);
-	if(!CanHandler.send(LoggerControl)) //TODO Handle multiple failed init
-		CanPacketPool.free(LoggerControl);
-
-}
-
-void Logger::onDiscovered()
-{
-	log(Message(Message::LogError, LOG_LOGGER_CONNECTED));
-}
-
-void Logger::onRecovery()
-{
-	log(Message(Message::LogError, LOG_LOGGER_RECOVERY_ATTEMPT));
-}
-
-void Logger::onReady()
-{
-
-}
-
-void Logger::onAbsent()
-{
-	log(Message(Message::LogError, LOG_LOGGER_ABSENT));
-}
-
-void Logger::onRecovered()
-{
-	log(Message(Message::LogInfo, LOG_LOGGER_RECOVERED));
-}
-
-void Logger::onLost()
-{
-	log(Message(Message::LogInfo, LOG_LOGGER_LOST));
-}
-
-void Logger::onDisabled()
-{
-	log(Message(Message::LogInfo, LOG_LOGGER_LOST));
-}
-
 void Logger::print(Message& m)
 {
 
@@ -186,4 +144,56 @@ void Logger::print(Message& m)
 		CanPacketPool.free(Log);
 	}
 }
+
+
+// ############## CAN Peripheral methods ###############
+
+void Logger::onInit()
+{
+	CanPacket *LoggerControl = CanPacketPool.allocate(0x1019);
+	LoggerControl->data.push_back(0x01);
+	CanHandler.send(LoggerControl); //TODO Handle send fail
+	CanPacketPool.free(LoggerControl);
+}
+
+void Logger::onDiscovered()
+{
+	log(Message(Message::LogError, LOG_LOGGER_CONNECTED));
+}
+
+void Logger::onRecovery()
+{
+	log(Message(Message::LogError, LOG_LOGGER_RECOVERY_ATTEMPT));
+	CanPacket *LoggerControl = CanPacketPool.allocate(0x1019);
+	LoggerControl->data.push_back(0x01);
+	CanHandler.send(LoggerControl); //TODO Handle send fail
+	CanPacketPool.free(LoggerControl);
+}
+
+void Logger::onReady()
+{
+
+}
+
+void Logger::onAbsent()
+{
+	log(Message(Message::LogError, LOG_LOGGER_ABSENT));
+}
+
+void Logger::onRecovered()
+{
+	log(Message(Message::LogInfo, LOG_LOGGER_RECOVERED));
+}
+
+void Logger::onLost()
+{
+	log(Message(Message::LogInfo, LOG_LOGGER_LOST));
+}
+
+void Logger::onDisabled()
+{
+	log(Message(Message::LogInfo, LOG_LOGGER_LOST));
+}
+
+
 
