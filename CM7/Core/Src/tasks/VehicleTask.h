@@ -84,8 +84,8 @@ class VehicleTask : public RTOS_Task
 		bool mMotorEngaged; // true if motor is engaged
 
 		//Direction values
-		uint32_t mSteeringCommand_AV;
-		uint32_t mSteeringCommand_AR;
+		int32_t mSteeringCommand_AV;
+		int32_t mSteeringCommand_AR;
 
 		//Motor Reverse
 		bool mMotorReversePending; // true if reverse gear is pending engagement

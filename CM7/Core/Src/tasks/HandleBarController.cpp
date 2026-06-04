@@ -78,10 +78,8 @@ void HandleBarController::ControllerStatus(CanPacket* packet)
 
 	if(xSemaphoreTake(Mut_Data, 10) == pdTRUE)
 	{
-		mHeartbeat |= packet->data[0] << 24;
-		mHeartbeat |= packet->data[1] << 16;
-		mHeartbeat |= packet->data[2] << 8;
-		mHeartbeat |= packet->data[3] & 0xFF;
+		uint32_t hb = packet->data[0] | (packet->data[1] << 8) | (packet->data[2] << 16) | (packet->data[3] << 24);
+		heartbeat(hb);
 
 		xSemaphoreGive(Mut_Data);
 	}
