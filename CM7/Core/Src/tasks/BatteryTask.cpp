@@ -11,7 +11,6 @@ BatteryTask BatteryHandler;
 
 BatteryTask::BatteryTask()
 {
-	// TODO Auto-generated constructor stub
 	setRangeFilter(0x18FF0009, 0x18FF1591);
 	setHeartbeatRequired(false);
 

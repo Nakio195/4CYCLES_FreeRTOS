@@ -133,18 +133,6 @@ void HandleBarController::ControllerData(CanPacket* packet)
 					break;
 			}
 
-			switch (mBrakeSwitch.read())
-			{
-				case Switch::States::PRESSED:
-					setLightsCommand(Action::Signals::BrakeSignal, true);
-					break;
-				case Switch::States::RELEASED:
-					setLightsCommand(Action::Signals::BrakeSignal, false);
-					break;
-				default:
-					break;
-			}
-
 			switch(mTurnRSwitch.read())
 			{
 				case Switch::States::PRESSED:
