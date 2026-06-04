@@ -39,6 +39,9 @@ VehicleTask::VehicleTask()
 	mMotorUpdateTimer = Timer(50, Timer::Continuous);
 	mMotorUpdateTimer.startTimer();
 
+	mHeapStatsTimer = Timer(500, Timer::Continuous);
+	mHeapStatsTimer.startTimer();
+
 	mEventsQueue = xQueueCreate(40, sizeof(Event));
 
 }
@@ -70,19 +73,63 @@ void VehicleTask::setup()
 	Ph_ARG.start("Ph_ARG", 512, osPriorityHigh2);
 	Ph_ARD.start("Ph_ARD", 512, osPriorityHigh2);
 	LoggerTask.start("Logger", 1024, osPriorityBelowNormal);
+
+	mLastWakeTime = osKernelGetTickCount();
 }
 
 void VehicleTask::run()
 {
-	Action* action = nullptr;
+    updateTimers();
+    processEvents();
+    processActions();
+    compute();
+    updateVehicle();
 
-	freeHeap = xPortGetFreeHeapSize();
-	minEver = xPortGetMinimumEverFreeHeapSize();
+    mLastWakeTime += VEHICLE_TICK_MS;
+    osDelayUntil(mLastWakeTime);
+}
 
-	vPortGetHeapStats(&stats);
+void VehicleTask::updateTimers()
+{
+	//Update timers
+	mLogDynamicsTimer.tick(osKernelGetTickCount());
+	mMotorUpdateTimer.tick(osKernelGetTickCount());
+	mHeapStatsTimer.tick(osKernelGetTickCount());
 
+	if(mHeapStatsTimer.triggered())
+	{
+		vPortGetHeapStats(&stats);
+		freeHeap = xPortGetFreeHeapSize();
+		minEver = xPortGetMinimumEverFreeHeapSize();
+	}
+
+}
+
+void VehicleTask::processEvents()
+{
+	//Read received events from can Peripherals
+	Event event;
+
+	while(xQueueReceive(mEventsQueue, &event, pdMS_TO_TICKS(0)) == pdTRUE)
+	{
+		switch (event.type)
+		{
+			case Event::PeripheralDiscover :
+
+				break;
+
+			default:
+				// TODO: log invalid type
+				break;
+		}
+	}
+}
+
+void VehicleTask::processActions()
+{
 	// Read received action from controller
-	while(xQueueReceive(mControllerQueue, &action, pdMS_TO_TICKS(5)) == pdTRUE)
+	Action* action = nullptr;
+	while(xQueueReceive(mControllerQueue, &action, pdMS_TO_TICKS(0)) == pdTRUE)
 	{
 		if (action != nullptr)
 		{
@@ -95,8 +142,6 @@ void VehicleTask::run()
 				case Action::Brake:
 					mRawBrake = action->getBrakeValue();
 					mBrake.setInput(action->getBrakeValue());
-					DirectionHandler.setBrakeAV(mBrake.getOutput()*200);
-					DirectionHandler.setBrakeAR(-mBrake.getOutput()*200);
 					break;
 				case Action::Lights:
 					handleLightsAction(action);
@@ -134,89 +179,56 @@ void VehicleTask::run()
 			ActionPacketPool.free(action);
 		}
 	}
+}
 
-	//Read received action from can Peripherals
-	Event event;
+void VehicleTask::compute()
+{
+    mThrottle.update();
+    mBrake.update();
 
-	while(xQueueReceive(mEventsQueue, &event, pdMS_TO_TICKS(5)) == pdTRUE)
-	{
-		switch (event.type)
-		{
-			case Event::PeripheralDiscover :
-//					uint8_t PeripheralType = action->
-				break;
-
-			default:
-				// TODO: log invalid type
-				break;
-		}
-	}
-
-	//Update timers
-	mLogDynamicsTimer.tick(osKernelGetTickCount());
-	mMotorUpdateTimer.tick(osKernelGetTickCount());
-
-	//	Computing data
-	mThrottle.update();
-	mBrake.update();
+    if (mThrottle.getOutput() < 2.0 && mMotorReversePending)
+    {
+        mMotorReverseEngaged = mMotorReversePendingValue;
+        mMotorReversePending = false;
+    }
+}
 
 
-	DirectionHandler.setDirectionAV(mSteeringCommand_AV);
-	DirectionHandler.setDirectionAR(-mSteeringCommand_AR);
+void VehicleTask::updateVehicle()
+{
+    // Safety: désengager si le contrôleur est absent
+    auto hbStatus = HandleBarTask.status();
+    if (hbStatus == CanPeripheral::Lost    ||
+        hbStatus == CanPeripheral::Absent  ||
+        hbStatus == CanPeripheral::Recovery)
+    {
+        mMotorEngaged = false;
+        disengageMotor();
+    }
 
-	if(HandleBarTask.status() == CanPeripheral::Lost || HandleBarTask.status() == CanPeripheral::Absent || HandleBarTask.status() == CanPeripheral::Recovery)
-	{
-		mMotorEngaged = false;
-		disengageMotor();
-	}
+    DirectionHandler.setDirectionAV(mSteeringCommand_AV);
+    DirectionHandler.setDirectionAR(-mSteeringCommand_AR);
+    DirectionHandler.setBrakeAV( mBrake.getOutput() * 200);
+    DirectionHandler.setBrakeAR(-mBrake.getOutput() * 200);
 
-	//Changing zero-crossing parameter
-//	if(mThrottle.getOutput() < 2.0)
-//	{
-//		mZeroCrossing = true;
-		if(mMotorReversePending)
-		{
-			mMotorReverseEngaged = mMotorReversePendingValue;
-			mMotorReversePending = false;
-		}
-//	}
-//
-//	else
-//		mZeroCrossing = false;
+    if (mMotorUpdateTimer.triggered())
+    {
+        setMotorSpeed(mThrottle.getOutput(), mMotorReverseEngaged);
+        setMotorEBrake(mBrake.getOutput());
+    }
 
-	if(mMotorUpdateTimer.triggered())
-	{
-		bool needRefresh = false;
+    if (mLogDynamicsTimer.triggered())
+    {
+        Message msg(Message::Controller);
+        msg << mRawThottle << mThrottle.getOutput()
+            << mRawBrake   << mBrake.getOutput();
+        log(msg);
 
-		if(mMotorUpdateTimer.counts() % 8)
-			needRefresh = true;
-
-//		if(mThrottle.hasChanged() || needRefresh)
-			setMotorSpeed(mThrottle.getOutput(), mMotorReverseEngaged);
-
-//		if(mBrake.hasChanged() || needRefresh)
-			setMotorEBrake(mBrake.getOutput());
-	}
-
-	//Logging dynamics data
-	if(mLogDynamicsTimer.triggered())
-	{
-		Message msg(Message::Controller);
-		msg << mRawThottle;
-		msg << mThrottle.getOutput();
-		msg << mRawBrake;
-		msg << mBrake.getOutput();
-		this->log(msg);
-
-		Ph_AVD.logMotorInfo();
-		Ph_AVG.logMotorInfo();
-		Ph_ARD.logMotorInfo();
-		Ph_ARG.logMotorInfo();
-
-	}
-
-	osThreadYield();
-
+        Ph_AVD.logMotorInfo();
+        Ph_AVG.logMotorInfo();
+        Ph_ARD.logMotorInfo();
+        Ph_ARG.logMotorInfo();
+    }
 }
 
 void VehicleTask::cleanup()

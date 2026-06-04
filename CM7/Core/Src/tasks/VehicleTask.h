@@ -30,6 +30,8 @@
 
 #include <string>
 
+#define VEHICLE_TICK_MS 10
+
 class VehicleTask : public RTOS_Task
 {
 	public:
@@ -56,6 +58,12 @@ class VehicleTask : public RTOS_Task
 		float getMeanSpeed();
 		float getMaxSpeed();
 
+	    void updateTimers();
+	    void processEvents();
+	    void processActions();
+	    void compute();
+	    void updateVehicle();
+
 		int32_t normalizeSterring(int32_t);
 
 	private:
@@ -81,8 +89,11 @@ class VehicleTask : public RTOS_Task
 		//Motor Zero crossing detection
 		bool mZeroCrossing;
 
+		// Task Control
 		Timer mLogDynamicsTimer;
 		Timer mMotorUpdateTimer;
+		uint32_t mLastWakeTime;
+		Timer mHeapStatsTimer;
 
 		size_t freeHeap;
 		size_t minEver;
