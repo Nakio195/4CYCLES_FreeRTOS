@@ -126,28 +126,31 @@ void VehicleTask::processEvents()
 
 	while(xQueueReceive(mEventsQueue, &event, pdMS_TO_TICKS(0)) == pdTRUE)
 	{
-		switch (event.type)
+		if(event.peripheral.type == CanPeripheral::Controller)
 		{
-			case Event::PeripheralDisabled:
-			case Event::PeripheralLost:
-			case Event::PeripheralMissing:
-				if(event.peripheral.id == CanPeripheral::RemoteController)
-					mRemoteControllerAvailable = false;
-				else if(event.peripheral.id == CanPeripheral::HandlebarController)
-					mLocalControllerAvailable = false;
-				updateControllerSelection();
-				break;
-			case Event::PeripheralReady:
-				if(event.peripheral.id == CanPeripheral::RemoteController)
-					mRemoteControllerAvailable = true;
-				else if(event.peripheral.id == CanPeripheral::HandlebarController)
-					mLocalControllerAvailable = true;
-				updateControllerSelection();
-				break;
+			switch (event.type)
+			{
+				case Event::PeripheralDisabled:
+				case Event::PeripheralLost:
+				case Event::PeripheralMissing:
+					if(event.peripheral.id == CanPeripheral::RemoteController)
+						mRemoteControllerAvailable = false;
+					else if(event.peripheral.id == CanPeripheral::HandlebarController)
+						mLocalControllerAvailable = false;
+					updateControllerSelection();
+					break;
+				case Event::PeripheralReady:
+					if(event.peripheral.id == CanPeripheral::RemoteController)
+						mRemoteControllerAvailable = true;
+					else if(event.peripheral.id == CanPeripheral::HandlebarController)
+						mLocalControllerAvailable = true;
+					updateControllerSelection();
+					break;
 
-			default:
-				// TODO: log invalid type
-				break;
+				default:
+					// TODO: log invalid type
+					break;
+			}
 		}
 	}
 }
