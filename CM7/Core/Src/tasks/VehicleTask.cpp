@@ -84,8 +84,7 @@ void VehicleTask::setup()
 	while(!mRemoteControllerAvailable && !mLocalControllerAvailable)
 	{
 		processEvents();
-	    mLastWakeTime += VEHICLE_TICK_MS;
-	    osDelayUntil(mLastWakeTime);
+	    osDelay(10);
 	}
 
 	updateControllerSelection();
