@@ -23,11 +23,11 @@ PS3Controller::PS3Controller()
 	mPeripheralId = PeripheralId::RemoteController;
 	mPeripheralType = PeripheralType::Controller;
 
-	CanHandler.attach(this);
 }
 
 void PS3Controller::setup()
 {
+	CanHandler.attach(this);
 	Mut_Data = xSemaphoreCreateMutex();
 	xSemaphoreGive(Mut_Data);
 }

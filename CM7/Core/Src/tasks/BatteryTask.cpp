@@ -23,7 +23,6 @@ BatteryTask::BatteryTask()
 	mPeripheralType = Battery;
 	mPeripheralId = BatteryTYVA;
 
-	CanHandler.attach(this);
 }
 
 // ############ RTOS Task Methods ############
@@ -31,6 +30,7 @@ BatteryTask::BatteryTask()
 void BatteryTask::setup()
 {
 
+	CanHandler.attach(this);
 }
 
 void BatteryTask::run()

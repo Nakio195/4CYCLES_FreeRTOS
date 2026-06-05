@@ -26,12 +26,12 @@ HandleBarController::HandleBarController()
 	Mut_Data = xSemaphoreCreateMutex();
 	xSemaphoreGive(Mut_Data);
 
-	CanHandler.attach(this);
 }
 
 void HandleBarController::setup()
 {
 
+	CanHandler.attach(this);
 }
 
 void HandleBarController::run()
