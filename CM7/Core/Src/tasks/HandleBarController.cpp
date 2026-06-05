@@ -251,7 +251,12 @@ void HandleBarController::onDiscovered()
 
 void HandleBarController::onReady()
 {
-
+	log(Message(Message::LogCritical, LOG_HANDLEBAR_READY));
+	Event e;
+	e.type = Event::PeripheralReady;
+	e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
+	emit(e);
 }
 
 void HandleBarController::onAbsent()

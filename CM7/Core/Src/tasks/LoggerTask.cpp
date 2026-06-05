@@ -154,11 +154,17 @@ void Logger::onInit()
 	LoggerControl->data.push_back(0x01);
 	if(!CanHandler.send(LoggerControl)) //TODO Handle send fail
 		CanPacketPool.free(LoggerControl);
+
 }
 
 void Logger::onDiscovered()
 {
 	log(Message(Message::LogError, LOG_LOGGER_CONNECTED));
+	Event e;
+	e.type = Event::PeripheralReady;
+	e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
+	emit(e);
 }
 
 void Logger::onRecovery()
@@ -172,22 +178,44 @@ void Logger::onRecovery()
 
 void Logger::onReady()
 {
-
+	Event e;
+	e.type = Event::PeripheralReady;
+	e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
+	emit(e);
 }
 
 void Logger::onAbsent()
 {
 	log(Message(Message::LogError, LOG_LOGGER_ABSENT));
+
+	Event e;
+	e.type = Event::PeripheralMissing;
+	e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
+	emit(e);
 }
 
 void Logger::onRecovered()
 {
 	log(Message(Message::LogInfo, LOG_LOGGER_RECOVERED));
+
+	Event e;
+	e.type = Event::PeripheralRecovered;
+	e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
+	emit(e);
 }
 
 void Logger::onLost()
 {
 	log(Message(Message::LogInfo, LOG_LOGGER_LOST));
+
+	Event e;
+	e.type = Event::PeripheralLost;
+	e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
+	emit(e);
 }
 
 void Logger::onDisabled()
@@ -197,6 +225,12 @@ void Logger::onDisabled()
 	LoggerControl->data.push_back(0x00);
 	if(!CanHandler.send(LoggerControl)) //TODO Handle send fail
 		CanPacketPool.free(LoggerControl);
+
+	Event e;
+	e.type = Event::PeripheralDisabled;
+	e.peripheral.id = mPeripheralId;
+	e.peripheral.type = mPeripheralType;
+	emit(e);
 }
 
 
