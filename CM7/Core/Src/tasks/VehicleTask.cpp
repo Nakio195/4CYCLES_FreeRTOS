@@ -59,13 +59,17 @@ void VehicleTask::setup()
 	Ph_AVG.attachLogQueue(LoggerTask.createLogQueue("Ph_AVG"));
 	Ph_ARD.attachLogQueue(LoggerTask.createLogQueue("Ph_ARD"));
 	Ph_ARG.attachLogQueue(LoggerTask.createLogQueue("Ph_ARG"));
+	BatteryHandler.attachLogQueue(LoggerTask.createLogQueue("Battery"));
 
 	HandleBarTask.attachEventQueue(mEventsQueue);
 	PS3Task.attachEventQueue(mEventsQueue);
+	LoggerTask.attachEventQueue(mEventsQueue);
+	BatteryHandler.attachEventQueue(mEventsQueue);
 
 	CanHandler.start("CAN", 256, osPriorityAboveNormal);
 	HandleBarTask.start("HandleBar", 256, osPriorityBelowNormal);
 	PS3Task.start("PS3", 256, osPriorityBelowNormal);
+	BatteryHandler.start("Battery", 256, osPriorityBelowNormal);
 	DirectionHandler.start("Direction", 128, osPriorityHigh3);
 	ModbusHandler.start("ModbusMaster", 256, osPriorityHigh);
 	Ph_AVG.start("Ph_AVG", 512, osPriorityHigh2);
