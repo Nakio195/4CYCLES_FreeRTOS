@@ -41,13 +41,13 @@ class RTOS_Task
 		void inline attachEventQueue(QueueHandle_t q)
 		{
 			if(q != nullptr)
-				mEventQueue = q;
+				mEventsQueue = q;
 		}
 
 		QueueHandle_t inline getEventQueue()
 		{
-			if(mEventQueue != nullptr)
-				return mEventQueue;
+			if(mEventsQueue != nullptr)
+				return mEventsQueue;
 
 			return nullptr;
 		}
@@ -65,8 +65,8 @@ class RTOS_Task
 
 		void inline emit(const Event e)
 		{
-			if(mEventQueue != nullptr)
-				xQueueSend(mEventQueue, &e, 100);
+			if(mEventsQueue != nullptr)
+				xQueueSend(mEventsQueue, &e, 100);
 		}
 
 	protected:
@@ -111,7 +111,7 @@ class RTOS_Task
 		bool stopCalled = false;
 		TaskHandle_t xHandle = 0;
 		QueueHandle_t mLogQueue = nullptr;
-		QueueHandle_t mEventQueue = nullptr;
+		QueueHandle_t mEventsQueue = nullptr;
 };
 
 #endif /* SRC_UTILS_RTOSTASK_H_ */

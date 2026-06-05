@@ -13,6 +13,7 @@
 #include "HandleBarController.h"
 #include "PS3Controller.h"
 #include "DirectionTask.h"
+#include "BatteryTask.h"
 #include "usbd_cdc_if.h"
 #include "usart.h"
 
@@ -72,7 +73,6 @@ class VehicleTask : public RTOS_Task
 
 	private:
 		QueueHandle_t mControllerQueue;
-		QueueHandle_t mEventsQueue;
 
 		//Controllers
 		uint8_t mControllersAvailables;
