@@ -198,8 +198,7 @@ void PS3Controller::ControllerData(CanPacket* packet)
 			{
 				case Switch::States::PRESSED:
 					setLightsCommand(Action::Signals::Hazard, true);
-					HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_RESET);
-					HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_RESET);
+					setControllerEvent(Action::Controller::Connect);
 					break;
 				case Switch::States::RELEASED:
 					setLightsCommand(Action::Signals::Hazard, false);
