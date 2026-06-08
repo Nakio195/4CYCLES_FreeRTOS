@@ -243,7 +243,8 @@ void HandleBarController::onDiscovered()
 {
 	log(Message(Message::LogInfo, LOG_HANDLEBAR_DISCOVERED));
 	Event e;
-	e.type = Event::PeripheralDiscover;
+	e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Discover;
 	e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
 	emit(e);
@@ -253,7 +254,8 @@ void HandleBarController::onReady()
 {
 	log(Message(Message::LogCritical, LOG_HANDLEBAR_READY));
 	Event e;
-	e.type = Event::PeripheralReady;
+	e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Ready;
 	e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
 	emit(e);
@@ -263,7 +265,8 @@ void HandleBarController::onAbsent()
 {
 	log(Message(Message::LogCritical, LOG_HANDLEBAR_ABSENT));
 	Event e;
-	e.type = Event::PeripheralMissing;
+	e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Missing;
 	e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
 	emit(e);
@@ -284,7 +287,8 @@ void HandleBarController::onRecovered()
 	log(Message(Message::LogInfo, LOG_HANDLEBAR_RECOVERED));
 
 	Event e;
-	e.type = Event::PeripheralRecovered;
+	e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Recovered;
 	e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
 	emit(e);
@@ -295,7 +299,8 @@ void HandleBarController::onLost()
 	log(Message(Message::LogCritical, LOG_HANDLEBAR_LOST));
 
 	Event e;
-	e.type = Event::PeripheralLost;
+	e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Lost;
 	e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
 	emit(e);
@@ -311,7 +316,8 @@ void HandleBarController::onDisabled()
     	CanPacketPool.free(settings);
 
     Event e;
-    e.type = Event::PeripheralDisabled;
+	e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Disabled;
     e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
     emit(e);

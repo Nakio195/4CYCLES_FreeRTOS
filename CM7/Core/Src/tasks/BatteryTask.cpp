@@ -163,7 +163,8 @@ void BatteryTask::onDiscovered()
 {
 	log(Message(Message::LogInfo, LOG_BATTERY_DISCOVERED));
 	Event e;
-	e.type = Event::PeripheralDiscover;
+	e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Discover;
 	e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
 	emit(e);
@@ -173,7 +174,8 @@ void BatteryTask::onReady()
 {
 	log(Message(Message::LogInfo, LOG_BATTERY_READY));
 	Event e;
-	e.type = Event::PeripheralReady;
+	e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Ready;
 	e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
 	emit(e);
@@ -183,7 +185,8 @@ void BatteryTask::onAbsent()
 {
 	log(Message(Message::LogCritical, LOG_BATTERY_ABSENT));
 	Event e;
-	e.type = Event::PeripheralMissing;
+	e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Missing;
 	e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
 	emit(e);
@@ -198,8 +201,8 @@ void BatteryTask::onRecovered()
 {
 	log(Message(Message::LogInfo, LOG_BATTERY_RECOVERED));
 
-	Event e;
-	e.type = Event::PeripheralRecovered;
+	Event e;e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Recovered;
 	e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
 	emit(e);
@@ -210,7 +213,8 @@ void BatteryTask::onLost()
 	log(Message(Message::LogCritical, LOG_BATTERY_LOST));
 
 	Event e;
-	e.type = Event::PeripheralLost;
+	e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Lost;
 	e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
 	emit(e);
@@ -221,7 +225,8 @@ void BatteryTask::onDisabled()
     log(Message(Message::LogInfo, LOG_BATTERY_DISABLED));
 
     Event e;
-    e.type = Event::PeripheralDisabled;
+	e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Disabled;
     e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
     emit(e);

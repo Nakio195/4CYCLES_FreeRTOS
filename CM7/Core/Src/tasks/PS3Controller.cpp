@@ -275,7 +275,8 @@ void PS3Controller::onDiscovered()
 {
 	log(Message(Message::LogInfo, LOG_PS3_CONTROLLER_DISCOVERED));
 	Event e;
-	e.type = Event::PeripheralDiscover;
+	e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Discover;
 	e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
 	emit(e);
@@ -285,7 +286,8 @@ void PS3Controller::onReady()
 {
 	log(Message(Message::LogInfo, LOG_PS3_CONTROLLER_READY));
 	Event e;
-	e.type = Event::PeripheralReady;
+	e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Ready;
 	e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
 	emit(e);
@@ -295,7 +297,8 @@ void PS3Controller::onAbsent()
 {
 	log(Message(Message::LogCritical, LOG_PS3_CONTROLLER_ABSENT));
 	Event e;
-	e.type = Event::PeripheralMissing;
+	e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Missing;
 	e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
 	emit(e);
@@ -318,7 +321,8 @@ void PS3Controller::onRecovered()
 	log(Message(Message::LogInfo, LOG_PS3_CONTROLLER_RECOVERED));
 
 	Event e;
-	e.type = Event::PeripheralRecovered;
+	e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Recovered;
 	e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
 	emit(e);
@@ -329,7 +333,8 @@ void PS3Controller::onLost()
 	log(Message(Message::LogCritical, LOG_PS3_CONTROLLER_LOST));
 
 	Event e;
-	e.type = Event::PeripheralLost;
+	e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Lost;
 	e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
 	emit(e);
@@ -347,7 +352,8 @@ void PS3Controller::onDisabled()
 		CanPacketPool.free(ControllerSettings);
 
     Event e;
-    e.type = Event::PeripheralDisabled;
+	e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Disabled;
     e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
     emit(e);

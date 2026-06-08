@@ -161,7 +161,8 @@ void Logger::onDiscovered()
 {
 	log(Message(Message::LogError, LOG_LOGGER_CONNECTED));
 	Event e;
-	e.type = Event::PeripheralReady;
+	e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Discover;
 	e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
 	emit(e);
@@ -179,7 +180,8 @@ void Logger::onRecovery()
 void Logger::onReady()
 {
 	Event e;
-	e.type = Event::PeripheralReady;
+	e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Ready;
 	e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
 	emit(e);
@@ -190,7 +192,8 @@ void Logger::onAbsent()
 	log(Message(Message::LogError, LOG_LOGGER_ABSENT));
 
 	Event e;
-	e.type = Event::PeripheralMissing;
+	e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Missing;
 	e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
 	emit(e);
@@ -201,7 +204,8 @@ void Logger::onRecovered()
 	log(Message(Message::LogInfo, LOG_LOGGER_RECOVERED));
 
 	Event e;
-	e.type = Event::PeripheralRecovered;
+	e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Recovered;
 	e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
 	emit(e);
@@ -212,7 +216,8 @@ void Logger::onLost()
 	log(Message(Message::LogInfo, LOG_LOGGER_LOST));
 
 	Event e;
-	e.type = Event::PeripheralLost;
+	e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Lost;
 	e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
 	emit(e);
@@ -227,7 +232,8 @@ void Logger::onDisabled()
 		CanPacketPool.free(LoggerControl);
 
 	Event e;
-	e.type = Event::PeripheralDisabled;
+	e.type = Event::PeripheralEvent;
+	e.peripheral.event = Event::Peripheral::Disabled;
 	e.peripheral.id = mPeripheralId;
 	e.peripheral.type = mPeripheralType;
 	emit(e);
