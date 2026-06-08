@@ -43,6 +43,7 @@ void PS3Controller::run()
 				ControllerData(packet);
 			else if(packet->Identifier == 0x11)
 				ControllerStatus(packet);
+			{
 			CanPacketPool.free(packet);
 		}
 	}
@@ -265,8 +266,6 @@ void PS3Controller::onInit()
 {
 	CanPacket *ControllerSettings = CanPacketPool.allocate(0x19);
 	ControllerSettings->data.push_back(0x01);
-	ControllerSettings->data.push_back(0x00);
-	ControllerSettings->data.push_back(0x00);
 	if(!CanHandler.send(ControllerSettings)) //TODO Handle send failed
 		CanPacketPool.free(ControllerSettings);
 }
@@ -310,8 +309,6 @@ void PS3Controller::onRecovery()
 
 	CanPacket *ControllerSettings = CanPacketPool.allocate(0x19);
 	ControllerSettings->data.push_back(0x01);
-	ControllerSettings->data.push_back(0x00);
-	ControllerSettings->data.push_back(0x00);
 	if(!CanHandler.send(ControllerSettings)) //TODO Handle send failed
 		CanPacketPool.free(ControllerSettings);
 }
@@ -345,8 +342,6 @@ void PS3Controller::onDisabled()
     log(Message(Message::LogInfo, LOG_PS3_CONTROLLER_DISABLED));
 
 	CanPacket *ControllerSettings = CanPacketPool.allocate(0x19);
-	ControllerSettings->data.push_back(0x00);
-	ControllerSettings->data.push_back(0x00);
 	ControllerSettings->data.push_back(0x00);
 	if(!CanHandler.send(ControllerSettings)) //TODO Handle send failed
 		CanPacketPool.free(ControllerSettings);
