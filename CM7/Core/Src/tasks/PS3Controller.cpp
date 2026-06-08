@@ -140,7 +140,20 @@ void PS3Controller::ControllerData(CanPacket* packet)
 		controller.buttons.ps.update(packet->data[7] & 0x40);
 		controller.status.connected.update(packet->data[7] & 0x80);
 
-		// Generate Actions only if Controller is active
+		// Generate Actions only if Controller is active except for controller switch
+		switch (controller.buttons.select.read())
+		{
+			case Switch::States::RELEASED:
+				//Emit change controller event
+				Event e;
+				e.type = Event::ControllerEvent;
+				e.controller.request = Event::Controller::Change;
+				emit(e);
+				break;
+			default:
+				break;
+		}
+
 		if(mActive)
 		{
 			setThrottleCommand(controller.trig.R);
