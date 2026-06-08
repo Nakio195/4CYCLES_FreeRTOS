@@ -43,7 +43,11 @@ void PS3Controller::run()
 				ControllerData(packet);
 			else if(packet->Identifier == 0x11)
 				ControllerStatus(packet);
+			else if (packet->Identifier == 0x18)
 			{
+				uint32_t hb = packet->data[0] | (packet->data[1] << 8) | (packet->data[2] << 16) | (packet->data[3] << 24);
+				heartbeat(hb);
+			}
 			CanPacketPool.free(packet);
 		}
 	}
