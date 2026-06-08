@@ -33,7 +33,9 @@ void CAN_Task::setup()
 		Error_Handler();
 
 	Sem_MessageAvailable = xSemaphoreCreateBinary();
-	TX_Queue = xQueueCreate(10, sizeof(CanPacket*));
+	TX_Queue = xQueueCreate(50, sizeof(CanPacket*));
+
+	vQueueAddToRegistry(TX_Queue, "CAN TX Queue");
 
 	if (HAL_FDCAN_ActivateNotification(&hfdcan2, (FDCAN_IT_RX_FIFO0_NEW_MESSAGE |
 													FDCAN_IT_TX_EVT_FIFO_FULL |
