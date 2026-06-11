@@ -17,7 +17,7 @@ class Action
 		enum Type{Invalid, Throttle, Brake, Steering, Motor, Lights, Horn, Controller, Engage};
 		enum Gear{Slow, Middle, Fast, Reverse, Forward};
 		enum Signals{Left, Right, BrakeSignal, NighLight, Hazard};
-		enum Controller{Unknown, Local, Remote};
+		enum Controller{Change, Connect};
 
 	public:
 		Action(Type type = Invalid)
@@ -74,6 +74,20 @@ class Action
 		bool getLightState()
 		{
 			return mValues[1];
+		}
+
+		bool changeController()
+		{
+			if(mValues[0] == Action::Controller::Change)
+				return true;
+			return false;
+		}
+
+		bool controllerConnected()
+		{
+			if(mValues[0] == Action::Controller::Connect)
+				return true;
+			return false;
 		}
 
 
