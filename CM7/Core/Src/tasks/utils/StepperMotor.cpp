@@ -19,7 +19,7 @@ StepperMotor::StepperMotor(bool motPosition, uint32_t stepTime, int32_t lowLimit
 	HAL_GPIO_WritePin(mDirPort, mDirPin, GPIO_PIN_RESET);
 
 	mPosition = 0;
-	mRealPosition = 0;
+	mRealPosition = 9999;
 	mTargetPosition = 0;
 	mDirection = 0;
 
