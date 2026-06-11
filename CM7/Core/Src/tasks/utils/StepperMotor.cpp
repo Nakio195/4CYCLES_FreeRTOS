@@ -19,7 +19,7 @@ StepperMotor::StepperMotor(bool motPosition, uint32_t stepTime, int32_t lowLimit
 	HAL_GPIO_WritePin(mDirPort, mDirPin, GPIO_PIN_RESET);
 
 	mPosition = 0;
-	mRealPosition = 9999;
+	mRealPosition = 0;
 	mTargetPosition = 0;
 	mDirection = 0;
 
@@ -66,6 +66,22 @@ void StepperMotor::setRealPosition(int32_t position)
 
 			mRealPosition = a*(-position + mSensor.center); //Add
 		}
+		xSemaphoreGive(mRunSemaphore);
+	}
+}
+
+void StepperMotor::setInitialPosition(int32_t initial)
+{
+	if (xSemaphoreTake(mRunSemaphore, 100) == pdTRUE)
+	{
+		// Constrain between limit
+		if (initial < mLowLimit)
+			mPosition = mLowLimit;
+		else if (initial > mHighLimit)
+			mPosition = mHighLimit;
+		else
+			mPosition = initial;
+
 		xSemaphoreGive(mRunSemaphore);
 	}
 }

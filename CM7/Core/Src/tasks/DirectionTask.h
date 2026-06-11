@@ -27,6 +27,9 @@ class DirectionTask: public RTOS_Task
 		void setDirectionAV(int32_t target);
 		void setDirectionAR(int32_t target);
 
+		void engageParking();
+		void disengageParking();
+
 		void setBrakeAV(int32_t target);
 		void setBrakeAR(int32_t target);
 		int32_t getSensorAV()

@@ -38,6 +38,7 @@ class StepperMotor
 
 		void setTargetPosition(int32_t position);
 		void setRealPosition(int32_t position);
+		void setInitialPosition(int32_t initial);
 		void configureSensor(const RotationSensor sensor);
 		void run();
 

@@ -31,6 +31,8 @@ VehicleTask::VehicleTask()
 	mBrake.addFilter(new LowPassFilter(10));
 
 	mMotorEngaged = false;
+	mParkingEngaged = true;
+
 	mZeroCrossing = false;
 
 	mLogDynamicsTimer = Timer(300, Timer::Continuous);
@@ -247,8 +249,12 @@ void VehicleTask::updateVehicle()
 {
     DirectionHandler.setDirectionAV(mSteeringCommand_AV);
     DirectionHandler.setDirectionAR(-mSteeringCommand_AR);
-    DirectionHandler.setBrakeAV( mBrake.getOutput() * 200);
-    DirectionHandler.setBrakeAR(-mBrake.getOutput() * 200);
+
+    if(!mParkingEngaged)
+    {
+		DirectionHandler.setBrakeAV( mBrake.getOutput() * 200);
+		DirectionHandler.setBrakeAR(-mBrake.getOutput() * 200);
+    }
 
     if (mMotorUpdateTimer.triggered())
     {
@@ -352,6 +358,7 @@ void VehicleTask::engageMotor()
 	Ph_AVD.startMotor();
 	Ph_ARG.startMotor();
 	Ph_ARD.startMotor();
+	disengageParking();
 }
 
 void VehicleTask::disengageMotor()
@@ -360,7 +367,22 @@ void VehicleTask::disengageMotor()
 	Ph_AVD.stopMotor();
 	Ph_ARG.stopMotor();
 	Ph_ARD.stopMotor();
+	engageParking();
 }
+
+
+void VehicleTask::engageParking()
+{
+	DirectionHandler.engageParking();
+	mParkingEngaged = true;
+}
+
+void VehicleTask::disengageParking()
+{
+	DirectionHandler.disengageParking();
+	mParkingEngaged = false;
+}
+
 
 void VehicleTask::setMotorSpeed(float speed, bool reverse)
 {

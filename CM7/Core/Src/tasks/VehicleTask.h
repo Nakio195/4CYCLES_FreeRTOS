@@ -47,6 +47,9 @@ class VehicleTask : public RTOS_Task
 		void engageMotor();
 		void disengageMotor();
 
+		void engageParking();
+		void disengageParking();
+
 		MotorInfo getMotorInfo(Phaserunner &motor)
 		{
 			return motor.getMotorInfo();
@@ -82,6 +85,7 @@ class VehicleTask : public RTOS_Task
 
 		//Motors
 		bool mMotorEngaged; // true if motor is engaged
+		bool mParkingEngaged;
 
 		//Direction values
 		int32_t mSteeringCommand_AV;
