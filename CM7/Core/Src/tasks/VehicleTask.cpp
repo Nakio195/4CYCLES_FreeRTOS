@@ -126,30 +126,44 @@ void VehicleTask::processEvents()
 
 	while(xQueueReceive(mEventsQueue, &event, pdMS_TO_TICKS(0)) == pdTRUE)
 	{
-		if(event.peripheral.type == CanPeripheral::Controller)
+		if(event.type == Event::PeripheralEvent)
 		{
-			switch (event.type)
+			if(event.peripheral.type == CanPeripheral::Controller)
 			{
-				case Event::PeripheralDisabled:
-				case Event::PeripheralLost:
-				case Event::PeripheralMissing:
-					if(event.peripheral.id == CanPeripheral::RemoteController)
-						mRemoteControllerAvailable = false;
-					else if(event.peripheral.id == CanPeripheral::HandlebarController)
-						mLocalControllerAvailable = false;
-					updateControllerSelection();
-					break;
-				case Event::PeripheralReady:
-					if(event.peripheral.id == CanPeripheral::RemoteController)
-						mRemoteControllerAvailable = true;
-					else if(event.peripheral.id == CanPeripheral::HandlebarController)
-						mLocalControllerAvailable = true;
-					updateControllerSelection();
-					break;
+				switch (event.peripheral.event)
+				{
+					case Event::Peripheral::Disabled:
+					case Event::Peripheral::Lost:
+					case Event::Peripheral::Missing:
+						if(event.peripheral.id == CanPeripheral::RemoteController)
+							mRemoteControllerAvailable = false;
+						else if(event.peripheral.id == CanPeripheral::HandlebarController)
+							mLocalControllerAvailable = false;
+						updateControllerSelection();
+						break;
+					case Event::Peripheral::Ready:
+						if(event.peripheral.id == CanPeripheral::RemoteController)
+							mRemoteControllerAvailable = true;
+						else if(event.peripheral.id == CanPeripheral::HandlebarController)
+							mLocalControllerAvailable = true;
+						updateControllerSelection();
+						break;
 
-				default:
-					// TODO: log invalid type
-					break;
+					default:
+						// TODO: log invalid type
+						break;
+				}
+			}
+		}
+
+		if(event.type == Event::ControllerEvent)
+		{
+			if(event.controller.request == Event::Controller::Change)
+			{
+				if(mCurrentController == CanPeripheral::RemoteController && mLocalControllerAvailable)
+					changeController(CanPeripheral::HandlebarController);
+				else if(mCurrentController == CanPeripheral::HandlebarController && mRemoteControllerAvailable)
+					changeController(CanPeripheral::RemoteController);
 			}
 		}
 	}
