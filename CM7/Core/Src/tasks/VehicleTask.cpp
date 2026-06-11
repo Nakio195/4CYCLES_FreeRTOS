@@ -282,8 +282,12 @@ void VehicleTask::enterControllerError()
 	log(Message(Message::LogCritical, LOG_VEHICLE_CRITICAL_STATE));
 	disengageMotor();
 
-	suspend();
-	while(1); // Should never reach this point
+	//Wait for at least a Controller to be Ready
+	while(!mRemoteControllerAvailable && !mLocalControllerAvailable)
+	{
+	    osDelay(10);
+		processEvents();
+	}
 }
 
 void VehicleTask::updateControllerSelection()
