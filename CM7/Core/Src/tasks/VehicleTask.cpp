@@ -326,6 +326,9 @@ void VehicleTask::updateControllerSelection()
 
 void VehicleTask::changeController(CanPeripheral::PeripheralId newController)
 {
+	if(getMeanSpeed() > 2.0)
+		return;
+
 	if(newController == CanPeripheral::RemoteController)
 	{
 		HandleBarTask.setActive(false);
