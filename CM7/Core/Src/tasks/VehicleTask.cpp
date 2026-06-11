@@ -215,6 +215,14 @@ void VehicleTask::processActions()
 						mMotorReversePendingValue = false;
 					}
 					break;
+
+				case Action::Controller:
+					if(action->controllerConnected())
+					{
+						HAL_GPIO_WritePin(SND_0_GPIO_Port, SND_0_Pin, GPIO_PIN_RESET);
+						HAL_GPIO_WritePin(SND_1_GPIO_Port, SND_1_Pin, GPIO_PIN_RESET);
+					}
+
 				default:
 					// TODO: log invalid type
 					break;
