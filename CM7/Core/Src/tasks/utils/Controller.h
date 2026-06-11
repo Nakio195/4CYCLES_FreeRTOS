@@ -48,7 +48,6 @@ class Controller
 			pushAction(Action::Engage, value);
 		}
 
-
 		void setLightsCommand(Action::Signals light, uint8_t value)
 		{
 			Action* action = ActionPacketPool.allocate(Action::Lights);
