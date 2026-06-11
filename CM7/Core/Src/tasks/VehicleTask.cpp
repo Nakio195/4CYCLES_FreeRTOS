@@ -86,9 +86,6 @@ void VehicleTask::setup()
 	    osDelay(10);
 		processEvents();
 	}
-
-	updateControllerSelection();
-	vQueueAddToRegistry(mControllerQueue, "ControllerActions");
 }
 
 void VehicleTask::run()
@@ -321,8 +318,6 @@ void VehicleTask::updateControllerSelection()
 	if(mCurrentController == CanPeripheral::PeripheralId::Unknown)
 	{
 		if(mLocalControllerAvailable)
-			changeController(CanPeripheral::RemoteController);
-		else if(mRemoteControllerAvailable)
 			changeController(CanPeripheral::HandlebarController);
 		else if(mRemoteControllerAvailable)
 			changeController(CanPeripheral::RemoteController);
