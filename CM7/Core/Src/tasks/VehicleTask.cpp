@@ -83,8 +83,8 @@ void VehicleTask::setup()
 	//Wait for at least a Controller to be Ready
 	while(!mRemoteControllerAvailable && !mLocalControllerAvailable)
 	{
-		processEvents();
 	    osDelay(10);
+		processEvents();
 	}
 
 	updateControllerSelection();
