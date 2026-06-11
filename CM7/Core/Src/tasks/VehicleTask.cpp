@@ -277,7 +277,7 @@ void VehicleTask::cleanup()
 
 }
 
-void VehicleTask::enterCriticalError()
+void VehicleTask::enterControllerError()
 {
 	log(Message(Message::LogCritical, LOG_VEHICLE_CRITICAL_STATE));
 	disengageMotor();
@@ -297,7 +297,7 @@ void VehicleTask::updateControllerSelection()
 			if(mLocalControllerAvailable)
 				changeController(CanPeripheral::HandlebarController);
 			else
-				enterCriticalError();
+				enterControllerError();
 		}
 	}
 
@@ -310,7 +310,7 @@ void VehicleTask::updateControllerSelection()
 			if(mRemoteControllerAvailable)
 				changeController(CanPeripheral::RemoteController);
 			else
-				enterCriticalError();
+				enterControllerError();
 		}
 	}
 
@@ -320,8 +320,8 @@ void VehicleTask::updateControllerSelection()
 			changeController(CanPeripheral::RemoteController);
 		else if(mRemoteControllerAvailable)
 			changeController(CanPeripheral::HandlebarController);
-		else
-			enterCriticalError();
+		else if(mRemoteControllerAvailable)
+			changeController(CanPeripheral::RemoteController);
 	}
 }
 

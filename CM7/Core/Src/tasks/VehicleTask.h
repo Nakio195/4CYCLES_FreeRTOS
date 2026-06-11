@@ -59,7 +59,7 @@ class VehicleTask : public RTOS_Task
 		void updateControllerSelection();
 		void changeController(CanPeripheral::PeripheralId);
 
-		void enterCriticalError();
+		void enterControllerError();
 		float getMeanSpeed();
 		float getMaxSpeed();
 
